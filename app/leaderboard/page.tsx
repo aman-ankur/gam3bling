@@ -1,6 +1,9 @@
 import { AppShell } from "@/components/app-shell";
 import { LeaderboardList } from "@/components/leaderboard-list";
+import { ScoringGuide } from "@/components/scoring-guide";
 import { getGlobalLeaderboard } from "@/features/leaderboards/data";
+
+export const dynamic = "force-dynamic";
 
 export default async function GlobalLeaderboardPage() {
   const globalLeaders = await getGlobalLeaderboard();
@@ -15,9 +18,7 @@ export default async function GlobalLeaderboardPage() {
           </div>
           <span className="status-chip">Global</span>
         </div>
-        <div className="projection-card leaderboard-summary">
-          <p>Top 11% across all active World Cup rooms.</p>
-        </div>
+        <ScoringGuide variant="details" />
         <LeaderboardList entries={globalLeaders} label="Global leaderboard rankings" />
       </section>
     </AppShell>

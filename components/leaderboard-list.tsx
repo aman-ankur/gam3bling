@@ -15,6 +15,15 @@ type LeaderboardListProps = {
 };
 
 export function LeaderboardList({ entries, label }: LeaderboardListProps) {
+  if (entries.length === 0) {
+    return (
+      <div className="empty-state" role="status">
+        <strong>No scored predictions yet</strong>
+        <span>Scores will appear after completed matches are synced.</span>
+      </div>
+    );
+  }
+
   return (
     <ol aria-label={label} className="leaderboard-list">
       {entries.map((entry) => (

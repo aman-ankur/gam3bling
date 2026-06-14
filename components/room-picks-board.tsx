@@ -18,8 +18,14 @@ export function RoomPicksBoard({ picks }: RoomPicksBoardProps) {
         <span className="status-chip">{savedCount}/{picks.length} saved</span>
       </div>
 
-      <div className="pick-list">
-        {picks.map((pick) => (
+      {picks.length === 0 ? (
+        <div className="empty-state" role="status">
+          <strong>No room predictions yet</strong>
+          <span>Friends&apos; predictions will appear here after they join and save.</span>
+        </div>
+      ) : (
+        <div className="pick-list">
+          {picks.map((pick) => (
           <article className={pick.isCurrentPlayer ? "pick-card mine" : "pick-card"} key={pick.playerId}>
             <div className="pick-player">
               <Avatar initials={pick.playerInitials} tone={pick.isCurrentPlayer ? "gold" : "green"} />
@@ -58,8 +64,9 @@ export function RoomPicksBoard({ picks }: RoomPicksBoardProps) {
               </div>
             )}
           </article>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

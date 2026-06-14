@@ -8,7 +8,7 @@ type BottomNavProps = {
 
 export function BottomNav({ roomSlug }: BottomNavProps) {
   const pathname = usePathname();
-  const roomBase = roomSlug ? `/r/${roomSlug}` : "/r/goa-wc-chaos";
+  const roomBase = roomSlug ? `/r/${roomSlug}` : "/r/world-cup-room";
   const navItems = [
     { href: "/", label: "Home" },
     { href: `${roomBase}/matches`, label: "Matches" },

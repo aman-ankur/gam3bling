@@ -4,6 +4,8 @@ import { AppShell } from "@/components/app-shell";
 import { MatchCard } from "@/components/match-card";
 import { MemberList } from "@/components/member-list";
 import { RoomInviteCard } from "@/components/room-invite-card";
+import { RoomMissing } from "@/components/room-missing";
+import { ScoringGuide } from "@/components/scoring-guide";
 import { SubmitButton } from "@/components/submit-button";
 import { getRoomLeaderboard } from "@/features/leaderboards/data";
 import { getUpcomingMatches } from "@/features/matches/data";
@@ -30,10 +32,15 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
   const session = await getPlayerSession();
   const shouldShowHub = hub === "1" || session?.roomSlug === slug;
 
+  if (!room.exists) {
+    return <RoomMissing slug={slug} />;
+  }
+
   if (shouldShowHub) {
     const [matches, leaderboard] = await Promise.all([getUpcomingMatches(), getRoomLeaderboard(slug)]);
     const openMatchIds = getOpenPredictionMatchIds(matches);
     const openMatches = matches.filter((match) => openMatchIds.has(match.id) || openMatchIds.has(match.apiMatchId)).slice(0, 2);
+    const currentPlayerScore = session ? leaderboard.find((entry) => entry.playerId === session.playerId)?.score : undefined;
 
     return (
       <AppShell roomName={room.name} roomSlug={slug} subtitle="Room hub">
@@ -47,7 +54,7 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
             </div>
             <div>
               <span>Your score</span>
-              <b>{leaderboard.find((entry) => entry.name !== "John Doe")?.score ?? leaderboard[0]?.score ?? 0}</b>
+              <b>{currentPlayerScore ?? 0}</b>
             </div>
             <div>
               <span>Leader</span>
@@ -89,14 +96,22 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
             </div>
           </div>
           <ol className="compact-leader-list">
-            {leaderboard.slice(0, 3).map((entry) => (
-              <li key={entry.name}>
-                <span>{entry.rank}</span>
-                <strong>{entry.name}</strong>
-                <b>{entry.score} pts</b>
+            {leaderboard.length > 0 ? (
+              leaderboard.slice(0, 3).map((entry) => (
+                <li key={entry.playerId ?? entry.name}>
+                  <span>{entry.rank}</span>
+                  <strong>{entry.name}</strong>
+                  <b>{entry.score} pts</b>
+                </li>
+              ))
+            ) : (
+              <li className="empty-compact-row">
+                <strong>No scored predictions yet</strong>
+                <b>0 pts</b>
               </li>
-            ))}
+            )}
           </ol>
+          <ScoringGuide variant="details" />
         </section>
 
         <section className="section-stack" aria-labelledby="room-history-title">

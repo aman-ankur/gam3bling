@@ -1,8 +1,9 @@
 import type { AppMatch } from "@/features/matches/data";
+import { getCurrentDate } from "../time/now";
 
 const OPEN_PREDICTION_MATCH_COUNT = 4;
 
-export function getOpenPredictionMatchIds(matches: AppMatch[], now = new Date()): Set<string> {
+export function getOpenPredictionMatchIds(matches: AppMatch[], now = getCurrentDate()): Set<string> {
   const nowMs = now.getTime();
   const openMatches = matches
     .filter((match) => match.status === "scheduled" && new Date(match.kickoffAt).getTime() > nowMs)

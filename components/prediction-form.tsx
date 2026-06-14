@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ScoringGuide } from "@/components/scoring-guide";
 import { SubmitButton } from "@/components/submit-button";
 
 type PredictionFormProps = {
@@ -60,6 +61,7 @@ export function PredictionForm({ action, awayTeam, homeTeam, initialPrediction, 
   return (
     <form action={action} className={locked ? "prediction-form locked" : "prediction-form"} aria-label="Prediction form">
       {locked ? <p className="locked-banner">Prediction locked</p> : null}
+      <ScoringGuide />
 
       <section className="market-card" aria-labelledby="final-score-title">
         <h2 id="final-score-title">Final score</h2>

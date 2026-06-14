@@ -6,7 +6,8 @@ test("home page renders the Gam3Bling shell", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Gam3Bling" })).toBeVisible();
   await expect(page.getByText("World Cup prediction rooms")).toBeVisible();
   await expect(page.getByRole("link", { name: "Create room" })).toHaveAttribute("href", "/new");
-  await expect(page.getByRole("link", { name: "Join demo room" })).toHaveAttribute("href", "/r/goa-wc-chaos");
+  await expect(page.getByRole("link", { name: "Join demo room" })).toHaveCount(0);
+  await expect(page.getByText("Max 29 pts")).toBeVisible();
   await expect(page.getByRole("link", { name: "Matches" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Picks" })).toHaveCount(0);
   await expect(page.getByRole("navigation", { name: "Primary" })).toBeVisible();
@@ -28,7 +29,7 @@ test("home page shows a returning room shortcut", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: "Your rooms" })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Goa WC Chaos/i })).toHaveAttribute("href", "/r/goa-wc-chaos");
+  await expect(page.getByRole("link", { name: /World Cup Room/i })).toHaveAttribute("href", "/r/world-cup-room");
   await expect(page.getByText("Netherlands vs Japan")).toBeVisible();
 });
 

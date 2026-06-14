@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/app-shell";
 import { MatchCard } from "@/components/match-card";
+import { RoomMissing } from "@/components/room-missing";
 import { getUpcomingMatches } from "@/features/matches/data";
 import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
 import { ensureMatchDetailsForMatches } from "@/features/match-details/cache";
@@ -18,6 +19,11 @@ type MatchesPageProps = {
 export default async function MatchesPage({ params }: MatchesPageProps) {
   const { slug } = await params;
   const [matches, room] = await Promise.all([getUpcomingMatches(), getRoomSummary(slug)]);
+
+  if (!room.exists) {
+    return <RoomMissing slug={slug} />;
+  }
+
   const openMatchIds = getOpenPredictionMatchIds(matches);
   const openMatches = matches.filter((match) => openMatchIds.has(match.id) || openMatchIds.has(match.apiMatchId));
   const savedMatchIds = await getCurrentPlayerPredictedMatchIds(slug, openMatches);

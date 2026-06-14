@@ -4,6 +4,7 @@ import { MatchDetailTabs } from "@/components/match-detail-tabs";
 import { MatchStatsPanel } from "@/components/match-stats-panel";
 import { PredictionForm } from "@/components/prediction-form";
 import { PredictionReceipt } from "@/components/prediction-receipt";
+import { RoomMissing } from "@/components/room-missing";
 import { RoomPicksBoard } from "@/components/room-picks-board";
 import { savePrediction } from "@/features/predictions/actions";
 import { getMatchByRouteId, getUpcomingMatches } from "@/features/matches/data";
@@ -15,6 +16,7 @@ import { isPredictionLocked } from "@/features/predictions/locking";
 import { getRoomMatchPicks } from "@/features/predictions/data";
 import { getRoomSummary } from "@/features/rooms/data";
 import { createApiFootballProvider } from "@/features/sync/api-football-provider";
+import { getCurrentDate } from "@/features/time/now";
 import { formatKickoffInIst } from "@/features/time/match-time";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
@@ -34,6 +36,11 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
   const { error, saved } = await searchParams;
   const matches = await getUpcomingMatches();
   const room = await getRoomSummary(slug);
+
+  if (!room.exists) {
+    return <RoomMissing slug={slug} />;
+  }
+
   const match = matches.find((candidate) => candidate.id === matchId || candidate.apiMatchId === matchId) ?? await getMatchByRouteId(matchId);
 
   if (!match) {
@@ -50,7 +57,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
     );
   }
 
-  const now = new Date();
+  const now = getCurrentDate();
   const kickoffLocked = isPredictionLocked({ now, kickoffAt: new Date(match.kickoffAt) });
   const windowLocked = !isMatchInOpenPredictionWindow(match, matches, now);
   const locked = kickoffLocked || windowLocked;

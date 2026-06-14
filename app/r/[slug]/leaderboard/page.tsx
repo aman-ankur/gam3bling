@@ -1,5 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import { LeaderboardList } from "@/components/leaderboard-list";
+import { RoomMissing } from "@/components/room-missing";
+import { ScoringGuide } from "@/components/scoring-guide";
 import { getRoomLeaderboard } from "@/features/leaderboards/data";
 import { getRoomSummary } from "@/features/rooms/data";
 
@@ -13,6 +15,10 @@ export default async function RoomLeaderboardPage({ params }: RoomLeaderboardPag
   const { slug } = await params;
   const [roomLeaders, room] = await Promise.all([getRoomLeaderboard(slug), getRoomSummary(slug)]);
 
+  if (!room.exists) {
+    return <RoomMissing slug={slug} />;
+  }
+
   return (
     <AppShell roomName={room.name} roomSlug={slug} subtitle="Leaderboard">
       <section className="section-stack" aria-labelledby="room-leaderboard-title">
@@ -23,6 +29,7 @@ export default async function RoomLeaderboardPage({ params }: RoomLeaderboardPag
           </div>
           <span className="status-chip">Room</span>
         </div>
+        <ScoringGuide variant="details" />
         <LeaderboardList entries={roomLeaders} label="Room leaderboard rankings" />
       </section>
     </AppShell>

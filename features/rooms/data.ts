@@ -4,6 +4,7 @@ import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window"
 import { getPlayerSession } from "@/features/players/session";
 
 export type RoomSummary = {
+  exists: boolean;
   id: string;
   name: string;
   slug: string;
@@ -26,9 +27,10 @@ export type PlayerRoomShortcut = {
 };
 
 const fallbackRoom: RoomSummary = {
+  exists: true,
   id: "fallback-room",
-  name: "Goa WC Chaos",
-  slug: "goa-wc-chaos",
+  name: "World Cup Room",
+  slug: "world-cup-room",
   members: [
     { name: "John Doe", initials: "JD", status: "Admin", tone: "gold" },
     { name: "Jane Doe", initials: "JD", status: "Joined", tone: "green" },
@@ -45,14 +47,14 @@ export async function getRoomSummary(slug: string): Promise<RoomSummary> {
   const supabase = getSupabaseAdmin();
 
   if (!supabase) {
-    return { ...fallbackRoom, slug, name: titleFromSlug(slug) };
+    return emptyRoom(slug);
   }
 
   try {
     const { data: room, error: roomError } = await supabase.from("rooms").select("*").eq("slug", slug).single();
 
     if (roomError || !room) {
-      return { ...fallbackRoom, slug, name: titleFromSlug(slug) };
+      return emptyRoom(slug);
     }
 
     const { data: memberships, error: memberError } = await supabase
@@ -62,11 +64,12 @@ export async function getRoomSummary(slug: string): Promise<RoomSummary> {
       .order("joined_at", { ascending: true });
 
     if (memberError || !memberships) {
-      return { id: room.id, name: room.name, slug: room.slug, members: [] };
+      return { exists: true, id: room.id, name: room.name, slug: room.slug, members: [] };
     }
 
     return {
       id: room.id,
+      exists: true,
       name: room.name,
       slug: room.slug,
       members: memberships.map((membership, index) => {
@@ -81,7 +84,7 @@ export async function getRoomSummary(slug: string): Promise<RoomSummary> {
       })
     };
   } catch {
-    return { ...fallbackRoom, slug, name: titleFromSlug(slug) };
+    return emptyRoom(slug);
   }
 }
 
@@ -93,11 +96,11 @@ export async function getCurrentPlayerRoomShortcuts(): Promise<PlayerRoomShortcu
   if (process.env.E2E_USE_FALLBACK_FIXTURES === "1") {
     return [
       {
-        name: "Goa WC Chaos",
-        slug: "goa-wc-chaos",
-        href: "/r/goa-wc-chaos",
+        name: "World Cup Room",
+        slug: "world-cup-room",
+        href: "/r/world-cup-room",
         nextMatchLabel: nextMatch ? `${nextMatch.homeTeam.name} vs ${nextMatch.awayTeam.name}` : "Next fixture",
-        nextMatchHref: nextMatch ? `/r/goa-wc-chaos/matches/${nextMatch.apiMatchId}` : "/r/goa-wc-chaos/matches",
+        nextMatchHref: nextMatch ? `/r/world-cup-room/matches/${nextMatch.apiMatchId}` : "/r/world-cup-room/matches",
         savedCount: 3,
         score: 44
       }
@@ -146,4 +149,14 @@ function titleFromSlug(slug: string): string {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function emptyRoom(slug: string): RoomSummary {
+  return {
+    exists: false,
+    id: "",
+    name: titleFromSlug(slug),
+    slug,
+    members: []
+  };
 }

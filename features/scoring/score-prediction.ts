@@ -4,6 +4,9 @@ import type {
   PredictionForScoring,
   ScoreBreakdown
 } from "./types";
+import { SCORING_RULES } from "./rules";
+
+const [FINAL_SCORE_RULE, RESULT_RULE, HALFTIME_RULE, FIRST_SCORER_RULE, LAST_SCORER_RULE] = SCORING_RULES;
 
 const ZERO_SCORE: ScoreBreakdown = {
   scoreFinal: 0,
@@ -30,21 +33,23 @@ export function scorePrediction(
   const scoreFinal =
     prediction.finalHomeScore === matchResult.homeScore &&
     prediction.finalAwayScore === matchResult.awayScore
-      ? 10
+      ? FINAL_SCORE_RULE.points
       : 0;
-  const scoreResult = prediction.matchResult === matchResult.winner ? 5 : 0;
+  const scoreResult = prediction.matchResult === matchResult.winner ? RESULT_RULE.points : 0;
   const scoreHalftime = scoreHalftimeMarket(prediction, matchResult, pendingMarkets);
   const scoreFirstScorer = scoreTeamMarket(
     prediction.firstScoringTeamId,
     matchResult.firstScoringTeamId,
     "firstScorer",
-    pendingMarkets
+    pendingMarkets,
+    FIRST_SCORER_RULE.points
   );
   const scoreLastScorer = scoreTeamMarket(
     prediction.lastScoringTeamId,
     matchResult.lastScoringTeamId,
     "lastScorer",
-    pendingMarkets
+    pendingMarkets,
+    LAST_SCORER_RULE.points
   );
 
   return {
@@ -70,7 +75,7 @@ function scoreHalftimeMarket(
 
   return prediction.halftimeHomeScore === matchResult.halftimeHomeScore &&
     prediction.halftimeAwayScore === matchResult.halftimeAwayScore
-    ? 6
+    ? HALFTIME_RULE.points
     : 0;
 }
 
@@ -78,12 +83,13 @@ function scoreTeamMarket(
   predictedTeamId: string | null | undefined,
   officialTeamId: string | null | undefined,
   pendingMarket: PendingMarket,
-  pendingMarkets: PendingMarket[]
+  pendingMarkets: PendingMarket[],
+  points: number
 ): number {
   if (officialTeamId == null) {
     pendingMarkets.push(pendingMarket);
     return 0;
   }
 
-  return predictedTeamId === officialTeamId ? 4 : 0;
+  return predictedTeamId === officialTeamId ? points : 0;
 }

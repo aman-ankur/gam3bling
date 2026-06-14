@@ -31,7 +31,7 @@ export async function getRoomMatchPicks(roomSlug: string, match: AppMatch): Prom
   const session = await getPlayerSession();
 
   if (!supabase) {
-    return fallbackPicks(match);
+    return [];
   }
 
   try {
@@ -84,7 +84,7 @@ export async function getRoomMatchPicks(roomSlug: string, match: AppMatch): Prom
       };
     });
   } catch {
-    return fallbackPicks(match);
+    return [];
   }
 }
 

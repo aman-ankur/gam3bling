@@ -742,6 +742,75 @@ a {
   font-weight: 950;
 }
 
+.scoring-guide {
+  display: grid;
+  gap: 4px;
+  padding: 11px 12px;
+  border: 1px solid rgba(232, 197, 106, 0.34);
+  border-radius: 8px;
+  background: rgba(232, 197, 106, 0.075);
+}
+
+.scoring-guide strong,
+.scoring-guide summary {
+  font-weight: 1000;
+}
+
+.scoring-guide span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.scoring-guide-details {
+  padding: 0;
+}
+
+.scoring-guide-details summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 0 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.scoring-guide-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.scoring-guide-details summary b {
+  color: var(--gold);
+  font-size: 12px;
+}
+
+.scoring-guide-details dl {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0 12px 12px;
+}
+
+.scoring-guide-details dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.scoring-guide-details dt {
+  color: var(--muted);
+  font-weight: 850;
+}
+
+.scoring-guide-details dd {
+  margin: 0;
+  font-weight: 1000;
+}
+
 .market-card,
 .receipt-card {
   display: grid;
@@ -1209,8 +1278,28 @@ a {
   white-space: nowrap;
 }
 
-.leaderboard-summary {
-  margin: 0;
+.empty-state {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.empty-state span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.standalone-action {
+  margin-top: 14px;
+}
+
+.empty-compact-row {
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .form-card,

@@ -20,7 +20,7 @@ export default function NewRoomPage() {
       <form action={createRoom} className="form-card" aria-label="Create room form">
         <label>
           Room name
-          <input aria-label="Room name" defaultValue="Goa WC Chaos" name="roomName" />
+          <input aria-label="Room name" defaultValue="World Cup Room" name="roomName" />
         </label>
         <label>
           Your display name
@@ -42,9 +42,9 @@ export default function NewRoomPage() {
         <SubmitButton pendingLabel="Creating room...">Generate room</SubmitButton>
       </form>
 
-      <RoomInviteCard inviteCode="TIGER7" shortLink="gamebling.app/r/goa-wc-chaos" />
+      <RoomInviteCard inviteCode="TIGER7" shortLink="gamebling.app/r/world-cup-room" />
 
-      <Link className="ghost-link" href="/r/goa-wc-chaos">
+      <Link className="ghost-link" href="/r/world-cup-room">
         Preview room
       </Link>
     </AppShell>

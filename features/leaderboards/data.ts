@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 export type LeaderboardEntry = {
+  playerId?: string;
   rank: number;
   name: string;
   initials: string;
@@ -10,17 +11,17 @@ export type LeaderboardEntry = {
 };
 
 const fallbackRoomLeaders: LeaderboardEntry[] = [
-  { rank: 1, name: "John Doe", initials: "JD", score: 48, secondaryStat: "3 exact scores", tone: "gold" },
-  { rank: 2, name: "Jane Doe", initials: "JD", score: 44, secondaryStat: "7 result hits", tone: "green" },
-  { rank: 3, name: "Alex Doe", initials: "AD", score: 39, secondaryStat: "2 scorer bonuses", tone: "blue" },
-  { rank: 4, name: "Sam Doe", initials: "SD", score: 32, secondaryStat: "5 saved predictions", tone: "red" }
+  { playerId: "fallback-john", rank: 1, name: "John Doe", initials: "JD", score: 48, secondaryStat: "3 exact scores", tone: "gold" },
+  { playerId: "fallback-jane", rank: 2, name: "Jane Doe", initials: "JD", score: 44, secondaryStat: "7 result hits", tone: "green" },
+  { playerId: "fallback-alex", rank: 3, name: "Alex Doe", initials: "AD", score: 39, secondaryStat: "2 scorer bonuses", tone: "blue" },
+  { playerId: "fallback-sam", rank: 4, name: "Sam Doe", initials: "SD", score: 32, secondaryStat: "5 saved predictions", tone: "red" }
 ];
 
 const fallbackGlobalLeaders: LeaderboardEntry[] = [
-  { rank: 1, name: "John Doe", initials: "JD", score: 71, secondaryStat: "Top 1%", tone: "gold" },
-  { rank: 2, name: "Jane Doe", initials: "JD", score: 48, secondaryStat: "Top 11%", tone: "green" },
-  { rank: 3, name: "Alex Doe", initials: "AD", score: 44, secondaryStat: "Top 14%", tone: "blue" },
-  { rank: 4, name: "Sam Doe", initials: "SD", score: 39, secondaryStat: "Top 19%", tone: "red" }
+  { playerId: "fallback-john", rank: 1, name: "John Doe", initials: "JD", score: 71, secondaryStat: "Top 1%", tone: "gold" },
+  { playerId: "fallback-jane", rank: 2, name: "Jane Doe", initials: "JD", score: 48, secondaryStat: "Top 11%", tone: "green" },
+  { playerId: "fallback-alex", rank: 3, name: "Alex Doe", initials: "AD", score: 44, secondaryStat: "Top 14%", tone: "blue" },
+  { playerId: "fallback-sam", rank: 4, name: "Sam Doe", initials: "SD", score: 39, secondaryStat: "Top 19%", tone: "red" }
 ];
 
 export async function getRoomLeaderboard(roomSlug: string): Promise<LeaderboardEntry[]> {
@@ -31,14 +32,14 @@ export async function getRoomLeaderboard(roomSlug: string): Promise<LeaderboardE
   const supabase = getSupabaseAdmin();
 
   if (!supabase) {
-    return fallbackRoomLeaders;
+    return [];
   }
 
   try {
     const { data: room } = await supabase.from("rooms").select("id").eq("slug", roomSlug).single();
 
     if (!room) {
-      return fallbackRoomLeaders;
+      return [];
     }
 
     const { data: members } = await supabase
@@ -47,7 +48,7 @@ export async function getRoomLeaderboard(roomSlug: string): Promise<LeaderboardE
       .eq("room_id", room.id);
 
     if (!members?.length) {
-      return fallbackRoomLeaders;
+      return [];
     }
 
     const playerIds = members.map((member) => member.player_id);
@@ -62,6 +63,7 @@ export async function getRoomLeaderboard(roomSlug: string): Promise<LeaderboardE
         const playerPredictions = predictions?.filter((prediction) => prediction.player_id === member.player_id) ?? [];
 
         return {
+          playerId: member.player_id,
           name: player?.display_name ?? "Player",
           initials: player?.avatar_initials ?? "GB",
           score: sumScores(playerPredictions),
@@ -70,7 +72,7 @@ export async function getRoomLeaderboard(roomSlug: string): Promise<LeaderboardE
       })
     );
   } catch {
-    return fallbackRoomLeaders;
+    return [];
   }
 }
 
@@ -82,7 +84,7 @@ export async function getGlobalLeaderboard(): Promise<LeaderboardEntry[]> {
   const supabase = getSupabaseAdmin();
 
   if (!supabase) {
-    return fallbackGlobalLeaders;
+    return [];
   }
 
   try {
@@ -92,7 +94,7 @@ export async function getGlobalLeaderboard(): Promise<LeaderboardEntry[]> {
     ]);
 
     if (!players?.length) {
-      return fallbackGlobalLeaders;
+      return [];
     }
 
     return rankEntries(
@@ -100,6 +102,7 @@ export async function getGlobalLeaderboard(): Promise<LeaderboardEntry[]> {
         const playerPredictions = predictions?.filter((prediction) => prediction.player_id === player.id) ?? [];
 
         return {
+          playerId: player.id,
           name: player.display_name,
           initials: player.avatar_initials,
           score: sumScores(playerPredictions),
@@ -108,7 +111,7 @@ export async function getGlobalLeaderboard(): Promise<LeaderboardEntry[]> {
       })
     );
   } catch {
-    return fallbackGlobalLeaders;
+    return [];
   }
 }
 

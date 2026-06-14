@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test("matches page prioritizes upcoming prediction locks", async ({ page }) => {
-  await page.goto("/r/goa-wc-chaos/matches");
+  await page.goto("/r/world-cup-room/matches");
 
   await expect(page.getByRole("heading", { name: "Predictions lock soon" })).toBeVisible();
   await expect(page.getByText("Netherlands vs Japan")).toBeVisible();
@@ -13,7 +13,7 @@ test("matches page prioritizes upcoming prediction locks", async ({ page }) => {
 });
 
 test("prediction page includes all MVP markets for an open fixture", async ({ page }) => {
-  await page.goto("/r/goa-wc-chaos/matches/1489376");
+  await page.goto("/r/world-cup-room/matches/1489376");
 
   await expect(page.getByRole("heading", { name: "Netherlands vs Japan" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Final score" })).toBeVisible();
@@ -28,7 +28,7 @@ test("prediction page includes all MVP markets for an open fixture", async ({ pa
 });
 
 test("match page tabs show lineups and stats without exposing cache internals", async ({ page }) => {
-  await page.goto("/r/goa-wc-chaos/matches/1489376");
+  await page.goto("/r/world-cup-room/matches/1489376");
 
   await page.getByRole("button", { name: "Lineups" }).click();
   await expect(page.getByRole("heading", { name: "Lineups" })).toBeVisible();
@@ -43,7 +43,7 @@ test("match page tabs show lineups and stats without exposing cache internals", 
 });
 
 test("saved prediction page shows compact receipt before editable details", async ({ page }) => {
-  await page.goto("/r/goa-wc-chaos/matches/1489376?saved=1");
+  await page.goto("/r/world-cup-room/matches/1489376?saved=1");
 
   await expect(page.getByText("Netherlands 2-1 Japan")).toBeVisible();
   await expect(page.getByText("HT 1-0")).toBeVisible();
@@ -55,7 +55,7 @@ test("saved prediction page shows compact receipt before editable details", asyn
 });
 
 test("prediction segmented choices visibly update when selected", async ({ page }) => {
-  await page.goto("/r/goa-wc-chaos/matches/1489376");
+  await page.goto("/r/world-cup-room/matches/1489376");
 
   const firstScorer = page.locator("section", { has: page.getByRole("heading", { name: "First team to score" }) });
   const japanOption = firstScorer.locator("label", { hasText: "Japan" });
@@ -64,7 +64,7 @@ test("prediction segmented choices visibly update when selected", async ({ page 
 });
 
 test("prediction result and scorer options follow the final score", async ({ page }) => {
-  await page.goto("/r/goa-wc-chaos/matches/1489376");
+  await page.goto("/r/world-cup-room/matches/1489376");
 
   const matchResult = page.locator("section", { has: page.getByRole("heading", { name: "Match result" }) });
   await expect(matchResult.locator("label", { hasText: "Netherlands" })).toHaveCSS("background-color", "rgb(232, 197, 106)");
@@ -82,7 +82,7 @@ test("prediction result and scorer options follow the final score", async ({ pag
 });
 
 test("prediction page has a locked read-only state after kickoff", async ({ page }) => {
-  await page.goto("/r/goa-wc-chaos/matches/1489372");
+  await page.goto("/r/world-cup-room/matches/1489372");
 
   await expect(page.getByRole("heading", { name: "Haiti vs Scotland" })).toBeVisible();
   await expect(page.getByText("Prediction locked")).toBeVisible();
@@ -90,7 +90,7 @@ test("prediction page has a locked read-only state after kickoff", async ({ page
 });
 
 test("room leaderboard shows ranked players", async ({ page }) => {
-  await page.goto("/r/goa-wc-chaos/leaderboard");
+  await page.goto("/r/world-cup-room/leaderboard");
 
   await expect(page.getByRole("heading", { name: "Room leaderboard" })).toBeVisible();
   await expect(page.getByRole("list", { name: "Room leaderboard rankings" })).toBeVisible();

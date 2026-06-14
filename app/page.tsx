@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
-import { Avatar } from "@/components/avatar";
 import { CountdownTimer } from "@/components/countdown-timer";
+import { ScoringGuide } from "@/components/scoring-guide";
 import { SubmitButton } from "@/components/submit-button";
 import { getUpcomingMatches } from "@/features/matches/data";
 import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
@@ -16,12 +16,6 @@ type HomePageProps = {
     joinError?: string;
   }>;
 };
-
-const leaders = [
-  { rank: 1, name: "John Doe", points: 48, initials: "JD", tone: "gold" },
-  { rank: 2, name: "Jane Doe", points: 44, initials: "JD", tone: "green" },
-  { rank: 3, name: "Alex Doe", points: 39, initials: "AD", tone: "blue" }
-];
 
 export default async function HomePage({ searchParams }: HomePageProps) {
   const { joinError } = await searchParams;
@@ -43,9 +37,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <div className="hero-actions">
           <Link className="primary-button" href="/new">
             Create room
-          </Link>
-          <Link className="secondary-button" href="/r/goa-wc-chaos">
-            Join demo room
           </Link>
         </div>
       </section>
@@ -139,24 +130,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </Link>
       </section>
 
-      <section className="section-stack" aria-labelledby="leaderboard-title">
+      <section className="section-stack" aria-labelledby="scoring-title">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Sample board</p>
-            <h2 id="leaderboard-title">Leaderboard preview</h2>
+            <p className="eyebrow">Points</p>
+            <h2 id="scoring-title">Scoring</h2>
           </div>
         </div>
-        <ol className="leader-list">
-          {leaders.map((leader) => (
-            <li key={leader.name}>
-              <span className="rank">{leader.rank}</span>
-              <Avatar initials={leader.initials} tone={leader.tone} />
-              <span>{leader.name}</span>
-              <strong>{leader.points}</strong>
-            </li>
-          ))}
-        </ol>
-        <p className="section-note">Create a room to see your friends&apos; real scores here.</p>
+        <ScoringGuide variant="details" />
       </section>
     </AppShell>
   );

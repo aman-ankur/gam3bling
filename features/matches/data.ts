@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { matches as fallbackMatches, teamById, teams as fallbackTeams } from "@/features/fixtures/world-cup-2026";
+import { getCurrentDate } from "../time/now";
 
 export type AppTeam = {
   id: string;
@@ -130,7 +131,7 @@ export function fallbackTeamOptions(): AppTeam[] {
 }
 
 function prioritizeUpcoming(matches: AppMatch[]): AppMatch[] {
-  const now = Date.now();
+  const now = getCurrentDate().getTime();
 
   return [...matches].sort((a, b) => {
     const aTime = new Date(a.kickoffAt).getTime();
