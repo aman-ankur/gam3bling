@@ -1,6 +1,7 @@
 "use client";
 
 import { type CSSProperties, useMemo, useState } from "react";
+import { getPitchPositions } from "@/features/match-details/pitch-layout";
 import type { MatchLineupView } from "@/features/match-details/types";
 
 type LineupPitchProps = {
@@ -18,6 +19,7 @@ export function LineupPitch({ lineups }: LineupPitchProps) {
     () => (selectedLineup?.players ?? []).filter((player) => player.role === "substitute").sort((a, b) => a.sortOrder - b.sortOrder),
     [selectedLineup]
   );
+  const pitchPositions = useMemo(() => getPitchPositions(starters), [starters]);
 
   if (!selectedLineup) {
     return (
@@ -62,30 +64,25 @@ export function LineupPitch({ lineups }: LineupPitchProps) {
         <div className="football-pitch" aria-label={`${selectedLineup.teamName} formation`}>
           <span className="pitch-half-line" aria-hidden="true" />
           <span className="pitch-center-circle" aria-hidden="true" />
-          {starters.map((player, index) => {
-            const position = pitchPosition(player.grid, index, starters.length);
-
-            return (
-              <span
-                className="pitch-player"
-                key={`${player.playerName}-${player.sortOrder}`}
-                style={{
-                  "--player-left": `${position.left}%`,
-                  "--player-top": `${position.top}%`
-                } as CSSProperties}
-              >
-                <span className="pitch-shirt">{player.shirtNumber ?? index + 1}</span>
-                <b>{player.playerName}</b>
-              </span>
-            );
-          })}
+          {pitchPositions.map((position, index) => (
+            <span
+              className="pitch-player"
+              key={`${position.player.playerName}-${position.player.sortOrder}`}
+              style={{
+                "--player-left": `${position.left}%`,
+                "--player-top": `${position.top}%`
+              } as CSSProperties}
+            >
+              <span className="pitch-shirt">{position.player.shirtNumber ?? index + 1}</span>
+            </span>
+          ))}
         </div>
       ) : (
         <p className="section-note">Lineups are not confirmed yet</p>
       )}
 
       <div className="lineup-player-list">
-        {starters.slice(0, 6).map((player) => (
+        {starters.map((player) => (
           <PlayerRow key={`${player.playerName}-starter`} player={player} />
         ))}
       </div>
@@ -112,41 +109,4 @@ function PlayerRow({ player }: { player: MatchLineupView["players"][number] }) {
       <small>{player.position ?? player.role}</small>
     </div>
   );
-}
-
-function pitchPosition(grid: string | null, index: number, total: number): { left: number; top: number } {
-  if (grid?.includes(":")) {
-    const [rowValue, columnValue] = grid.split(":").map(Number);
-
-    if (Number.isFinite(rowValue) && Number.isFinite(columnValue)) {
-      const rows = 5;
-      const columns = columnCountForRow(rowValue, total);
-
-      return {
-        left: (columnValue / (columns + 1)) * 100,
-        top: (rowValue / (rows + 1)) * 100
-      };
-    }
-  }
-
-  return {
-    left: ((index % 4) + 1) * 20,
-    top: 14 + Math.floor(index / 4) * 24
-  };
-}
-
-function columnCountForRow(row: number, total: number): number {
-  if (row <= 1 || row >= 5) {
-    return 1;
-  }
-
-  if (row === 2) {
-    return 4;
-  }
-
-  if (row === 3) {
-    return total > 10 ? 2 : 3;
-  }
-
-  return 3;
 }
