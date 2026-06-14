@@ -1,0 +1,163 @@
+import Link from "next/link";
+import { AppShell } from "@/components/app-shell";
+import { Avatar } from "@/components/avatar";
+import { CountdownTimer } from "@/components/countdown-timer";
+import { SubmitButton } from "@/components/submit-button";
+import { getUpcomingMatches } from "@/features/matches/data";
+import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
+import { joinRoomByCode } from "@/features/rooms/actions";
+import { getCurrentPlayerRoomShortcuts } from "@/features/rooms/data";
+import { formatKickoffInIst } from "@/features/time/match-time";
+
+export const dynamic = "force-dynamic";
+
+type HomePageProps = {
+  searchParams: Promise<{
+    joinError?: string;
+  }>;
+};
+
+const leaders = [
+  { rank: 1, name: "John Doe", points: 48, initials: "JD", tone: "gold" },
+  { rank: 2, name: "Jane Doe", points: 44, initials: "JD", tone: "green" },
+  { rank: 3, name: "Alex Doe", points: 39, initials: "AD", tone: "blue" }
+];
+
+export default async function HomePage({ searchParams }: HomePageProps) {
+  const { joinError } = await searchParams;
+  const matches = await getUpcomingMatches();
+  const roomShortcuts = await getCurrentPlayerRoomShortcuts();
+  const openMatchIds = getOpenPredictionMatchIds(matches);
+  const openMatches = matches.filter((match) => openMatchIds.has(match.id) || openMatchIds.has(match.apiMatchId));
+  const previewMatches = openMatches.slice(0, 3);
+
+  return (
+    <AppShell roomName="Gam3Bling">
+      <section className="hero-card" aria-labelledby="home-title">
+        <p className="eyebrow">World Cup prediction rooms</p>
+        <h1 id="home-title">Gam3Bling</h1>
+        <p>
+          Create a room, invite friends, lock predictions before kickoff, and climb the
+          leaderboard when the results land.
+        </p>
+        <div className="hero-actions">
+          <Link className="primary-button" href="/new">
+            Create room
+          </Link>
+          <Link className="secondary-button" href="/r/goa-wc-chaos">
+            Join demo room
+          </Link>
+        </div>
+      </section>
+
+      {roomShortcuts.length > 0 ? (
+        <section className="section-stack room-shortcuts" aria-labelledby="your-rooms-title">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Continue</p>
+              <h2 id="your-rooms-title">Your rooms</h2>
+            </div>
+            <span className="status-chip">{roomShortcuts.length} active</span>
+          </div>
+
+          {roomShortcuts.map((room) => (
+            <Link className="room-shortcut-card" href={room.href} key={room.slug}>
+              <div>
+                <strong>{room.name}</strong>
+                <span>{room.nextMatchLabel}</span>
+              </div>
+              <dl>
+                <div>
+                  <dt>Saved</dt>
+                  <dd>{room.savedCount}</dd>
+                </div>
+                <div>
+                  <dt>Score</dt>
+                  <dd>{room.score}</dd>
+                </div>
+              </dl>
+            </Link>
+          ))}
+        </section>
+      ) : null}
+
+      <section className="section-stack join-room-panel" aria-labelledby="join-home-title">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Have an invite?</p>
+            <h2 id="join-home-title">Join a room</h2>
+          </div>
+        </div>
+
+        {joinError ? <p className="locked-banner">Check the room code and try again.</p> : null}
+
+        <form action={joinRoomByCode} className="form-card home-join-form" aria-label="Join room by code form">
+          <label>
+            Room code
+            <input aria-label="Room code" autoComplete="off" inputMode="text" name="inviteCode" placeholder="TIGER7" />
+          </label>
+          <label>
+            Your display name
+            <input aria-label="Your display name" autoComplete="name" name="displayName" placeholder="John" />
+          </label>
+          <SubmitButton pendingLabel="Joining room...">Join room</SubmitButton>
+        </form>
+      </section>
+
+      <section className="section-stack" aria-labelledby="next-fixtures-title">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Predict next</p>
+            <h2 id="next-fixtures-title">Next fixtures</h2>
+          </div>
+          <span className="status-chip">{openMatches.length} open</span>
+        </div>
+
+        {previewMatches.map((match) => (
+          <article className="match-ticket home-fixture" key={match.id}>
+            <div className="ticket-meta">
+              <span>{match.stage}</span>
+              <strong>
+                <CountdownTimer kickoffAt={match.kickoffAt} />
+              </strong>
+            </div>
+            <p className="kickoff-line">{formatKickoffInIst(match.kickoffAt)}</p>
+            <div className="team-row">
+              <b>{match.homeTeam.name}</b>
+              <span>vs</span>
+              <b>{match.awayTeam.name}</b>
+            </div>
+            <div className="ticket-footer">
+              <span>Open for predictions</span>
+              <span>Next 4 window</span>
+            </div>
+          </article>
+        ))}
+
+        <Link className="secondary-button compact-link" href="/new">
+          Create a room to predict
+        </Link>
+      </section>
+
+      <section className="section-stack" aria-labelledby="leaderboard-title">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Sample board</p>
+            <h2 id="leaderboard-title">Leaderboard preview</h2>
+          </div>
+        </div>
+        <ol className="leader-list">
+          {leaders.map((leader) => (
+            <li key={leader.name}>
+              <span className="rank">{leader.rank}</span>
+              <Avatar initials={leader.initials} tone={leader.tone} />
+              <span>{leader.name}</span>
+              <strong>{leader.points}</strong>
+            </li>
+          ))}
+        </ol>
+        <p className="section-note">Create a room to see your friends&apos; real scores here.</p>
+      </section>
+    </AppShell>
+  );
+}

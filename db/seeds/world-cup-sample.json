@@ -1,0 +1,114 @@
+{
+  "tournament": {
+    "name": "FIFA World Cup 2026",
+    "sport": "football",
+    "season": "2026",
+    "status": "planned",
+    "theme": {
+      "primary": "#00c2ff",
+      "accent": "#f8d84a"
+    }
+  },
+  "teams": [
+    {
+      "name": "United States",
+      "shortCode": "USA",
+      "flagCode": "US"
+    },
+    {
+      "name": "Mexico",
+      "shortCode": "MEX",
+      "flagCode": "MX"
+    },
+    {
+      "name": "Canada",
+      "shortCode": "CAN",
+      "flagCode": "CA"
+    },
+    {
+      "name": "Brazil",
+      "shortCode": "BRA",
+      "flagCode": "BR"
+    },
+    {
+      "name": "Argentina",
+      "shortCode": "ARG",
+      "flagCode": "AR"
+    },
+    {
+      "name": "France",
+      "shortCode": "FRA",
+      "flagCode": "FR"
+    },
+    {
+      "name": "England",
+      "shortCode": "ENG",
+      "flagCode": "GB-ENG"
+    },
+    {
+      "name": "Japan",
+      "shortCode": "JPN",
+      "flagCode": "JP"
+    }
+  ],
+  "matches": [
+    {
+      "homeTeamCode": "MEX",
+      "awayTeamCode": "BRA",
+      "kickoffAt": "2026-06-11T19:00:00Z",
+      "stage": "group",
+      "groupName": "A",
+      "status": "scheduled",
+      "apiProvider": "sample",
+      "apiMatchId": "sample-001"
+    },
+    {
+      "homeTeamCode": "USA",
+      "awayTeamCode": "JPN",
+      "kickoffAt": "2026-06-12T22:00:00Z",
+      "stage": "group",
+      "groupName": "B",
+      "status": "scheduled",
+      "apiProvider": "sample",
+      "apiMatchId": "sample-002"
+    },
+    {
+      "homeTeamCode": "CAN",
+      "awayTeamCode": "FRA",
+      "kickoffAt": "2026-06-13T01:00:00Z",
+      "stage": "group",
+      "groupName": "C",
+      "status": "scheduled",
+      "apiProvider": "sample",
+      "apiMatchId": "sample-003"
+    },
+    {
+      "homeTeamCode": "ARG",
+      "awayTeamCode": "ENG",
+      "kickoffAt": "2026-06-14T20:00:00Z",
+      "stage": "group",
+      "groupName": "D",
+      "status": "scheduled",
+      "apiProvider": "sample",
+      "apiMatchId": "sample-004"
+    },
+    {
+      "homeTeamCode": "BRA",
+      "awayTeamCode": "FRA",
+      "kickoffAt": "2026-06-20T22:00:00Z",
+      "stage": "round_of_16",
+      "status": "scheduled",
+      "apiProvider": "sample",
+      "apiMatchId": "sample-005"
+    },
+    {
+      "homeTeamCode": "USA",
+      "awayTeamCode": "ARG",
+      "kickoffAt": "2026-06-21T01:00:00Z",
+      "stage": "round_of_16",
+      "status": "scheduled",
+      "apiProvider": "sample",
+      "apiMatchId": "sample-006"
+    }
+  ]
+}

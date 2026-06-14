@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Game Bling World Cup Mockups</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="studio">
+    <aside class="board">
+      <p class="eyebrow">Game Bling</p>
+      <h1>World Cup room prediction mockups</h1>
+      <p class="summary">Tap through the mobile flow: join a room, make picks, watch live status, and check room/global rankings.</p>
+      <nav class="screen-nav" aria-label="Mockup screens">
+        <button class="nav-pill active" data-screen="join">Join</button>
+        <button class="nav-pill" data-screen="home">Home</button>
+        <button class="nav-pill" data-screen="predict">Predict</button>
+        <button class="nav-pill" data-screen="match">Match</button>
+        <button class="nav-pill" data-screen="leaderboard">Board</button>
+        <button class="nav-pill" data-screen="room">Room</button>
+        <button class="nav-pill" data-screen="profile">Profile</button>
+      </nav>
+      <section class="notes">
+        <h2>Design notes</h2>
+        <ul>
+          <li>Mobile-first, compact match-ticket cards.</li>
+          <li>Fixtures are visible even if live API sync fails.</li>
+          <li>Name + PIN keeps return visits low-friction.</li>
+          <li>Avatars use initials, color, and badge choice in v1.</li>
+        </ul>
+      </section>
+    </aside>
+
+    <section class="phone-shell" aria-live="polite">
+      <div class="phone">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span class="signal">5G 100%</span>
+        </div>
+
+        <section class="screen active" id="join" data-title="Join">
+          <header class="hero-panel">
+            <div class="cup-mark">GB</div>
+            <p class="eyebrow">World Cup 2026</p>
+            <h2>Join the room before kickoff.</h2>
+            <p>Short link, one invite code, name and PIN. No email circus.</p>
+          </header>
+          <form class="form-card">
+            <label>
+              Room code
+              <input value="TIGER7" aria-label="Room code">
+            </label>
+            <label>
+              Display name
+              <input value="Aankur" aria-label="Display name">
+            </label>
+            <label>
+              4 digit PIN
+              <input type="password" value="1234" aria-label="PIN">
+            </label>
+            <div class="avatar-strip" aria-label="Avatar choices">
+              <button type="button" class="avatar selected">AK</button>
+              <button type="button" class="avatar blue">AS</button>
+              <button type="button" class="avatar gold">RJ</button>
+              <button type="button" class="avatar red">VM</button>
+            </div>
+            <button type="button" class="primary" data-jump="home">Enter Goa WC Chaos</button>
+          </form>
+          <button type="button" class="ghost" data-jump="room">Create a new room</button>
+        </section>
+
+        <section class="screen" id="home" data-title="Home">
+          <header class="top-app">
+            <div>
+              <p class="eyebrow">Goa WC Chaos</p>
+              <h2>3 picks lock soon</h2>
+            </div>
+            <button class="avatar mini" data-jump="profile">AK</button>
+          </header>
+
+          <article class="next-card feature">
+            <div class="match-meta">
+              <span>Group E</span>
+              <strong>Locks in 42m</strong>
+            </div>
+            <div class="teams">
+              <div><span class="crest de">DE</span><b>Germany</b></div>
+              <span class="versus">vs</span>
+              <div><span class="crest cu">CU</span><b>Curacao</b></div>
+            </div>
+            <div class="progress-row">
+              <span>Missing: final score, first scorer</span>
+              <span>2/5 done</span>
+            </div>
+            <button type="button" class="primary" data-jump="predict">Finish picks</button>
+          </article>
+
+          <section class="section-block">
+            <div class="section-title">
+              <h3>Live now</h3>
+              <button data-jump="match">View</button>
+            </div>
+            <article class="live-card">
+              <span class="live-dot">LIVE 61'</span>
+              <div class="scoreline">
+                <span>Brazil</span>
+                <strong>2 : 1</strong>
+                <span>Morocco</span>
+              </div>
+              <div class="win-bar">
+                <span style="width:58%"></span>
+                <b>Projected +9 pts if it holds</b>
+              </div>
+            </article>
+          </section>
+
+          <section class="section-block">
+            <div class="section-title">
+              <h3>Room movement</h3>
+              <button data-jump="leaderboard">Board</button>
+            </div>
+            <div class="movement">
+              <p><b>Rhea</b> jumped to #1 with the exact half-time score.</p>
+              <p><b>Varun</b> got first scorer wrong, still gained 5.</p>
+            </div>
+          </section>
+        </section>
+
+        <section class="screen" id="predict" data-title="Predict">
+          <header class="top-app">
+            <button class="icon-button" data-jump="home" aria-label="Back">&lt;</button>
+            <div>
+              <p class="eyebrow">Locks in 42m</p>
+              <h2>Germany vs Curacao</h2>
+            </div>
+            <span class="chip">Group E</span>
+          </header>
+
+          <div class="pitch-card">
+            <div class="teams compact">
+              <div><span class="crest de">DE</span><b>Germany</b></div>
+              <span class="versus">vs</span>
+              <div><span class="crest cu">CU</span><b>Curacao</b></div>
+            </div>
+            <p>Sun, Jun 14 - 6:00 PM IST</p>
+          </div>
+
+          <section class="pick-list">
+            <article class="pick-row">
+              <div><b>Final score</b><span>10 pts</span></div>
+              <div class="score-stepper"><button>-</button><strong>2</strong><button>+</button><em>:</em><button>-</button><strong>0</strong><button>+</button></div>
+            </article>
+            <article class="pick-row">
+              <div><b>Match result</b><span>5 pts</span></div>
+              <div class="segmented">
+                <button class="selected">GER</button><button>Draw</button><button>CUW</button>
+              </div>
+            </article>
+            <article class="pick-row">
+              <div><b>Half-time score</b><span>6 pts</span></div>
+              <div class="score-stepper small"><strong>1</strong><em>:</em><strong>0</strong></div>
+            </article>
+            <article class="pick-row">
+              <div><b>First team to score</b><span>4 pts</span></div>
+              <div class="segmented two"><button class="selected">Germany</button><button>Curacao</button></div>
+            </article>
+            <article class="pick-row">
+              <div><b>Last team to score</b><span>4 pts</span></div>
+              <div class="segmented two"><button>Germany</button><button class="selected">Curacao</button></div>
+            </article>
+          </section>
+          <button type="button" class="primary" data-jump="home">Save prediction receipt</button>
+        </section>
+
+        <section class="screen" id="match" data-title="Match">
+          <header class="top-app">
+            <button class="icon-button" data-jump="home" aria-label="Back">&lt;</button>
+            <div>
+              <p class="eyebrow">Live 61'</p>
+              <h2>Brazil vs Morocco</h2>
+            </div>
+            <span class="chip live">API sync</span>
+          </header>
+          <article class="stadium-card">
+            <div class="scoreboard">
+              <div><span class="crest br">BR</span><b>Brazil</b></div>
+              <strong>2 : 1</strong>
+              <div><span class="crest ma">MA</span><b>Morocco</b></div>
+            </div>
+            <div class="stat-grid">
+              <span><b>58%</b> win read</span>
+              <span><b>HT 1:1</b> official</span>
+              <span><b>BR</b> first</span>
+              <span><b>MA</b> last now</span>
+            </div>
+          </article>
+          <section class="receipt">
+            <h3>Your locked picks</h3>
+            <div class="receipt-row"><span>Final score</span><b>2:1</b><em>+10</em></div>
+            <div class="receipt-row"><span>Result</span><b>Brazil</b><em>+5</em></div>
+            <div class="receipt-row"><span>Half-time</span><b>1:0</b><em>0</em></div>
+            <div class="receipt-row"><span>First scorer</span><b>Brazil</b><em>+4</em></div>
+            <div class="receipt-row pending"><span>Last scorer</span><b>Awaiting final</b><em>-</em></div>
+          </section>
+          <section class="feed">
+            <p><b>Rhea</b> is on a perfect 19-point track.</p>
+            <p><b>Aankur</b> needs one more Brazil goal for exact score.</p>
+          </section>
+        </section>
+
+        <section class="screen" id="leaderboard" data-title="Leaderboard">
+          <header class="top-app">
+            <div>
+              <p class="eyebrow">Leaderboard</p>
+              <h2>Room rankings</h2>
+            </div>
+            <div class="segmented mini-tabs"><button class="selected">Room</button><button>Global</button></div>
+          </header>
+          <ol class="leader-list">
+            <li><span class="rank">1</span><span class="avatar gold">RK</span><div><b>Rhea</b><small>3 exact scores</small></div><strong>48</strong></li>
+            <li><span class="rank">2</span><span class="avatar">AK</span><div><b>Aankur</b><small>+9 projected live</small></div><strong>44</strong></li>
+            <li><span class="rank">3</span><span class="avatar blue">AS</span><div><b>Arjun</b><small>5-match streak</small></div><strong>39</strong></li>
+            <li><span class="rank">4</span><span class="avatar red">VM</span><div><b>Varun</b><small>First scorer king</small></div><strong>33</strong></li>
+          </ol>
+          <article class="global-card">
+            <span class="chip">Global</span>
+            <h3>You are #128 overall</h3>
+            <p>Top 11% across all active World Cup rooms.</p>
+          </article>
+        </section>
+
+        <section class="screen" id="room" data-title="Room">
+          <header class="top-app">
+            <div>
+              <p class="eyebrow">Room</p>
+              <h2>Goa WC Chaos</h2>
+            </div>
+            <button class="icon-button" data-jump="home" aria-label="Close">x</button>
+          </header>
+          <section class="invite-card">
+            <p class="eyebrow">Invite link</p>
+            <h3>gamebling.app/r/AB12</h3>
+            <div class="code-box">TIGER7</div>
+            <button class="primary">Copy invite</button>
+          </section>
+          <section class="member-grid">
+            <div><span class="avatar gold">RK</span><b>Rhea</b><small>Admin</small></div>
+            <div><span class="avatar">AK</span><b>Aankur</b><small>Joined</small></div>
+            <div><span class="avatar blue">AS</span><b>Arjun</b><small>Joined</small></div>
+            <div><span class="avatar red">VM</span><b>Varun</b><small>Joined</small></div>
+          </section>
+        </section>
+
+        <section class="screen" id="profile" data-title="Profile">
+          <header class="top-app">
+            <button class="icon-button" data-jump="home" aria-label="Back">&lt;</button>
+            <div>
+              <p class="eyebrow">Profile</p>
+              <h2>Aankur</h2>
+            </div>
+            <span class="chip">PIN saved</span>
+          </header>
+          <section class="profile-card">
+            <span class="avatar hero-avatar">AK</span>
+            <h3>Pick your look</h3>
+            <div class="avatar-strip">
+              <button class="avatar selected">AK</button>
+              <button class="avatar blue">AK</button>
+              <button class="avatar gold">AK</button>
+              <button class="avatar red">AK</button>
+            </div>
+            <div class="badge-grid">
+              <button class="selected">Classic ball</button>
+              <button>Golden boot</button>
+              <button>Captain</button>
+              <button>Underdog</button>
+            </div>
+          </section>
+          <section class="stat-grid profile-stats">
+            <span><b>44</b> points</span>
+            <span><b>2</b> exact scores</span>
+            <span><b>71%</b> result hit</span>
+            <span><b>5</b> streak</span>
+          </section>
+        </section>
+
+        <footer class="bottom-nav">
+          <button data-jump="home">Home</button>
+          <button data-jump="predict">Picks</button>
+          <button data-jump="leaderboard">Board</button>
+          <button data-jump="room">Room</button>
+        </footer>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const screens = [...document.querySelectorAll('.screen')];
+    const pills = [...document.querySelectorAll('.nav-pill')];
+    const showScreen = (id) => {
+      screens.forEach((screen) => screen.classList.toggle('active', screen.id === id));
+      pills.forEach((pill) => pill.classList.toggle('active', pill.dataset.screen === id));
+      document.querySelector('.phone-shell').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    };
+
+    document.addEventListener('click', (event) => {
+      const target = event.target.closest('[data-screen], [data-jump]');
+      if (!target) return;
+      showScreen(target.dataset.screen || target.dataset.jump);
+    });
+  </script>
+</body>
+</html>

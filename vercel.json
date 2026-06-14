@@ -1,0 +1,3 @@
+{
+  "installCommand": "corepack prepare npm@10.9.2 --activate && npm install --engine-strict=false --no-audit --no-fund"
+}
