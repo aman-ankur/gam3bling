@@ -2,6 +2,8 @@ import { describe, expect, test, vi } from "vitest";
 import {
   createApiFootballProvider,
   normalizeApiFootballFixture,
+  normalizeApiFootballLineups,
+  normalizeApiFootballStatistics,
   normalizeApiFootballStatus
 } from "./api-football-provider";
 
@@ -151,5 +153,168 @@ describe("createApiFootballProvider", () => {
         "x-apisports-key": "test-key"
       }
     });
+  });
+
+  test("fetches fixture lineups and statistics by provider match id", async () => {
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          response: [
+            {
+              team: { id: 111, name: "Netherlands" },
+              coach: { name: "Ronald Koeman" },
+              formation: "4-2-3-1",
+              startXI: [
+                { player: { id: 1, name: "Bart Verbruggen", number: 1, pos: "G", grid: "1:1" } }
+              ],
+              substitutes: [
+                { player: { id: 12, name: "Justin Bijlow", number: 13, pos: "G", grid: null } }
+              ]
+            }
+          ]
+        })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          response: [
+            {
+              team: { id: 111, name: "Netherlands" },
+              statistics: [
+                { type: "Ball Possession", value: "58%" },
+                { type: "Total Shots", value: 13 }
+              ]
+            }
+          ]
+        })
+      });
+
+    const provider = createApiFootballProvider({
+      apiKey: "test-key",
+      baseUrl: "https://v3.football.api-sports.io",
+      fetchImpl
+    });
+
+    await expect(provider.fetchMatchDetails("123")).resolves.toEqual({
+      apiMatchId: "123",
+      lineupsStatus: "available",
+      statisticsStatus: "available",
+      lineups: [
+        {
+          providerTeamId: "111",
+          teamName: "Netherlands",
+          coachName: "Ronald Koeman",
+          formation: "4-2-3-1",
+          players: [
+            {
+              providerPlayerId: "1",
+              playerName: "Bart Verbruggen",
+              shirtNumber: 1,
+              position: "G",
+              grid: "1:1",
+              role: "starter",
+              sortOrder: 0
+            },
+            {
+              providerPlayerId: "12",
+              playerName: "Justin Bijlow",
+              shirtNumber: 13,
+              position: "G",
+              grid: null,
+              role: "substitute",
+              sortOrder: 1
+            }
+          ]
+        }
+      ],
+      statistics: [
+        { providerTeamId: "111", teamName: "Netherlands", statName: "Ball Possession", statValue: "58%", sortOrder: 0 },
+        { providerTeamId: "111", teamName: "Netherlands", statName: "Total Shots", statValue: "13", sortOrder: 1 }
+      ],
+      rawPayload: expect.objectContaining({
+        lineups: expect.any(Array),
+        statistics: expect.any(Array)
+      })
+    });
+
+    expect(fetchImpl).toHaveBeenNthCalledWith(1, "https://v3.football.api-sports.io/fixtures/lineups?fixture=123", {
+      headers: {
+        "x-apisports-key": "test-key"
+      }
+    });
+    expect(fetchImpl).toHaveBeenNthCalledWith(2, "https://v3.football.api-sports.io/fixtures/statistics?fixture=123", {
+      headers: {
+        "x-apisports-key": "test-key"
+      }
+    });
+  });
+});
+
+describe("normalizeApiFootballLineups", () => {
+  test("normalizes starters and substitutes", () => {
+    expect(
+      normalizeApiFootballLineups([
+        {
+          team: { id: 111, name: "Netherlands" },
+          coach: { name: "Ronald Koeman" },
+          formation: "4-3-3",
+          startXI: [
+            { player: { id: 8, name: "Cody Gakpo", number: 11, pos: "F", grid: "4:1" } }
+          ],
+          substitutes: [
+            { player: { id: 9, name: "Wout Weghorst", number: 19, pos: "F" } }
+          ]
+        }
+      ])
+    ).toEqual([
+      {
+        providerTeamId: "111",
+        teamName: "Netherlands",
+        coachName: "Ronald Koeman",
+        formation: "4-3-3",
+        players: [
+          {
+            providerPlayerId: "8",
+            playerName: "Cody Gakpo",
+            shirtNumber: 11,
+            position: "F",
+            grid: "4:1",
+            role: "starter",
+            sortOrder: 0
+          },
+          {
+            providerPlayerId: "9",
+            playerName: "Wout Weghorst",
+            shirtNumber: 19,
+            position: "F",
+            grid: null,
+            role: "substitute",
+            sortOrder: 1
+          }
+        ]
+      }
+    ]);
+  });
+});
+
+describe("normalizeApiFootballStatistics", () => {
+  test("normalizes team statistics as display strings", () => {
+    expect(
+      normalizeApiFootballStatistics([
+        {
+          team: { id: 111, name: "Netherlands" },
+          statistics: [
+            { type: "Ball Possession", value: "58%" },
+            { type: "Total Shots", value: 13 },
+            { type: "Expected Goals", value: null }
+          ]
+        }
+      ])
+    ).toEqual([
+      { providerTeamId: "111", teamName: "Netherlands", statName: "Ball Possession", statValue: "58%", sortOrder: 0 },
+      { providerTeamId: "111", teamName: "Netherlands", statName: "Total Shots", statValue: "13", sortOrder: 1 },
+      { providerTeamId: "111", teamName: "Netherlands", statName: "Expected Goals", statValue: null, sortOrder: 2 }
+    ]);
   });
 });

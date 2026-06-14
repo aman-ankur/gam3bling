@@ -3,6 +3,8 @@ import { CountdownTimer } from "@/components/countdown-timer";
 import { formatKickoffInIst } from "@/features/time/match-time";
 
 type MatchCardProps = {
+  actionLabel?: string;
+  ariaActionLabel?: string;
   href?: string;
   stage: string;
   kickoffAt: string;
@@ -14,6 +16,8 @@ type MatchCardProps = {
 };
 
 export function MatchCard({
+  actionLabel = "Predict",
+  ariaActionLabel,
   href,
   stage,
   kickoffAt,
@@ -53,8 +57,8 @@ export function MatchCard({
           <small>{progress}</small>
         </div>
         {href && !isLocked ? (
-          <Link aria-label={`Predict ${matchTitle}`} className="card-link" href={href}>
-            Predict
+          <Link aria-label={ariaActionLabel ?? `${actionLabel} ${matchTitle}`} className="card-link" href={href}>
+            {actionLabel}
           </Link>
         ) : (
           <span aria-label={`${matchTitle} locked`} className="card-link disabled">

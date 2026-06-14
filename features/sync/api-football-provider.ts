@@ -1,4 +1,11 @@
-import type { FootballProvider, ProviderMatchUpdate } from "./provider";
+import type {
+  FootballProvider,
+  ProviderLineup,
+  ProviderLineupPlayer,
+  ProviderMatchDetails,
+  ProviderMatchUpdate,
+  ProviderTeamStatistic
+} from "./provider";
 import type { MatchResult, MatchStatus } from "../matches/types";
 
 type FetchImpl = typeof fetch;
@@ -37,6 +44,52 @@ type ApiFootballFixture = {
 
 type ApiFootballResponse = {
   response?: ApiFootballFixture[];
+  errors?: unknown;
+};
+
+type ApiFootballLineupPlayerEntry = {
+  player?: {
+    id?: number | string | null;
+    name?: string | null;
+    number?: number | null;
+    pos?: string | null;
+    grid?: string | null;
+  } | null;
+};
+
+type ApiFootballLineup = {
+  team?: {
+    id?: number | string | null;
+    name?: string | null;
+  } | null;
+  coach?: {
+    name?: string | null;
+  } | null;
+  formation?: string | null;
+  startXI?: ApiFootballLineupPlayerEntry[];
+  substitutes?: ApiFootballLineupPlayerEntry[];
+};
+
+type ApiFootballLineupsResponse = {
+  response?: ApiFootballLineup[];
+  errors?: unknown;
+};
+
+type ApiFootballStatistic = {
+  type?: string | null;
+  value?: string | number | null;
+};
+
+type ApiFootballTeamStatistics = {
+  team?: {
+    id?: number | string | null;
+    name?: string | null;
+  } | null;
+  statistics?: ApiFootballStatistic[];
+};
+
+type ApiFootballStatisticsResponse = {
+  response?: ApiFootballTeamStatistics[];
   errors?: unknown;
 };
 
@@ -100,6 +153,32 @@ export function createApiFootballProvider(options: ApiFootballProviderOptions = 
       );
 
       return updates.flat();
+    },
+    async fetchMatchDetails(apiMatchId: string): Promise<ProviderMatchDetails> {
+      if (!apiKey) {
+        throw new Error("API_FOOTBALL_KEY is not configured");
+      }
+
+      const [lineupsPayload, statisticsPayload] = await Promise.all([
+        fetchApiFootball<ApiFootballLineupsResponse>(fetchImpl, `${baseUrl}/fixtures/lineups?fixture=${encodeURIComponent(apiMatchId)}`, apiKey),
+        fetchApiFootball<ApiFootballStatisticsResponse>(fetchImpl, `${baseUrl}/fixtures/statistics?fixture=${encodeURIComponent(apiMatchId)}`, apiKey)
+      ]);
+      const rawLineups = lineupsPayload.response ?? [];
+      const rawStatistics = statisticsPayload.response ?? [];
+      const lineups = normalizeApiFootballLineups(rawLineups);
+      const statistics = normalizeApiFootballStatistics(rawStatistics);
+
+      return {
+        apiMatchId,
+        lineupsStatus: lineups.length > 0 ? "available" : "unavailable",
+        statisticsStatus: statistics.length > 0 ? "available" : "unavailable",
+        lineups,
+        statistics,
+        rawPayload: {
+          lineups: rawLineups,
+          statistics: rawStatistics
+        }
+      };
     }
   };
 }
@@ -135,6 +214,99 @@ export function normalizeApiFootballStatus(status: string | null | undefined): M
   return STATUS_MAP[(status ?? "").toUpperCase()] ?? "scheduled";
 }
 
+export function normalizeApiFootballLineups(lineups: ApiFootballLineup[]): ProviderLineup[] {
+  return lineups.flatMap((lineup) => {
+    const providerTeamId = valueToString(lineup.team?.id);
+    const teamName = lineup.team?.name?.trim();
+
+    if (!providerTeamId || !teamName) {
+      return [];
+    }
+
+    const starters = normalizeLineupPlayers(lineup.startXI ?? [], "starter", 0);
+    const substitutes = normalizeLineupPlayers(lineup.substitutes ?? [], "substitute", starters.length);
+
+    return [{
+      providerTeamId,
+      teamName,
+      coachName: lineup.coach?.name?.trim() || null,
+      formation: lineup.formation?.trim() || null,
+      players: [...starters, ...substitutes]
+    }];
+  });
+}
+
+export function normalizeApiFootballStatistics(statistics: ApiFootballTeamStatistics[]): ProviderTeamStatistic[] {
+  return statistics.flatMap((teamStats) => {
+    const providerTeamId = valueToString(teamStats.team?.id);
+    const teamName = teamStats.team?.name?.trim();
+
+    if (!providerTeamId || !teamName) {
+      return [];
+    }
+
+    return (teamStats.statistics ?? []).flatMap<ProviderTeamStatistic>((stat, index) => {
+      const statName = stat.type?.trim();
+
+      if (!statName) {
+        return [];
+      }
+
+      return [{
+        providerTeamId,
+        teamName,
+        statName,
+        statValue: stat.value == null ? null : String(stat.value),
+        sortOrder: index
+      }];
+    });
+  });
+}
+
+async function fetchApiFootball<T>(fetchImpl: FetchImpl, url: string, apiKey: string): Promise<T & { errors?: unknown }> {
+  const response = await fetchImpl(url, {
+    headers: {
+      "x-apisports-key": apiKey
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`API-FOOTBALL request failed with ${response.status}`);
+  }
+
+  const payload = (await response.json()) as T & { errors?: unknown };
+
+  if (hasProviderErrors(payload.errors)) {
+    throw new Error("API-FOOTBALL returned errors");
+  }
+
+  return payload;
+}
+
+function normalizeLineupPlayers(
+  entries: ApiFootballLineupPlayerEntry[],
+  role: ProviderLineupPlayer["role"],
+  sortOffset: number
+): ProviderLineupPlayer[] {
+  return entries.flatMap((entry, index) => {
+    const playerName = entry.player?.name?.trim();
+
+    if (!playerName) {
+      return [];
+    }
+
+    return [{
+      providerPlayerId: valueToString(entry.player?.id),
+      playerName,
+      shirtNumber: typeof entry.player?.number === "number" ? entry.player.number : null,
+      position: entry.player?.pos?.trim() || null,
+      grid: entry.player?.grid?.trim() || null,
+      role,
+      sortOrder: sortOffset + index
+    }];
+  });
+}
+
 function winnerFromScore(homeScore: number | null, awayScore: number | null): MatchResult | null {
   if (homeScore == null || awayScore == null) {
     return null;
@@ -153,6 +325,14 @@ function winnerFromScore(homeScore: number | null, awayScore: number | null): Ma
 
 function numberOrNull(value: number | null | undefined): number | null {
   return typeof value === "number" ? value : null;
+}
+
+function valueToString(value: number | string | null | undefined): string | null {
+  if (value == null) {
+    return null;
+  }
+
+  return String(value);
 }
 
 function normalizeDate(value: string | null | undefined): string | undefined {

@@ -1,0 +1,968 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gam3Bling - Match Details Tabs Flow</title>
+    <style>
+      :root {
+        --bg: #07110c;
+        --surface: #141a16;
+        --surface-2: #1d241f;
+        --surface-3: #2a302b;
+        --text: #f7f5ec;
+        --muted: #aeb5b1;
+        --line: rgba(255, 255, 255, 0.12);
+        --field: #26c66b;
+        --field-dark: #0b5738;
+        --gold: #e8c56a;
+        --red: #ff4d5e;
+        --blue: #78a7ff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 18% 0%, rgba(38, 198, 107, 0.18), transparent 28rem),
+          linear-gradient(145deg, #07110c, #171719 56%, #071a12);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      button {
+        border: 0;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .canvas {
+        width: min(1540px, calc(100vw - 36px));
+        margin: 0 auto;
+        padding: 34px 0 44px;
+      }
+
+      .intro {
+        display: grid;
+        gap: 10px;
+        max-width: 920px;
+        margin-bottom: 26px;
+      }
+
+      .eyebrow {
+        color: var(--gold);
+        font-size: 12px;
+        font-weight: 1000;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .intro h1 {
+        font-size: 42px;
+        line-height: 1.02;
+      }
+
+      .intro p {
+        color: var(--muted);
+        font-size: 17px;
+        line-height: 1.5;
+      }
+
+      .flow-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(290px, 1fr));
+        gap: 20px;
+        align-items: start;
+      }
+
+      .phone-wrap {
+        display: grid;
+        gap: 10px;
+      }
+
+      .step-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        min-height: 34px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .step-label b {
+        color: var(--text);
+      }
+
+      .phone {
+        position: relative;
+        width: 100%;
+        min-height: 830px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 18px;
+        background:
+          radial-gradient(circle at 50% 0%, rgba(38, 198, 107, 0.08), transparent 18rem),
+          rgba(7, 17, 12, 0.96);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+      }
+
+      .screen {
+        display: grid;
+        gap: 14px;
+        padding: 22px 18px 98px;
+      }
+
+      .topbar,
+      .section-head,
+      .match-row,
+      .score-line,
+      .friend-top,
+      .lineup-head,
+      .stat-row,
+      .bottom-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .room-label {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .topbar h2 {
+        margin-top: 2px;
+        font-size: 25px;
+        line-height: 1.05;
+      }
+
+      .avatar {
+        display: grid;
+        place-items: center;
+        width: 54px;
+        height: 54px;
+        flex: 0 0 auto;
+        border-radius: 999px;
+        color: #06100b;
+        background: var(--field);
+        font-size: 20px;
+        font-weight: 1000;
+      }
+
+      .avatar.gold {
+        background: var(--gold);
+      }
+
+      .hero,
+      .section,
+      .fixture,
+      .prediction-card,
+      .friend-card,
+      .tab-surface,
+      .mini-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.055);
+      }
+
+      .hero {
+        display: grid;
+        gap: 14px;
+        padding: 18px;
+        background:
+          linear-gradient(145deg, rgba(38, 198, 107, 0.16), rgba(232, 197, 106, 0.08)),
+          var(--surface);
+      }
+
+      .hero h1 {
+        font-size: 34px;
+        line-height: 1.02;
+      }
+
+      .hero p,
+      .muted {
+        color: var(--muted);
+        line-height: 1.38;
+      }
+
+      .section {
+        display: grid;
+        gap: 12px;
+        padding: 15px;
+      }
+
+      .section-head {
+        align-items: end;
+      }
+
+      .section-head h2 {
+        font-size: 22px;
+      }
+
+      .chip,
+      .status,
+      .tiny-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        white-space: nowrap;
+        font-weight: 1000;
+      }
+
+      .chip {
+        min-height: 32px;
+        padding: 0 12px;
+        color: #07110c;
+        background: var(--gold);
+        font-size: 13px;
+      }
+
+      .status {
+        min-height: 26px;
+        padding: 0 9px;
+        color: #07110c;
+        background: var(--field);
+        font-size: 11px;
+        text-transform: uppercase;
+      }
+
+      .status.locked {
+        color: var(--text);
+        background: rgba(255, 77, 94, 0.22);
+      }
+
+      .tiny-chip {
+        min-height: 24px;
+        padding: 0 8px;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.08);
+        font-size: 11px;
+      }
+
+      .button {
+        display: inline-grid;
+        min-height: 44px;
+        place-items: center;
+        border-radius: 8px;
+        color: #07110c;
+        background: var(--field);
+        font-weight: 1000;
+      }
+
+      .button.secondary {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .fixture,
+      .prediction-card,
+      .friend-card,
+      .mini-card {
+        display: grid;
+        gap: 11px;
+        padding: 13px;
+      }
+
+      .fixture.primary {
+        border-color: rgba(232, 197, 106, 0.42);
+        background: rgba(232, 197, 106, 0.08);
+      }
+
+      .match-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      }
+
+      .team-name {
+        overflow: hidden;
+        font-size: 17px;
+        font-weight: 1000;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .versus {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.08);
+        font-size: 11px;
+        font-weight: 1000;
+      }
+
+      .quick-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 9px;
+      }
+
+      .bottom-nav {
+        position: absolute;
+        right: 18px;
+        bottom: 18px;
+        left: 18px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        padding: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        background: rgba(5, 10, 8, 0.94);
+      }
+
+      .nav-item {
+        display: grid;
+        min-height: 42px;
+        place-items: center;
+        border-radius: 8px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 1000;
+      }
+
+      .nav-item.active {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .match-hero {
+        text-align: center;
+      }
+
+      .score {
+        color: var(--gold);
+        font-size: 42px;
+        font-weight: 1000;
+        letter-spacing: 0;
+      }
+
+      .tab-strip {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 7px;
+        padding: 6px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .tab-button {
+        min-height: 40px;
+        border-radius: 8px;
+        color: var(--muted);
+        background: transparent;
+        font-size: 13px;
+        font-weight: 1000;
+      }
+
+      .tab-button.active {
+        color: #07110c;
+        background: var(--gold);
+      }
+
+      .tab-panel {
+        display: none;
+      }
+
+      .tab-panel.active {
+        display: grid;
+        gap: 12px;
+      }
+
+      .receipt {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+        padding: 13px;
+        border-radius: 8px;
+        background: rgba(232, 197, 106, 0.12);
+      }
+
+      .score-pill {
+        display: grid;
+        min-width: 68px;
+        min-height: 54px;
+        place-items: center;
+        border-radius: 8px;
+        color: #07110c;
+        background: var(--gold);
+        font-size: 28px;
+        font-weight: 1000;
+      }
+
+      .friend-top {
+        justify-content: start;
+      }
+
+      .friend-top .tiny-chip {
+        margin-left: auto;
+      }
+
+      .friend-avatar {
+        display: grid;
+        place-items: center;
+        width: 42px;
+        height: 42px;
+        border-radius: 999px;
+        color: #07110c;
+        background: var(--field);
+        font-weight: 1000;
+      }
+
+      .lineup-toggle {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 7px;
+      }
+
+      .lineup-toggle button {
+        min-height: 40px;
+        border-radius: 8px;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.07);
+        font-weight: 1000;
+      }
+
+      .lineup-toggle button.active {
+        color: #07110c;
+        background: var(--field);
+      }
+
+      .pitch {
+        position: relative;
+        height: 392px;
+        overflow: hidden;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        border-radius: 8px;
+        background:
+          repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 38px, transparent 38px 76px),
+          linear-gradient(180deg, #167045, #0d4a31);
+      }
+
+      .pitch::before,
+      .pitch::after {
+        position: absolute;
+        right: 20%;
+        left: 20%;
+        height: 62px;
+        border: 2px solid rgba(255, 255, 255, 0.55);
+        content: "";
+      }
+
+      .pitch::before {
+        top: -2px;
+      }
+
+      .pitch::after {
+        bottom: -2px;
+      }
+
+      .half-line {
+        position: absolute;
+        top: 50%;
+        right: 0;
+        left: 0;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.5);
+      }
+
+      .center-circle {
+        position: absolute;
+        top: calc(50% - 38px);
+        left: calc(50% - 38px);
+        width: 76px;
+        height: 76px;
+        border: 2px solid rgba(255, 255, 255, 0.45);
+        border-radius: 999px;
+      }
+
+      .player {
+        position: absolute;
+        display: grid;
+        gap: 2px;
+        width: 72px;
+        transform: translate(-50%, -50%);
+        text-align: center;
+      }
+
+      .shirt {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        margin: 0 auto;
+        border: 2px solid rgba(255, 255, 255, 0.88);
+        border-radius: 999px;
+        color: #06100b;
+        background: var(--gold);
+        font-size: 13px;
+        font-weight: 1000;
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+      }
+
+      .player b {
+        overflow: hidden;
+        color: var(--text);
+        font-size: 10px;
+        line-height: 1.1;
+        text-overflow: ellipsis;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.65);
+        white-space: nowrap;
+      }
+
+      .p1 { left: 50%; top: 9%; }
+      .p2 { left: 23%; top: 25%; }
+      .p3 { left: 40%; top: 26%; }
+      .p4 { left: 60%; top: 26%; }
+      .p5 { left: 77%; top: 25%; }
+      .p6 { left: 32%; top: 45%; }
+      .p7 { left: 68%; top: 45%; }
+      .p8 { left: 20%; top: 66%; }
+      .p9 { left: 50%; top: 68%; }
+      .p10 { left: 80%; top: 66%; }
+      .p11 { left: 50%; top: 86%; }
+
+      .player-list {
+        display: grid;
+        gap: 7px;
+      }
+
+      .player-row {
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr) auto;
+        gap: 8px;
+        align-items: center;
+        min-height: 36px;
+        padding: 0 9px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.055);
+      }
+
+      .player-row b {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .stat-box {
+        display: grid;
+        gap: 10px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.045);
+      }
+
+      .stat-row {
+        display: grid;
+        grid-template-columns: 48px minmax(0, 1fr) 48px;
+        min-height: 34px;
+      }
+
+      .bar {
+        position: relative;
+        height: 8px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .bar span {
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: var(--w);
+        border-radius: inherit;
+        background: var(--gold);
+      }
+
+      .stat-name {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 900;
+        text-align: center;
+      }
+
+      @media (max-width: 1260px) {
+        .flow-grid {
+          grid-template-columns: repeat(2, minmax(290px, 1fr));
+        }
+      }
+
+      @media (max-width: 680px) {
+        .canvas {
+          width: min(430px, calc(100vw - 24px));
+          padding-top: 20px;
+        }
+
+        .flow-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .intro h1 {
+          font-size: 34px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="canvas">
+      <section class="intro">
+        <p class="eyebrow">Gam3Bling flow mockup</p>
+        <h1>From room shortcut to prediction tabs and API-backed lineups</h1>
+        <p>
+          Match details are fetched only when eligible prediction matches come into view or when a user opens
+          the match page. The data is cached once per match and reused by every room.
+        </p>
+      </section>
+
+      <section class="flow-grid" aria-label="Game Bling match detail flow">
+        <div class="phone-wrap">
+          <div class="step-label"><b>1. Home</b><span>Return to room</span></div>
+          <article class="phone">
+            <div class="screen">
+              <header class="topbar">
+                <div>
+                  <p class="room-label">Gam3Bling</p>
+                  <h2>Your rooms</h2>
+                </div>
+                <div class="avatar">A</div>
+              </header>
+
+              <section class="hero">
+                <p class="eyebrow">Next deadline</p>
+                <h1>Netherlands vs Japan</h1>
+                <p>15 Jun, 1:30 AM IST. Prediction window is open.</p>
+                <a class="button">Open match</a>
+              </section>
+
+              <section class="section">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Current room</p>
+                    <h2>test4</h2>
+                  </div>
+                  <span class="chip">2/3 saved</span>
+                </div>
+                <article class="fixture primary">
+                  <div class="match-row">
+                    <span class="team-name">Netherlands</span>
+                    <span class="versus">VS</span>
+                    <span class="team-name">Japan</span>
+                  </div>
+                  <p class="muted">Prediction saved. Lineups and stats appear on the match page when available.</p>
+                  <a class="button">Show prediction</a>
+                </article>
+              </section>
+
+              <nav class="bottom-nav">
+                <span class="nav-item active">Home</span>
+                <span class="nav-item">Matches</span>
+                <span class="nav-item">Board</span>
+                <span class="nav-item">Room</span>
+              </nav>
+            </div>
+          </article>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="step-label"><b>2. Room hub</b><span>Open fixtures</span></div>
+          <article class="phone">
+            <div class="screen">
+              <header class="topbar">
+                <div>
+                  <p class="room-label">test4</p>
+                  <h2>Room hub</h2>
+                </div>
+                <div class="avatar">A</div>
+              </header>
+
+              <section class="hero">
+                <p class="eyebrow">Open now</p>
+                <h1>4 prediction matches</h1>
+                  <p>Open matches show prediction status first. Lineups and stats load in the background when available.</p>
+                <div class="quick-grid">
+                  <a class="button">Matches</a>
+                  <a class="button secondary">Room score</a>
+                </div>
+              </section>
+
+              <section class="section">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Current fixtures</p>
+                    <h2>Predict now</h2>
+                  </div>
+                    <span class="chip">2/3 saved</span>
+                </div>
+                <article class="fixture primary">
+                  <div class="match-row">
+                    <span class="team-name">Netherlands</span>
+                    <span class="versus">VS</span>
+                    <span class="team-name">Japan</span>
+                  </div>
+                  <div class="score-line">
+                    <span class="status">Saved</span>
+                    <span class="muted">Show prediction</span>
+                  </div>
+                </article>
+                <article class="fixture">
+                  <div class="match-row">
+                    <span class="team-name">Ivory Coast</span>
+                    <span class="versus">VS</span>
+                    <span class="team-name">Ecuador</span>
+                  </div>
+                  <div class="score-line">
+                    <span class="status">Open</span>
+                    <span class="muted">Predict</span>
+                  </div>
+                </article>
+              </section>
+
+              <nav class="bottom-nav">
+                <span class="nav-item">Home</span>
+                <span class="nav-item active">Matches</span>
+                <span class="nav-item">Board</span>
+                <span class="nav-item">Room</span>
+              </nav>
+            </div>
+          </article>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="step-label"><b>3. Matches</b><span>Eligible only</span></div>
+          <article class="phone">
+            <div class="screen">
+              <header class="topbar">
+                <div>
+                  <p class="room-label">test4</p>
+                  <h2>Matches</h2>
+                </div>
+                <div class="avatar">A</div>
+              </header>
+
+              <section class="section">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Prediction window</p>
+                    <h2>Open fixtures</h2>
+                  </div>
+                  <span class="chip">4 open</span>
+                </div>
+
+                <article class="fixture primary">
+                  <div class="match-row">
+                    <span class="team-name">Netherlands</span>
+                    <span class="versus">VS</span>
+                    <span class="team-name">Japan</span>
+                  </div>
+                  <p class="muted">15 Jun, 1:30 AM IST. Prediction saved.</p>
+                  <a class="button">Show prediction</a>
+                </article>
+
+                <article class="fixture">
+                  <div class="match-row">
+                    <span class="team-name">Sweden</span>
+                    <span class="versus">VS</span>
+                    <span class="team-name">Tunisia</span>
+                  </div>
+                  <p class="muted">Prediction still needed before kickoff.</p>
+                  <a class="button">Predict</a>
+                </article>
+
+                <article class="fixture">
+                  <div class="match-row">
+                    <span class="team-name">Spain</span>
+                    <span class="versus">VS</span>
+                    <span class="team-name">Cape Verde</span>
+                  </div>
+                  <div class="score-line">
+                    <span class="status locked">Locked later</span>
+                    <span class="muted">Opens after nearer matches</span>
+                  </div>
+                </article>
+              </section>
+
+              <nav class="bottom-nav">
+                <span class="nav-item">Home</span>
+                <span class="nav-item active">Matches</span>
+                <span class="nav-item">Board</span>
+                <span class="nav-item">Room</span>
+              </nav>
+            </div>
+          </article>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="step-label"><b>4. Match page</b><span>Try the tabs</span></div>
+          <article class="phone">
+            <div class="screen">
+              <header class="topbar">
+                <div>
+                  <p class="room-label">test4</p>
+                  <h2>Prediction saved</h2>
+                </div>
+                <div class="avatar">A</div>
+              </header>
+
+              <section class="hero match-hero">
+                <p class="eyebrow">Group F</p>
+                <h1>Netherlands vs Japan</h1>
+                <div class="score">2-1</div>
+                <p>15 Jun, 1:30 AM IST. Kickoff locks this match.</p>
+              </section>
+
+              <div class="tab-strip" role="tablist" aria-label="Match detail tabs">
+                <button class="tab-button active" data-tab="predictions">Predictions</button>
+                <button class="tab-button" data-tab="lineups">Lineups</button>
+                <button class="tab-button" data-tab="stats">Stats</button>
+              </div>
+
+              <section class="tab-panel active" id="predictions">
+                <article class="prediction-card">
+                  <p class="eyebrow">Your prediction</p>
+                  <div class="receipt">
+                    <span class="score-pill">2-1</span>
+                    <div>
+                      <b>Netherlands</b>
+                      <p class="muted">HT 1-0. Netherlands first, Japan last</p>
+                    </div>
+                    <span class="tiny-chip">Saved</span>
+                  </div>
+                </article>
+                <article class="friend-card">
+                  <div class="friend-top">
+                    <span class="friend-avatar">A</span>
+                    <div>
+                      <b>Aman</b>
+                      <p class="muted">Friend</p>
+                    </div>
+                    <span class="tiny-chip">Waiting</span>
+                  </div>
+                  <p class="muted">No prediction yet</p>
+                </article>
+              </section>
+
+              <section class="tab-panel" id="lineups">
+                <div class="lineup-toggle">
+                  <button class="active">Netherlands</button>
+                  <button>Japan</button>
+                </div>
+
+                <article class="tab-surface section">
+                  <div class="lineup-head">
+                    <div>
+                      <p class="eyebrow">Lineups</p>
+                      <h2>Netherlands</h2>
+                    </div>
+                    <span class="chip">4-2-3-1</span>
+                  </div>
+                  <p class="muted">Fetched from API-Football and cached once for this match.</p>
+
+                  <div class="pitch" aria-label="Football pitch with player positions">
+                    <span class="half-line"></span>
+                    <span class="center-circle"></span>
+                    <span class="player p1"><span class="shirt">1</span><b>Flekken</b></span>
+                    <span class="player p2"><span class="shirt">22</span><b>Dumfries</b></span>
+                    <span class="player p3"><span class="shirt">4</span><b>Van Dijk</b></span>
+                    <span class="player p4"><span class="shirt">5</span><b>Ake</b></span>
+                    <span class="player p5"><span class="shirt">17</span><b>Blind</b></span>
+                    <span class="player p6"><span class="shirt">14</span><b>Reijnders</b></span>
+                    <span class="player p7"><span class="shirt">21</span><b>De Jong</b></span>
+                    <span class="player p8"><span class="shirt">11</span><b>Gakpo</b></span>
+                    <span class="player p9"><span class="shirt">10</span><b>Simons</b></span>
+                    <span class="player p10"><span class="shirt">7</span><b>Frimpong</b></span>
+                    <span class="player p11"><span class="shirt">9</span><b>Depay</b></span>
+                  </div>
+
+                  <div class="player-list">
+                    <div class="player-row"><span class="tiny-chip">9</span><b>Memphis Depay</b><span>FW</span></div>
+                    <div class="player-row"><span class="tiny-chip">10</span><b>Xavi Simons</b><span>AM</span></div>
+                    <div class="player-row"><span class="tiny-chip">4</span><b>Virgil van Dijk</b><span>CB</span></div>
+                  </div>
+                </article>
+              </section>
+
+              <section class="tab-panel" id="stats">
+                <article class="tab-surface section">
+                  <div class="lineup-head">
+                    <div>
+                      <p class="eyebrow">Stats</p>
+                      <h2>Team comparison</h2>
+                    </div>
+                    <span class="chip">Live API</span>
+                  </div>
+                  <div class="stat-box">
+                    <div class="stat-row">
+                      <b>58%</b>
+                      <div>
+                        <p class="stat-name">Possession</p>
+                        <div class="bar" style="--w: 58%"><span></span></div>
+                      </div>
+                      <b>42%</b>
+                    </div>
+                    <div class="stat-row">
+                      <b>13</b>
+                      <div>
+                        <p class="stat-name">Shots</p>
+                        <div class="bar" style="--w: 68%"><span></span></div>
+                      </div>
+                      <b>6</b>
+                    </div>
+                    <div class="stat-row">
+                      <b>5</b>
+                      <div>
+                        <p class="stat-name">Corners</p>
+                        <div class="bar" style="--w: 62%"><span></span></div>
+                      </div>
+                      <b>3</b>
+                    </div>
+                  </div>
+                  <p class="muted">If API-Football has not released stats yet, this area shows a clean unavailable state.</p>
+                </article>
+              </section>
+
+              <nav class="bottom-nav">
+                <span class="nav-item">Home</span>
+                <span class="nav-item active">Matches</span>
+                <span class="nav-item">Board</span>
+                <span class="nav-item">Room</span>
+              </nav>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const buttons = document.querySelectorAll(".tab-button");
+      const panels = document.querySelectorAll(".tab-panel");
+
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+          buttons.forEach((item) => item.classList.remove("active"));
+          panels.forEach((panel) => panel.classList.remove("active"));
+          button.classList.add("active");
+          document.getElementById(button.dataset.tab).classList.add("active");
+        });
+      });
+    </script>
+  </body>
+</html>

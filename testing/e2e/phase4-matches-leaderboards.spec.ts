@@ -6,7 +6,10 @@ test("matches page prioritizes upcoming prediction locks", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Predictions lock soon" })).toBeVisible();
   await expect(page.getByText("Netherlands vs Japan")).toBeVisible();
   await expect(page.getByText("15 Jun, 1:30 AM IST")).toBeVisible();
-  await expect(page.getByRole("link", { name: /Predict Netherlands vs Japan/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Show prediction Netherlands vs Japan/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Predict Ivory Coast vs Ecuador/i })).toBeVisible();
+  await expect(page.getByText("Details cached")).toHaveCount(0);
+  await expect(page.getByText("Fetch queued")).toHaveCount(0);
 });
 
 test("prediction page includes all MVP markets for an open fixture", async ({ page }) => {
@@ -19,6 +22,24 @@ test("prediction page includes all MVP markets for an open fixture", async ({ pa
   await expect(page.getByRole("heading", { name: "First team to score" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Last team to score" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Save predictions" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Predictions", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Lineups" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Stats" })).toBeVisible();
+});
+
+test("match page tabs show lineups and stats without exposing cache internals", async ({ page }) => {
+  await page.goto("/r/goa-wc-chaos/matches/1489376");
+
+  await page.getByRole("button", { name: "Lineups" }).click();
+  await expect(page.getByRole("heading", { name: "Lineups" })).toBeVisible();
+  await expect(page.getByText("4-2-3-1")).toBeVisible();
+  await expect(page.getByText("Memphis Depay")).toBeVisible();
+
+  await page.getByRole("button", { name: "Stats" }).click();
+  await expect(page.getByRole("heading", { name: "Stats" })).toBeVisible();
+  await expect(page.getByText("Ball Possession")).toBeVisible();
+  await expect(page.getByText("Details cached")).toHaveCount(0);
+  await expect(page.getByText("Fetch queued")).toHaveCount(0);
 });
 
 test("saved prediction page shows compact receipt before editable details", async ({ page }) => {

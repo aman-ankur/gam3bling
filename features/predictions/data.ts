@@ -88,6 +88,53 @@ export async function getRoomMatchPicks(roomSlug: string, match: AppMatch): Prom
   }
 }
 
+export async function getCurrentPlayerPredictedMatchIds(roomSlug: string, matches: AppMatch[]): Promise<Set<string>> {
+  if (process.env.E2E_USE_FALLBACK_FIXTURES === "1") {
+    return new Set(["1489376", "30000000-0000-4000-8000-000000000002"]);
+  }
+
+  const supabase = getSupabaseAdmin();
+  const session = await getPlayerSession();
+
+  if (!supabase || !session || matches.length === 0) {
+    return new Set();
+  }
+
+  try {
+    const { data: room } = await supabase.from("rooms").select("id").eq("slug", roomSlug).single();
+
+    if (!room) {
+      return new Set();
+    }
+
+    const { data: membership } = await supabase
+      .from("room_members")
+      .select("player_id")
+      .eq("room_id", room.id)
+      .eq("player_id", session.playerId)
+      .maybeSingle();
+
+    if (!membership) {
+      return new Set();
+    }
+
+    const matchIds = matches.map((match) => match.id);
+    const { data: predictions } = await supabase
+      .from("predictions")
+      .select("match_id")
+      .eq("player_id", session.playerId)
+      .in("match_id", matchIds);
+
+    return new Set((predictions ?? []).flatMap((prediction) => {
+      const match = matches.find((candidate) => candidate.id === prediction.match_id);
+
+      return match ? [match.id, match.apiMatchId] : [prediction.match_id];
+    }));
+  } catch {
+    return new Set();
+  }
+}
+
 function fallbackPicks(match: AppMatch): RoomMatchPick[] {
   return [
     {

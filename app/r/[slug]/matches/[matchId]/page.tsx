@@ -1,4 +1,7 @@
 import { AppShell } from "@/components/app-shell";
+import { LineupPitch } from "@/components/lineup-pitch";
+import { MatchDetailTabs } from "@/components/match-detail-tabs";
+import { MatchStatsPanel } from "@/components/match-stats-panel";
 import { PredictionForm } from "@/components/prediction-form";
 import { PredictionReceipt } from "@/components/prediction-receipt";
 import { RoomPicksBoard } from "@/components/room-picks-board";
@@ -6,10 +9,14 @@ import { savePrediction } from "@/features/predictions/actions";
 import { getMatchByRouteId, getUpcomingMatches } from "@/features/matches/data";
 import type { AppMatch } from "@/features/matches/data";
 import { isMatchInOpenPredictionWindow } from "@/features/matches/prediction-window";
+import { ensureMatchDetailsForMatches } from "@/features/match-details/cache";
+import { createSupabaseMatchDetailsStore, getCachedMatchDetails } from "@/features/match-details/data";
 import { isPredictionLocked } from "@/features/predictions/locking";
 import { getRoomMatchPicks } from "@/features/predictions/data";
 import { getRoomSummary } from "@/features/rooms/data";
+import { createApiFootballProvider } from "@/features/sync/api-football-provider";
 import { formatKickoffInIst } from "@/features/time/match-time";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 type MatchPredictionPageProps = {
   params: Promise<{
@@ -48,6 +55,17 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
   const windowLocked = !isMatchInOpenPredictionWindow(match, matches, now);
   const locked = kickoffLocked || windowLocked;
   const action = savePrediction.bind(null, slug, match.apiMatchId);
+  const supabase = getSupabaseAdmin();
+
+  if (supabase && !windowLocked && !process.env.E2E_USE_FALLBACK_FIXTURES) {
+    await ensureMatchDetailsForMatches({
+      matches: [match],
+      provider: createApiFootballProvider(),
+      store: createSupabaseMatchDetailsStore(supabase)
+    });
+  }
+
+  const matchDetails = await getCachedMatchDetails(supabase, match);
   const roomPicks = await getRoomMatchPicks(slug, match);
   const currentPrediction = roomPicks.find((pick) => pick.isCurrentPlayer && pick.saved);
   const receiptPrediction = currentPrediction ?? (saved ? createFallbackReceipt(match) : undefined);
@@ -73,31 +91,39 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
       {error === "invalid" ? <p className="locked-banner">That prediction combination did not make sense. Adjust the score and try again.</p> : null}
       {error === "locked" ? <p className="locked-banner">This match is locked for predictions.</p> : null}
 
-      {receiptPrediction ? (
-        <PredictionReceipt
-          finalScore={receiptPrediction.finalScore ?? `${receiptPrediction.finalHomeScore ?? 2}-${receiptPrediction.finalAwayScore ?? 1}`}
-          halftimeScore={receiptPrediction.halftimeScore}
-          matchLabel={`${match.homeTeam.name} ${receiptPrediction.finalScore ?? `${receiptPrediction.finalHomeScore ?? 2}-${receiptPrediction.finalAwayScore ?? 1}`} ${match.awayTeam.name}`}
-          result={receiptPrediction.result}
-          scorers={receiptPrediction.scorers}
-        />
-      ) : null}
+      <MatchDetailTabs
+        predictions={(
+          <>
+            {receiptPrediction ? (
+              <PredictionReceipt
+                finalScore={receiptPrediction.finalScore ?? `${receiptPrediction.finalHomeScore ?? 2}-${receiptPrediction.finalAwayScore ?? 1}`}
+                halftimeScore={receiptPrediction.halftimeScore}
+                matchLabel={`${match.homeTeam.name} ${receiptPrediction.finalScore ?? `${receiptPrediction.finalHomeScore ?? 2}-${receiptPrediction.finalAwayScore ?? 1}`} ${match.awayTeam.name}`}
+                result={receiptPrediction.result}
+                scorers={receiptPrediction.scorers}
+              />
+            ) : null}
 
-      <RoomPicksBoard picks={roomPicks} />
+            <RoomPicksBoard picks={roomPicks} />
 
-      <details className="edit-prediction-panel" open={!receiptPrediction}>
-        <summary>
-          <span>{receiptPrediction ? "Edit prediction" : "Make prediction"}</span>
-          <b>{receiptPrediction ? "Expand" : "Open"}</b>
-        </summary>
-        <PredictionForm
-          action={action}
-          awayTeam={match.awayTeam}
-          homeTeam={match.homeTeam}
-          initialPrediction={receiptPrediction}
-          locked={locked}
-        />
-      </details>
+            <details className="edit-prediction-panel" open={!receiptPrediction}>
+              <summary>
+                <span>{receiptPrediction ? "Edit prediction" : "Make prediction"}</span>
+                <b>{receiptPrediction ? "Expand" : "Open"}</b>
+              </summary>
+              <PredictionForm
+                action={action}
+                awayTeam={match.awayTeam}
+                homeTeam={match.homeTeam}
+                initialPrediction={receiptPrediction}
+                locked={locked}
+              />
+            </details>
+          </>
+        )}
+        lineups={<LineupPitch lineups={matchDetails.lineups} />}
+        stats={<MatchStatsPanel match={match} statistics={matchDetails.statistics} />}
+      />
     </AppShell>
   );
 }
