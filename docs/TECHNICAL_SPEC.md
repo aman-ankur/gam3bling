@@ -1,11 +1,11 @@
-# Game Bling Technical Specification
+# Gam3bling Technical Specification
 
 Date: 2026-06-15
 Status: Implemented MVP, current technical reference
 
 ## 1. System Overview
 
-Game Bling is a Next.js web app with Supabase Postgres as the system of record. The app is designed around a seeded fixture database, lightweight player identity, room memberships, predictions, scoring, and leaderboard queries.
+Gam3bling is a Next.js web app with Supabase Postgres as the system of record. The app is designed around a seeded fixture database, lightweight player identity, room memberships, predictions, scoring, and leaderboard queries.
 
 The system must work even when the live football API is unavailable. External match data is treated as an enhancement layer that updates local match records.
 
@@ -17,7 +17,7 @@ Primary runtime pieces:
 - **Supabase Postgres:** persistent data for rooms, players, fixtures, predictions, scoring, and sync logs.
 - **Scheduled sync job:** updates match status/results from the football data provider.
 - **Scoring service:** recalculates prediction scores after match updates.
-- **Provider adapter:** isolates API-Football specifics from the rest of the app.
+- **Provider adapter:** isolates ESPN/API-Football specifics from the rest of the app.
 
 Recommended deployment:
 
@@ -31,17 +31,17 @@ Local development:
 - If port `3003` is occupied, stop the occupying process and reuse `3003`.
 - Do not silently switch to another local port.
 - The `npm run dev` script enforces this with `scripts/ensure-port-free.mjs`.
-- The visible home-page brand is `Gam3Bling`.
+- The visible product brand is `Gam3bling`.
 
 ## 3. Route Structure
 
 Initial route map:
 
-- `/`: home, room shortcuts for the current browser session, create/join entry, next fixtures, and leaderboard preview.
+- `/`: home, clickable room shortcuts for the current browser session, create/join entry, next fixtures, and leaderboard preview.
 - `/new`: create room.
-- `/r/[slug]`: invite/join screen for new visitors, or room hub for returning/session players.
+- `/r/[slug]`: invite/join screen for new visitors, or room hub for returning/session players with current/live matches first.
 - `/r/[slug]/matches`: match schedule.
-- `/r/[slug]/matches/[matchId]`: match detail, prediction entry, compact saved receipt, friends' predictions, and expandable edit form.
+- `/r/[slug]/matches/[matchId]`: match detail, score card, prediction entry, compact saved receipt, friends' predictions, result breakdown, and expandable edit form.
 - `/r/[slug]/leaderboard`: room leaderboard.
 - `/leaderboard`: global leaderboard.
 - `/profile`: current player profile and avatar settings.

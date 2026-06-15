@@ -1,6 +1,6 @@
-# Game Bling Database
+# Gam3bling Database
 
-This folder contains the Supabase Postgres schema and development seed data for Game Bling.
+This folder contains the Supabase Postgres schema and development seed data for Gam3bling.
 
 ## Migrations
 

@@ -1,11 +1,11 @@
-# Game Bling PRD
+# Gam3bling PRD
 
 Date: 2026-06-15
 Status: Implemented MVP, current product reference
 
 ## 1. Summary
 
-Game Bling is a mobile-first World Cup prediction game for small friend groups. Users create a room, invite friends through a short link and shared code, join with room code + display name, predict match outcomes, and compete on room and global leaderboards.
+Gam3bling is a mobile-first World Cup prediction game for small friend groups. Users create a room, invite friends through a short link and shared code, join with room code + display name, predict match outcomes, and compete on room and global leaderboards.
 
 The first release should be playable quickly on a free Vercel deployment with Supabase as the permanent database. It should prioritize the core friend-circle loop over advanced sports analytics.
 
@@ -13,7 +13,7 @@ The first release should be playable quickly on a free Vercel deployment with Su
 
 During a tournament, friends often make casual predictions in chats. Those predictions are easy to lose, hard to score, and not very visual. Existing sports prediction or betting apps often feel too public, too gambling-oriented, or too login-heavy for a small group.
 
-Game Bling gives a room-based, lightweight alternative:
+Gam3bling gives a room-based, lightweight alternative:
 
 - No full account setup.
 - Shared room identity.
@@ -89,11 +89,13 @@ Quality metrics:
 - As a player, I can see a compact saved prediction receipt, then expand the full form if I want to edit before kickoff.
 - As a player, I can see friends' predictions immediately after saving mine.
 - As a player, I can see how many points I earned after a match.
+- As a player, I can open a finished match from history and see the conclusion view: final score, room predictions, and who scored.
 
 ### Returning Player
 
 - As a returning player, I can reopen the app and remain recognized on the same device.
 - As a returning player on the same device, I can use the home shortcut to return directly to my current room.
+- As a returning player, I can recognize room shortcuts as tappable actions and jump straight into the current/live match context.
 
 ### Spectator/Competitor
 
@@ -162,8 +164,9 @@ Quality metrics:
 
 ### API Sync
 
-- Use API-Football first if 2026 World Cup coverage is available with the chosen key.
-- Keep a provider interface so a different source can replace it later.
+- Use the provider interface for football data instead of calling a provider directly from product code.
+- Prefer ESPN public soccer endpoints while API-Football account access is unavailable.
+- Keep API-Football as a fallback provider when access is restored and the mapped fixture IDs are useful.
 - Sync fixtures/results/status on a schedule.
 - Track sync logs and failures.
 - Do not block app usage if API sync fails.
@@ -172,9 +175,11 @@ Quality metrics:
 
 - The first home screen section must prioritize upcoming lock deadlines.
 - If a returning player has a room session, home must show "Your rooms" before generic join/create sections.
-- The room page should act as a room hub for returning members: current fixtures first, then room score, then result history.
-- Match cards should be compact and readable on phone.
+- The room page should act as a room hub for returning members: current/live fixtures first, then room score, then result history.
+- Match cards should be compact, score-forward, and readable on phone.
+- Home room shortcuts should look and behave like obvious clickable actions.
 - Prediction controls should be thumb-friendly.
+- Saved prediction summaries should reduce cognitive load: final score first, supporting details as short pills or compact text.
 - Server-action buttons must show immediate pending states such as "Creating room...", "Joining room...", and "Saving predictions..." so taps feel responsive.
 - Leaderboard and room member rows should always include avatar + name.
 - Use clear states for open, locked, live, final, pending API data, and scored.
@@ -207,6 +212,14 @@ Reason: fixtures are known and should not depend on an external API at render ti
 
 Trade-off: seed data must be maintained if schedules change. API sync can update fixture status and results later.
 
+### Provider Abstraction For Football Data
+
+Decision: treat ESPN and API-Football as interchangeable providers behind a local sync interface.
+
+Reason: API-Football access can be unavailable, suspended, rate-limited, or missing event detail. ESPN currently gives a no-key path for many scoreboard and detail checks. The app should keep working from local fixtures while trying the best available provider for live enrichment.
+
+Trade-off: provider matching needs defensive code because local fixture IDs, API-Football IDs, and ESPN event IDs do not always match directly.
+
 ### One Prediction Per Player Per Match
 
 Decision: predictions are global to a player/match, not room-specific.
@@ -233,7 +246,7 @@ Trade-off: less personal than photos. Photo upload can use Supabase Storage late
 
 ## 12. Open Implementation Checks
 
-- Verify API-Football access for the relevant World Cup competition and season.
+- Restore or replace API-Football access if ESPN coverage becomes insufficient.
+- Add durable provider team/event mapping where first/last scorer data is important.
 - Confirm Vercel scheduled job limits for the selected sync cadence.
 - Confirm Supabase free-tier capacity for expected room/player volume.
-- Decide whether the first seed file is hand-authored or generated from API fixture data.

@@ -1,6 +1,6 @@
-# Game Bling Deployment Checklist
+# Gam3bling Deployment Checklist
 
-This is the current deployable MVP path for sharing Game Bling with friends.
+This is the current deployable MVP path for sharing Gam3bling with friends.
 
 ## 1. Supabase
 
@@ -93,11 +93,12 @@ Expected production route table should show `/new` as dynamic:
 - Create a room at `/new`.
 - Share the generated room link and invite code. Returning room hubs also show the invite link and room code below the Results ledger.
 - Friends join with room code + display name.
-- Returning players see a `Your rooms` shortcut on the home page for the current browser session.
-- `/r/[slug]` acts as a room hub for returning players, with current fixtures, room score, and history preview.
+- Returning players see clickable `Your rooms` shortcuts on the home page for the current browser session.
+- `/r/[slug]` acts as a room hub for returning players, with live/current fixtures first, then room score and history preview.
 - Players open `/r/[slug]/matches` or jump from the room hub to an open fixture.
 - Players save predictions before kickoff.
-- After saving, the match page shows a compact prediction receipt first, then friends' predictions, with the full prediction form inside an expandable edit section.
+- After saving, the match page shows a compact prediction receipt first, then friends' predictions with first/last scorer context, with the full prediction form inside an expandable edit section.
+- Finished match history links back to the conclusion view with final score, room predictions, and scoring outcomes.
 - Locked matches become read-only at kickoff.
 - Room and global leaderboards read prediction score totals.
 - Create/join/save buttons use pending labels and disabled states so users get immediate feedback while server actions run.
