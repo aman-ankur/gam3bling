@@ -4054,3 +4054,551 @@ body {
   color: #07100b;
   background: var(--gold);
 }
+
+/* Compact professional match-room refinement */
+:root {
+  --background: #0b0f10;
+  --surface: #141a1c;
+  --surface-strong: #1b2224;
+  --text: #f2f1ec;
+  --muted: #9da5a2;
+  --line: rgba(255, 255, 255, 0.1);
+  --field: #31c77a;
+  --green: #31c77a;
+  --gold: #d8b95d;
+  --red: #f05a55;
+  --blue: #6f9df2;
+  --purple: #7d83ff;
+  --purple-dark: #6970ee;
+  --teal: #2f9e8a;
+  --soft: #0b0f10;
+  --shadow: none;
+  --shadow-soft: none;
+}
+
+body {
+  background:
+    linear-gradient(180deg, rgba(216, 185, 93, 0.08), transparent 260px),
+    #080b0c;
+}
+
+.app-frame {
+  padding: 12px 14px calc(88px + env(safe-area-inset-bottom));
+  background-color: var(--background);
+  box-shadow: none;
+}
+
+.top-bar {
+  margin: -12px -14px 12px;
+  padding: 12px 14px 10px;
+  background: rgba(11, 15, 16, 0.92);
+}
+
+.top-bar h2 {
+  font-size: 20px;
+  line-height: 1.08;
+}
+
+.room-label,
+.header-subtitle {
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.header-subtitle {
+  margin-top: 3px;
+}
+
+.tournament-badge {
+  width: 44px;
+  height: 44px;
+  border-width: 1px;
+  background: var(--surface-strong);
+}
+
+.tournament-badge strong {
+  font-size: 12px;
+}
+
+.tournament-badge span {
+  font-size: 10px;
+}
+
+.hero-card,
+.room-hub-hero,
+.join-room-panel,
+.room-shortcuts,
+.latest-result-hero,
+.post-result-hero,
+.ticket-meta,
+.match-card.featured .ticket-meta,
+.home-fixture .ticket-meta {
+  background-image: none;
+}
+
+.hero-card,
+.section-stack,
+.match-ticket,
+.projection-card,
+.form-card,
+.invite-card,
+.market-card,
+.receipt-card,
+.edit-prediction-panel,
+.prediction-receipt,
+.pick-card,
+.empty-state,
+.history-preview,
+.locked-summary,
+.lineup-summary,
+.member-grid li,
+.room-shortcut-card,
+.claim-card,
+.result-breakdown,
+.latest-return-card,
+.latest-result-movers-card,
+.latest-result-action {
+  background-color: var(--surface);
+  border-color: var(--line);
+}
+
+.hero-card {
+  padding: 16px;
+}
+
+.hero-card h1 {
+  font-size: 32px;
+  line-height: 1.04;
+}
+
+.hero-card p:last-child {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.setup-hero h1 {
+  font-size: 30px;
+}
+
+.room-hub-hero {
+  gap: 10px;
+}
+
+.section-stack {
+  gap: 10px;
+  margin-top: 12px;
+  padding: 14px;
+}
+
+.section-heading h1,
+.section-heading h2 {
+  font-size: 18px;
+  line-height: 1.15;
+}
+
+.eyebrow {
+  margin-bottom: 5px;
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+}
+
+.status-chip,
+.live-chip,
+.pick-status,
+.points-pill {
+  min-height: 26px;
+  padding: 0 9px;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.hub-stats {
+  gap: 6px;
+}
+
+.hub-stats div,
+.room-shortcut-card dl div {
+  min-height: 50px;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.hub-stats span,
+.room-shortcut-card dt {
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.hub-stats b,
+.room-shortcut-card dd {
+  font-size: 17px;
+}
+
+.ticket-meta,
+.match-card.featured .ticket-meta,
+.home-fixture .ticket-meta,
+.latest-result-hero,
+.post-result-hero {
+  background-color: #182123;
+}
+
+.ticket-meta {
+  min-height: 50px;
+  padding: 11px 12px;
+}
+
+.ticket-meta strong {
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.ticket-meta small {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.sport-card .ticket-meta span {
+  font-size: 16px;
+}
+
+.sport-card .sport-matchup {
+  grid-template-columns: minmax(0, 1fr) 58px minmax(0, 1fr);
+  gap: 4px;
+  padding: 16px 12px 10px;
+}
+
+.sport-team .team-name {
+  gap: 8px;
+}
+
+.sport-team .team-flag {
+  width: 54px;
+  min-width: 54px;
+  height: 54px;
+  font-size: 23px;
+}
+
+.sport-team .team-name > span:last-child {
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.center-lock b {
+  font-size: 26px;
+}
+
+.center-lock small {
+  max-width: 62px;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.match-energy-bars {
+  gap: 8px;
+  margin: 0 12px 10px;
+}
+
+.match-energy-bars span {
+  height: 6px;
+}
+
+.match-card h3,
+.kickoff-line,
+.fixture-row,
+.match-action-row {
+  margin-right: 12px;
+  margin-left: 12px;
+}
+
+.match-card h3 {
+  margin-top: 12px;
+  font-size: 18px;
+}
+
+.match-action-row {
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px 0 12px;
+}
+
+.match-action-row small,
+.kickoff-line,
+.other-open-match-row small,
+.section-note,
+.locked-summary span {
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.primary-button,
+.card-link,
+.edit-prediction-panel summary b,
+.other-open-match-row > span {
+  min-height: 38px;
+  border-radius: 8px;
+  color: #11140e;
+  background: var(--gold);
+  box-shadow: none;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.primary-button:hover,
+.card-link:hover,
+.primary-button[aria-busy="true"] {
+  color: #11140e;
+  background: #e0c46e;
+  box-shadow: none;
+}
+
+.card-link {
+  min-width: 96px;
+  padding: 0 13px;
+}
+
+.other-open-match-row {
+  min-height: 56px;
+  padding: 9px;
+  border-radius: 8px;
+}
+
+.other-open-match-row strong {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.other-open-match-row .team-flag {
+  width: 24px;
+  min-width: 24px;
+  height: 20px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.other-open-match-row > span {
+  min-width: 62px;
+  min-height: 34px;
+  font-size: 12px;
+}
+
+.match-back-link {
+  min-height: 36px;
+  margin-bottom: 8px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.match-hero h1 {
+  font-size: 28px;
+  line-height: 1.08;
+}
+
+.match-hero h1 .matchup-vs {
+  margin-left: 44px;
+  font-size: 17px;
+}
+
+.match-card h3 .team-flag,
+.match-hero h1 .team-flag {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  font-size: 17px;
+}
+
+.match-tab-list,
+.segmented-control {
+  padding: 4px;
+}
+
+.match-tab {
+  min-height: 36px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.market-card,
+.form-card,
+.invite-card,
+.prediction-receipt,
+.edit-prediction-panel,
+.pick-card,
+.room-picks {
+  padding: 12px;
+}
+
+.market-card h2,
+.receipt-card h2 {
+  font-size: 16px;
+}
+
+.score-grid {
+  gap: 8px;
+}
+
+.score-grid label {
+  min-height: 108px;
+  padding: 11px;
+  border-radius: 8px;
+}
+
+.score-grid input {
+  min-height: 48px;
+  border-radius: 8px;
+  font-size: 28px;
+}
+
+.form-card input,
+.invite-recovery-form input {
+  min-height: 46px;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.prediction-receipt {
+  gap: 10px;
+}
+
+.prediction-receipt h2 {
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.prediction-receipt p:not(.eyebrow) {
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.prediction-receipt > span,
+.score-pill {
+  min-width: 48px;
+  min-height: 38px;
+  border-radius: 8px;
+  font-size: 20px;
+}
+
+.edit-prediction-panel summary {
+  min-height: 50px;
+  padding: 0 12px;
+  font-weight: 850;
+}
+
+.edit-prediction-panel .prediction-form {
+  padding: 0 10px 10px;
+}
+
+.room-picks .section-heading h2 {
+  font-size: 18px;
+}
+
+.pick-list {
+  gap: 8px;
+}
+
+.pick-card {
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.pick-player {
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  gap: 9px;
+}
+
+.pick-player b {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.pick-player small {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.pick-score-summary strong {
+  font-size: 18px;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  font-size: 14px;
+}
+
+.compact-leader-list li,
+.leaderboard-list li,
+.result-movers li,
+.breakdown-row {
+  min-height: 58px;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.leaderboard-list {
+  gap: 8px;
+}
+
+.leaderboard-list li {
+  grid-template-columns: 22px 36px minmax(0, 1fr) auto;
+}
+
+.leaderboard-list strong {
+  font-size: 16px;
+}
+
+.leader-meta b {
+  font-weight: 800;
+}
+
+.leader-meta small {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.scoring-guide {
+  border-radius: 8px;
+}
+
+.football-pitch {
+  height: 380px;
+}
+
+.lineup-player-row,
+.stat-comparison {
+  border-radius: 8px;
+}
+
+.bottom-nav {
+  right: 10px;
+  bottom: 8px;
+  left: 10px;
+  width: min(410px, calc(100% - 20px));
+  padding: 6px;
+  border-radius: 8px;
+  background: rgba(11, 15, 16, 0.96);
+}
+
+.bottom-nav a {
+  min-height: 38px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+@media (max-width: 420px) {
+  .post-result-hero h2,
+  .latest-result-hero h2 {
+    font-size: 28px;
+  }
+
+  .result-score-title {
+    font-size: 21px;
+  }
+
+  .breakdown-row strong {
+    font-size: 15px;
+  }
+}

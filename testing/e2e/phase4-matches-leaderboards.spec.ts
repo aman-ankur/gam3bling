@@ -79,23 +79,23 @@ test("prediction segmented choices visibly update when selected", async ({ page 
   const firstScorer = page.locator("section", { has: page.getByRole("heading", { name: "First team to score" }) });
   const japanOption = firstScorer.locator("label", { hasText: "Japan" });
   await japanOption.click();
-  await expect(japanOption).toHaveCSS("background-color", "rgb(230, 193, 92)");
+  await expect(japanOption).toHaveCSS("background-color", "rgb(216, 185, 93)");
 });
 
 test("prediction result and scorer options follow the final score", async ({ page }) => {
   await page.goto("/r/world-cup-room/matches/1489376");
 
   const matchResult = page.locator("section", { has: page.getByRole("heading", { name: "Match result" }) });
-  await expect(matchResult.locator("label", { hasText: "Netherlands" })).toHaveCSS("background-color", "rgb(230, 193, 92)");
+  await expect(matchResult.locator("label", { hasText: "Netherlands" })).toHaveCSS("background-color", "rgb(216, 185, 93)");
   await expect(matchResult.getByText("Auto-selected from final score")).toBeVisible();
 
   await page.getByLabel("Netherlands final score").fill("1");
   await page.getByLabel("Japan final score").fill("1");
-  await expect(matchResult.locator("label", { hasText: "Draw" })).toHaveCSS("background-color", "rgb(230, 193, 92)");
+  await expect(matchResult.locator("label", { hasText: "Draw" })).toHaveCSS("background-color", "rgb(216, 185, 93)");
 
   await page.getByLabel("Netherlands final score").fill("0");
   await page.getByLabel("Japan final score").fill("2");
-  await expect(matchResult.locator("label", { hasText: "Japan" })).toHaveCSS("background-color", "rgb(230, 193, 92)");
+  await expect(matchResult.locator("label", { hasText: "Japan" })).toHaveCSS("background-color", "rgb(216, 185, 93)");
   await expect(page.getByLabel("Netherlands half-time score")).toHaveValue("0");
   await expect(page.locator("section", { has: page.getByRole("heading", { name: "First team to score" }) }).locator("label", { hasText: "Netherlands" })).toHaveCSS("opacity", "0.58");
 });
