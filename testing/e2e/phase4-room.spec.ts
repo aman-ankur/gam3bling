@@ -39,6 +39,7 @@ test("room page can render a room hub for returning players", async ({ page }) =
 
   await expect(page.getByText("World Cup Room · Room hub")).toBeVisible();
   await expect(page.getByRole("heading", { name: "World Cup Room" })).toBeVisible();
+  await expect(page.locator(".hub-stats div").first().locator("b")).toHaveText("4");
   await expect(page.locator(".match-card.featured .sport-matchup")).toHaveAttribute("aria-label", "Netherlands vs Japan");
   await expect(page.locator(".match-card.featured .fixture-row")).toHaveCount(0);
   await expect(page.locator(".match-card.featured").getByText("15 Jun, 1:30 AM IST")).toBeVisible();

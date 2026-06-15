@@ -73,20 +73,55 @@ export async function getRoomSummary(slug: string): Promise<RoomSummary> {
       exists: true,
       name: room.name,
       slug: room.slug,
-      members: memberships.map((membership, index) => {
-        const player = Array.isArray(membership.players) ? membership.players[0] : membership.players;
-
-        return {
-          name: player?.display_name ?? "Player",
-          initials: player?.avatar_initials ?? "GB",
-          status: membership.role === "admin" ? "Admin" : "Joined",
-          tone: index === 0 ? "gold" : index === 2 ? "blue" : index === 3 ? "red" : "green"
-        };
-      })
+      members: dedupeRoomMembers(memberships).map((member, index) => ({
+        ...member,
+        tone: index === 0 ? "gold" : index === 2 ? "blue" : index === 3 ? "red" : "green"
+      }))
     };
   } catch {
     return emptyRoom(slug);
   }
+}
+
+function dedupeRoomMembers(
+  memberships: Array<{
+    role: string;
+    players:
+      | {
+          avatar_initials: string | null;
+          display_name: string | null;
+        }
+      | Array<{
+          avatar_initials: string | null;
+          display_name: string | null;
+        }>
+      | null;
+  }>
+): Array<Omit<RoomSummary["members"][number], "tone">> {
+  const membersByName = new Map<string, Omit<RoomSummary["members"][number], "tone">>();
+
+  for (const membership of memberships) {
+    const player = Array.isArray(membership.players) ? membership.players[0] : membership.players;
+    const name = normalizeDisplayName(player?.display_name ?? "Player");
+    const nameKey = playerNameKey(name);
+    const currentMember = membersByName.get(nameKey);
+    const nextMember = {
+      name,
+      initials: normalizeDisplayName(player?.avatar_initials ?? "GB"),
+      status: membership.role === "admin" ? "Admin" : "Joined"
+    };
+
+    if (!currentMember) {
+      membersByName.set(nameKey, nextMember);
+      continue;
+    }
+
+    if (nextMember.status === "Admin" && currentMember.status !== "Admin") {
+      membersByName.set(nameKey, { ...currentMember, status: "Admin" });
+    }
+  }
+
+  return Array.from(membersByName.values());
 }
 
 export async function getCurrentPlayerRoomShortcuts(): Promise<PlayerRoomShortcut[]> {
@@ -168,6 +203,14 @@ function titleFromSlug(slug: string): string {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function playerNameKey(displayName: string): string {
+  return normalizeDisplayName(displayName).toLocaleLowerCase();
+}
+
+function normalizeDisplayName(displayName: string): string {
+  return displayName.trim().replace(/\s+/g, " ");
 }
 
 function emptyRoom(slug: string): RoomSummary {
