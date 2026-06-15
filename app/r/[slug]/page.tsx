@@ -14,7 +14,7 @@ import type { AppMatch } from "@/features/matches/data";
 import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
 import { getPlayerSessionForRoom } from "@/features/players/session";
 import { getCurrentPlayerPredictedMatchIds } from "@/features/predictions/data";
-import { claimRoomPlayer, joinRoom } from "@/features/rooms/actions";
+import { claimRoomPlayer, joinRoom, rememberRoomInviteCode } from "@/features/rooms/actions";
 import { getRoomSummary } from "@/features/rooms/data";
 import { formatKickoffInIst } from "@/features/time/match-time";
 
@@ -28,12 +28,13 @@ type RoomPageProps = {
     error?: string;
     hub?: string;
     invite?: string;
+    inviteError?: string;
   }>;
 };
 
 export default async function RoomPage({ params, searchParams }: RoomPageProps) {
   const { slug } = await params;
-  const { claimName, claimPlayerId, error, hub, invite } = await searchParams;
+  const { claimName, claimPlayerId, error, hub, invite, inviteError } = await searchParams;
   const room = await getRoomSummary(slug);
   const session = await getPlayerSessionForRoom(slug);
   const shouldShowHub = hub === "1" || Boolean(session);
@@ -55,6 +56,7 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
     const currentPlayerScore = session ? leaderboard.find((entry) => entry.playerId === session.playerId)?.score : undefined;
     const visibleInvite = room.inviteCode ?? invite ?? (room.id === "fallback-room" ? "TIGER7" : undefined);
     const shareLink = await buildShareLink(slug, visibleInvite);
+    const recoverInviteAction = rememberRoomInviteCode.bind(null, slug);
 
     return (
       <AppShell roomName={room.name} roomSlug={slug} subtitle="Room hub">
@@ -156,7 +158,12 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
           </div>
         </section>
 
-        <RoomInviteCard inviteCode={visibleInvite} shortLink={shareLink} />
+        <RoomInviteCard
+          inviteCode={visibleInvite}
+          inviteError={inviteError}
+          recoverInviteAction={room.inviteCode ? undefined : recoverInviteAction}
+          shortLink={shareLink}
+        />
       </AppShell>
     );
   }

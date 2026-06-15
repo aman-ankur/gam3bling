@@ -4,18 +4,36 @@ import { useState } from "react";
 
 type RoomInviteCardProps = {
   inviteCode?: string;
+  inviteError?: string;
+  recoverInviteAction?: (formData: FormData) => void | Promise<void>;
   shortLink: string;
 };
 
-export function RoomInviteCard({ inviteCode, shortLink }: RoomInviteCardProps) {
-  const [copied, setCopied] = useState(false);
+export function RoomInviteCard({ inviteCode, inviteError, recoverInviteAction, shortLink }: RoomInviteCardProps) {
+  const [copiedInvite, setCopiedInvite] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   async function copyInvite() {
     try {
-      await navigator.clipboard.writeText(shortLink);
-      setCopied(true);
+      const inviteText = inviteCode ? `Invite link: ${shortLink}\nRoom code: ${inviteCode}` : `Invite link: ${shortLink}`;
+
+      await navigator.clipboard.writeText(inviteText);
+      setCopiedInvite(true);
     } catch {
-      setCopied(false);
+      setCopiedInvite(false);
+    }
+  }
+
+  async function copyCode() {
+    if (!inviteCode) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(inviteCode);
+      setCopiedCode(true);
+    } catch {
+      setCopiedCode(false);
     }
   }
 
@@ -23,12 +41,35 @@ export function RoomInviteCard({ inviteCode, shortLink }: RoomInviteCardProps) {
     <section className="invite-card" aria-labelledby="invite-title">
       <p className="eyebrow">Invite link</p>
       <h3 id="invite-title">{shortLink}</h3>
+      <p className="invite-code-label">Room code</p>
       <div className="code-box" aria-label="Invite code">
-        {inviteCode ?? "Hidden after creation"}
+        {inviteCode ?? "Code not saved yet"}
       </div>
-      <button className="primary-button" onClick={copyInvite} type="button">
-        {copied ? "Copied" : "Copy invite"}
-      </button>
+      {inviteCode ? (
+        <div className="invite-actions">
+          <button className="primary-button" onClick={copyInvite} type="button">
+            {copiedInvite ? "Copied" : "Copy link + code"}
+          </button>
+          <button className="ghost-link" onClick={copyCode} type="button">
+            {copiedCode ? "Code copied" : "Copy code only"}
+          </button>
+        </div>
+      ) : null}
+      {!inviteCode && recoverInviteAction ? (
+        <form action={recoverInviteAction} className="invite-recovery-form">
+          <p>Legacy room: enter the room code once and it will stay visible here.</p>
+          {inviteError ? <span role="alert">That room code did not match.</span> : null}
+          <input aria-label="Recover room code" autoComplete="off" name="inviteCode" placeholder="TIGER7" />
+          <button className="primary-button" type="submit">
+            Save room code
+          </button>
+        </form>
+      ) : null}
+      {!inviteCode && !recoverInviteAction ? (
+        <button className="primary-button" onClick={copyInvite} type="button">
+          {copiedInvite ? "Copied" : "Copy invite link"}
+        </button>
+      ) : null}
     </section>
   );
 }

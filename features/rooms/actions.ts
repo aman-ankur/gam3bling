@@ -14,6 +14,7 @@ type IdRow = {
 
 type RoomInviteRow = {
   id: string;
+  invite_code?: string | null;
   slug: string;
   invite_code_hash: string;
 };
@@ -36,11 +37,14 @@ type RoomMemberPredictionRow = {
   submitted_at: string;
 };
 
+type SupabaseClient = ReturnType<typeof requireSupabase>;
+
 export async function createRoom(formData: FormData): Promise<void> {
   const supabase = requireSupabase();
   const roomName = stringField(formData, "roomName", "World Cup Room");
   const displayName = normalizeDisplayName(stringField(formData, "displayName", "Player"));
   const inviteCode = createInviteCode();
+  const normalizedInviteCode = normalizeInviteCode(inviteCode);
   const slug = `${slugify(roomName)}-${randomBytes(2).toString("hex")}`;
 
   console.info("[rooms.create] start", { roomName, slug });
@@ -65,20 +69,13 @@ export async function createRoom(formData: FormData): Promise<void> {
     throw new Error(playerError?.message ?? "Could not create player");
   }
 
-  const { data: room, error: roomError } = await withSupabaseRetry<IdRow>(() =>
+  const { data: room, error: roomError } = await insertRoomRecord({
+    creatorPlayerId: player.id,
+    inviteCode: normalizedInviteCode,
+    roomName,
+    slug,
     supabase
-      .from("rooms")
-      .insert({
-        name: roomName,
-        slug,
-        invite_code: normalizeInviteCode(inviteCode),
-        invite_code_hash: hashSecret(normalizeInviteCode(inviteCode)),
-        creator_player_id: player.id
-      })
-      .select("id")
-      .single()
-  , { label: "rooms.create.rooms.insert" }
-  );
+  });
 
   if (roomError || !room) {
     console.error("[rooms.create] room_failed", { slug, playerId: player.id, message: roomError?.message ?? "No room returned" });
@@ -111,10 +108,7 @@ export async function joinRoom(slug: string, formData: FormData): Promise<void> 
 
   console.info("[rooms.join] start", { slug });
 
-  const { data: room, error: roomError } = await withSupabaseRetry<RoomInviteRow>(() =>
-    supabase.from("rooms").select("id, slug, invite_code_hash").eq("slug", slug).single()
-  , { label: "rooms.join.rooms.select" }
-  );
+  const { data: room, error: roomError } = await selectRoomBySlug({ label: "rooms.join.rooms.select", slug, supabase });
 
   if (roomError || !room) {
     console.warn("[rooms.join] room_missing", { slug, message: roomError?.message ?? "No room returned" });
@@ -126,6 +120,7 @@ export async function joinRoom(slug: string, formData: FormData): Promise<void> 
     redirect(`/r/${slug}?error=code`);
   }
 
+  await persistVisibleInviteCode({ inviteCode, room, supabase, logLabel: "rooms.join" });
   await completeRoomJoin({
     displayName,
     inviteCode,
@@ -144,10 +139,7 @@ export async function claimRoomPlayer(slug: string, formData: FormData): Promise
 
   console.info("[rooms.claim] start", { slug });
 
-  const { data: room, error: roomError } = await withSupabaseRetry<RoomInviteRow>(() =>
-    supabase.from("rooms").select("id, slug, invite_code_hash").eq("slug", slug).single()
-  , { label: "rooms.claim.rooms.select" }
-  );
+  const { data: room, error: roomError } = await selectRoomBySlug({ label: "rooms.claim.rooms.select", slug, supabase });
 
   if (roomError || !room) {
     console.warn("[rooms.claim] room_missing", { slug, message: roomError?.message ?? "No room returned" });
@@ -159,6 +151,7 @@ export async function claimRoomPlayer(slug: string, formData: FormData): Promise
     redirect(`/r/${slug}?error=code`);
   }
 
+  await persistVisibleInviteCode({ inviteCode, room, supabase, logLabel: "rooms.claim" });
   const { data: membership } = await withSupabaseRetry<{ player_id: string }>(() =>
     supabase.from("room_members").select("player_id").eq("room_id", room.id).eq("player_id", playerId).maybeSingle()
   , { label: "rooms.claim.room_members.select" }
@@ -186,16 +179,18 @@ export async function joinRoomByCode(formData: FormData): Promise<void> {
     redirect(failureTarget.code);
   }
 
-  const { data: room, error: roomError } = await withSupabaseRetry<RoomInviteRow>(() =>
-    supabase.from("rooms").select("id, slug, invite_code_hash").eq("invite_code_hash", hashSecret(inviteCode)).single()
-  , { label: "rooms.join_by_code.rooms.select" }
-  );
+  const { data: room, error: roomError } = await selectRoomByInviteHash({
+    inviteCodeHash: hashSecret(inviteCode),
+    label: "rooms.join_by_code.rooms.select",
+    supabase
+  });
 
   if (roomError || !room) {
     console.warn("[rooms.join_by_code] room_missing", { message: roomError?.message ?? "No room returned" });
     redirect(failureTarget.code);
   }
 
+  await persistVisibleInviteCode({ inviteCode, room, supabase, logLabel: "rooms.join_by_code" });
   await completeRoomJoin({
     displayName,
     inviteCode,
@@ -205,6 +200,33 @@ export async function joinRoomByCode(formData: FormData): Promise<void> {
     logLabel: "rooms.join_by_code"
   });
   redirect(`/r/${room.slug}/matches`);
+}
+
+export async function rememberRoomInviteCode(slug: string, formData: FormData): Promise<void> {
+  const supabase = requireSupabase();
+  const inviteCode = normalizeInviteCode(stringField(formData, "inviteCode", ""));
+
+  console.info("[rooms.invite.remember] start", { slug });
+
+  if (!isValidInviteCode(inviteCode)) {
+    redirect(`/r/${slug}?hub=1&inviteError=code`);
+  }
+
+  const { data: room, error: roomError } = await selectRoomBySlug({ label: "rooms.invite.remember.rooms.select", slug, supabase });
+
+  if (roomError || !room) {
+    console.warn("[rooms.invite.remember] room_missing", { slug, message: roomError?.message ?? "No room returned" });
+    redirect(`/r/${slug}?hub=1&inviteError=room`);
+  }
+
+  if (room.invite_code_hash !== hashSecret(inviteCode)) {
+    console.warn("[rooms.invite.remember] invalid_invite", { slug, roomId: room.id });
+    redirect(`/r/${slug}?hub=1&inviteError=code`);
+  }
+
+  await persistVisibleInviteCode({ inviteCode, room, supabase, logLabel: "rooms.invite.remember" });
+  console.info("[rooms.invite.remember] success", { roomSlug: room.slug, roomId: room.id });
+  redirect(`/r/${room.slug}?hub=1&invite=${inviteCode}`);
 }
 
 async function completeRoomJoin({
@@ -268,6 +290,126 @@ async function completeRoomJoin({
 
   console.info(`[${logLabel}] success`, { roomSlug, roomId, playerId: player.id });
   await setPlayerSession({ playerId: player.id, roomId, roomSlug });
+}
+
+async function insertRoomRecord({
+  creatorPlayerId,
+  inviteCode,
+  roomName,
+  slug,
+  supabase
+}: {
+  creatorPlayerId: string;
+  inviteCode: string;
+  roomName: string;
+  slug: string;
+  supabase: SupabaseClient;
+}) {
+  const sharedPayload = {
+    name: roomName,
+    slug,
+    invite_code_hash: hashSecret(inviteCode),
+    creator_player_id: creatorPlayerId
+  };
+  const result = await withSupabaseRetry<IdRow>(() =>
+    supabase
+      .from("rooms")
+      .insert({
+        ...sharedPayload,
+        invite_code: inviteCode
+      })
+      .select("id")
+      .single()
+  , { label: "rooms.create.rooms.insert" }
+  );
+
+  if (!isMissingInviteCodeColumn(result.error)) {
+    return result;
+  }
+
+  console.warn("[rooms.create] invite_code column missing; retrying with legacy room schema", { slug });
+  return withSupabaseRetry<IdRow>(() =>
+    supabase
+      .from("rooms")
+      .insert(sharedPayload)
+      .select("id")
+      .single()
+  , { label: "rooms.create.rooms.insert_legacy" }
+  );
+}
+
+async function selectRoomBySlug({ label, slug, supabase }: { label: string; slug: string; supabase: SupabaseClient }) {
+  const result = await withSupabaseRetry<RoomInviteRow>(() =>
+    supabase.from("rooms").select("id, slug, invite_code, invite_code_hash").eq("slug", slug).single()
+  , { label }
+  );
+
+  if (!isMissingInviteCodeColumn(result.error)) {
+    return result;
+  }
+
+  console.warn(`[${label}] invite_code column missing; retrying with legacy room schema`, { slug });
+  return withSupabaseRetry<RoomInviteRow>(() =>
+    supabase.from("rooms").select("id, slug, invite_code_hash").eq("slug", slug).single()
+  , { label: `${label}_legacy` }
+  );
+}
+
+async function selectRoomByInviteHash({
+  inviteCodeHash,
+  label,
+  supabase
+}: {
+  inviteCodeHash: string;
+  label: string;
+  supabase: SupabaseClient;
+}) {
+  const result = await withSupabaseRetry<RoomInviteRow>(() =>
+    supabase.from("rooms").select("id, slug, invite_code, invite_code_hash").eq("invite_code_hash", inviteCodeHash).single()
+  , { label }
+  );
+
+  if (!isMissingInviteCodeColumn(result.error)) {
+    return result;
+  }
+
+  console.warn(`[${label}] invite_code column missing; retrying with legacy room schema`);
+  return withSupabaseRetry<RoomInviteRow>(() =>
+    supabase.from("rooms").select("id, slug, invite_code_hash").eq("invite_code_hash", inviteCodeHash).single()
+  , { label: `${label}_legacy` }
+  );
+}
+
+async function persistVisibleInviteCode({
+  inviteCode,
+  room,
+  supabase,
+  logLabel
+}: {
+  inviteCode: string;
+  room: RoomInviteRow;
+  supabase: ReturnType<typeof requireSupabase>;
+  logLabel: string;
+}): Promise<void> {
+  if (room.invite_code === inviteCode || room.invite_code === undefined) {
+    return;
+  }
+
+  const { error } = await withSupabaseRetry<null>(() =>
+    supabase.from("rooms").update({ invite_code: inviteCode }).eq("id", room.id)
+  , { label: `${logLabel}.rooms.invite_code_update` }
+  );
+
+  if (error) {
+    console.error(`[${logLabel}] invite_code_update_failed`, { roomId: room.id, message: error.message });
+    throw new Error(error.message);
+  }
+}
+
+function isMissingInviteCodeColumn(error: { message?: string } | null | undefined): boolean {
+  const message = error?.message?.toLowerCase() ?? "";
+
+  return message.includes("invite_code") && message.includes("schema cache");
 }
 
 async function findExistingRoomMemberByName({

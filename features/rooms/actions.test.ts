@@ -2,7 +2,7 @@ import { beforeEach, expect, test, vi } from "vitest";
 import { redirect } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { setPlayerSession } from "@/features/players/session";
-import { claimRoomPlayer, createRoom, joinRoom } from "./actions";
+import { claimRoomPlayer, createRoom, joinRoom, rememberRoomInviteCode } from "./actions";
 
 vi.mock("next/navigation", () => ({
   redirect: vi.fn((target: string) => {
@@ -88,6 +88,64 @@ test("creating a room stores the visible invite code for later sharing", async (
 
   expect(roomInsertPayload?.invite_code).toMatch(/^[A-Z0-9]{6}$/);
   expect(roomInsertPayload?.invite_code_hash).toBe(`hash:${roomInsertPayload?.invite_code}`);
+});
+
+test("creating a room still works before the visible invite code migration is applied", async () => {
+  const roomInsertPayloads: Array<{ invite_code?: string; invite_code_hash?: string }> = [];
+  const supabase = {
+    from: vi.fn((table: string) => {
+      if (table === "players") {
+        return {
+          insert: vi.fn(() => ({
+            select: vi.fn(() => ({
+              single: vi.fn(async () => ({ data: { id: "player-1" }, error: null }))
+            }))
+          }))
+        };
+      }
+
+      if (table === "rooms") {
+        return {
+          insert: vi.fn((payload: { invite_code?: string; invite_code_hash?: string }) => {
+            roomInsertPayloads.push(payload);
+
+            return {
+              select: vi.fn(() => ({
+                single: vi.fn(async () =>
+                  roomInsertPayloads.length === 1
+                    ? {
+                        data: null,
+                        error: { message: "Could not find the 'invite_code' column of 'rooms' in the schema cache" }
+                      }
+                    : { data: { id: "room-1" }, error: null }
+                )
+              }))
+            };
+          })
+        };
+      }
+
+      if (table === "room_members") {
+        return {
+          insert: vi.fn(async () => ({ error: null }))
+        };
+      }
+
+      throw new Error(`Unexpected table ${table}`);
+    })
+  };
+  const formData = new FormData();
+  formData.set("roomName", "World Cup Room");
+  formData.set("displayName", "Amanwa");
+
+  vi.mocked(getSupabaseAdmin).mockReturnValue(supabase as never);
+
+  await expect(createRoom(formData)).rejects.toThrow(/NEXT_REDIRECT:\/r\/world-cup-room-[a-f0-9]{4}\?invite=[A-Z0-9]{6}/);
+
+  expect(roomInsertPayloads).toHaveLength(2);
+  expect(roomInsertPayloads[0]?.invite_code).toMatch(/^[A-Z0-9]{6}$/);
+  expect(roomInsertPayloads[1]?.invite_code).toBeUndefined();
+  expect(roomInsertPayloads[1]?.invite_code_hash).toBe(roomInsertPayloads[0]?.invite_code_hash);
 });
 
 test("warns before creating a duplicate room member with the same display name", async () => {
@@ -188,6 +246,173 @@ test("warns before creating a duplicate room member with the same display name",
   expect(redirect).toHaveBeenCalledWith(
     "/r/world-cup-room?invite=TIGER7&claimPlayerId=existing-player&claimName=Amanwa"
   );
+});
+
+test("joining a legacy room saves the visible invite code", async () => {
+  const updateRoom = vi.fn(() => ({
+    eq: vi.fn(async () => ({ error: null }))
+  }));
+  const supabase = {
+    from: vi.fn((table: string) => {
+      if (table === "rooms") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn(async () => ({
+                data: {
+                  id: "room-1",
+                  slug: "world-cup-room",
+                  invite_code: null,
+                  invite_code_hash: "67985328ad86808121da46742ba759123b6e7bc1dae81edaeb39747d5b672302"
+                },
+                error: null
+              }))
+            }))
+          })),
+          update: updateRoom
+        };
+      }
+
+      if (table === "room_members") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              order: vi.fn(async () => ({ data: [], error: null }))
+            }))
+          })),
+          upsert: vi.fn(async () => ({ error: null }))
+        };
+      }
+
+      if (table === "players") {
+        return {
+          insert: vi.fn(() => ({
+            select: vi.fn(() => ({
+              single: vi.fn(async () => ({ data: { id: "player-1" }, error: null }))
+            }))
+          }))
+        };
+      }
+
+      throw new Error(`Unexpected table ${table}`);
+    })
+  };
+  const formData = new FormData();
+  formData.set("inviteCode", "tiger7");
+  formData.set("displayName", "Kamesh");
+
+  vi.mocked(getSupabaseAdmin).mockReturnValue(supabase as never);
+
+  await expect(joinRoom("world-cup-room", formData)).rejects.toThrow("NEXT_REDIRECT:/r/world-cup-room/matches");
+
+  expect(updateRoom).toHaveBeenCalledWith({ invite_code: "TIGER7" });
+});
+
+test("joining a room still works before the visible invite code migration is applied", async () => {
+  let roomSelectCalls = 0;
+  const supabase = {
+    from: vi.fn((table: string) => {
+      if (table === "rooms") {
+        return {
+          select: vi.fn(() => {
+            roomSelectCalls += 1;
+
+            return {
+              eq: vi.fn(() => ({
+                single: vi.fn(async () =>
+                  roomSelectCalls === 1
+                    ? {
+                        data: null,
+                        error: { message: "Could not find the 'invite_code' column of 'rooms' in the schema cache" }
+                      }
+                    : {
+                        data: {
+                          id: "room-1",
+                          slug: "world-cup-room",
+                          invite_code_hash: "67985328ad86808121da46742ba759123b6e7bc1dae81edaeb39747d5b672302"
+                        },
+                        error: null
+                      }
+                )
+              }))
+            };
+          })
+        };
+      }
+
+      if (table === "room_members") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              order: vi.fn(async () => ({ data: [], error: null }))
+            }))
+          })),
+          upsert: vi.fn(async () => ({ error: null }))
+        };
+      }
+
+      if (table === "players") {
+        return {
+          insert: vi.fn(() => ({
+            select: vi.fn(() => ({
+              single: vi.fn(async () => ({ data: { id: "player-1" }, error: null }))
+            }))
+          }))
+        };
+      }
+
+      throw new Error(`Unexpected table ${table}`);
+    })
+  };
+  const formData = new FormData();
+  formData.set("inviteCode", "TIGER7");
+  formData.set("displayName", "Kamesh");
+
+  vi.mocked(getSupabaseAdmin).mockReturnValue(supabase as never);
+
+  await expect(joinRoom("world-cup-room", formData)).rejects.toThrow("NEXT_REDIRECT:/r/world-cup-room/matches");
+
+  expect(roomSelectCalls).toBe(2);
+});
+
+test("remembering a legacy room code verifies and stores the code", async () => {
+  const updateRoom = vi.fn(() => ({
+    eq: vi.fn(async () => ({ error: null }))
+  }));
+  const supabase = {
+    from: vi.fn((table: string) => {
+      if (table === "rooms") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn(async () => ({
+                data: {
+                  id: "room-1",
+                  slug: "world-cup-room",
+                  invite_code: null,
+                  invite_code_hash: "67985328ad86808121da46742ba759123b6e7bc1dae81edaeb39747d5b672302"
+                },
+                error: null
+              }))
+            }))
+          })),
+          update: updateRoom
+        };
+      }
+
+      throw new Error(`Unexpected table ${table}`);
+    })
+  };
+  const formData = new FormData();
+  formData.set("inviteCode", "tiger7");
+
+  vi.mocked(getSupabaseAdmin).mockReturnValue(supabase as never);
+
+  await expect(rememberRoomInviteCode("world-cup-room", formData)).rejects.toThrow(
+    "NEXT_REDIRECT:/r/world-cup-room?hub=1&invite=TIGER7"
+  );
+
+  expect(updateRoom).toHaveBeenCalledWith({ invite_code: "TIGER7" });
 });
 
 test("claiming an existing room member restores that player session", async () => {
