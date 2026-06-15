@@ -51,7 +51,15 @@ test("room page can render a room hub for returning players", async ({ page }) =
   await expect(page.getByText("Other open matches")).toBeVisible();
   await expect(page.getByRole("link", { name: /Predict Ivory Coast vs Ecuador/i })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Room score" })).toBeVisible();
+  await expect(page.locator(".compact-leader-list")).toBeHidden();
+  await page.locator(".room-accordion-summary", { hasText: "Room score" }).click();
+  await expect(page.locator(".compact-leader-list")).toBeVisible();
   await expect(page.getByRole("heading", { name: "History" })).toBeVisible();
+  await expect(page.locator(".history-preview")).toBeHidden();
+  await page.locator(".room-accordion-summary", { hasText: "History" }).click();
+  await expect(page.locator(".history-preview")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /\/r\/world-cup-room\?invite=TIGER7/ })).toBeHidden();
+  await page.locator(".room-accordion-summary", { hasText: "Invite link" }).click();
   await expect(page.getByRole("heading", { name: /\/r\/world-cup-room\?invite=TIGER7/ })).toBeVisible();
   await expect(page.getByLabel("Invite code")).toHaveText("TIGER7");
 });

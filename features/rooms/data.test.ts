@@ -1,7 +1,7 @@
 import { beforeEach, expect, test, vi } from "vitest";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { getUpcomingMatches } from "@/features/matches/data";
-import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
+import { getActiveMatchIds, getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
 import { getPlayerSessions } from "@/features/players/session";
 import { getCurrentPlayerRoomShortcuts, getRoomSummary } from "./data";
 
@@ -14,6 +14,7 @@ vi.mock("@/features/matches/data", () => ({
 }));
 
 vi.mock("@/features/matches/prediction-window", () => ({
+  getActiveMatchIds: vi.fn(() => new Set<string>()),
   getOpenPredictionMatchIds: vi.fn(() => new Set<string>())
 }));
 
@@ -323,4 +324,62 @@ test("returns shortcuts for every room stored in the current browser session", a
   expect(shortcuts.map((shortcut) => shortcut.href)).toEqual(["/r/new-room", "/r/old-room"]);
   expect(shortcuts.map((shortcut) => shortcut.score)).toEqual([5, 7]);
   expect(shortcuts.map((shortcut) => shortcut.savedCount)).toEqual([1, 2]);
+});
+
+test("uses an active room shortcut match before the next open prediction match", async () => {
+  const liveMatch = {
+    id: "match-live",
+    apiMatchId: "api-match-live",
+    stage: "Group H",
+    kickoffAt: "2026-06-15T16:00:00Z",
+    status: "live",
+    homeTeam: { id: "spain", name: "Spain", shortCode: "ESP", flagCode: "ES" },
+    awayTeam: { id: "cape-verde", name: "Cape Verde", shortCode: "CPV", flagCode: "CV" }
+  };
+  const nextOpenMatch = {
+    id: "match-open",
+    apiMatchId: "api-match-open",
+    stage: "Group G",
+    kickoffAt: "2026-06-15T19:00:00Z",
+    status: "scheduled",
+    homeTeam: { id: "belgium", name: "Belgium", shortCode: "BEL", flagCode: "BE" },
+    awayTeam: { id: "egypt", name: "Egypt", shortCode: "EGY", flagCode: "EG" }
+  };
+
+  vi.mocked(getUpcomingMatches).mockResolvedValue([liveMatch, nextOpenMatch]);
+  vi.mocked(getActiveMatchIds).mockReturnValue(new Set(["match-live"]));
+  vi.mocked(getOpenPredictionMatchIds).mockReturnValue(new Set(["match-open"]));
+  vi.mocked(getPlayerSessions).mockResolvedValue([{ playerId: "player-1", roomId: "room-1", roomSlug: "room-1" }]);
+  vi.mocked(getSupabaseAdmin).mockReturnValue({
+    from: vi.fn((table: string) => {
+      if (table === "rooms") {
+        return {
+          select: vi.fn(() => ({
+            in: vi.fn(async () => ({
+              data: [{ id: "room-1", name: "Bon Jor WC26", slug: "bon-jor-wc26" }]
+            }))
+          }))
+        };
+      }
+
+      if (table === "predictions") {
+        return {
+          select: vi.fn(() => ({
+            in: vi.fn(async () => ({ data: [] }))
+          }))
+        };
+      }
+
+      throw new Error(`Unexpected table ${table}`);
+    })
+  } as never);
+
+  const shortcuts = await getCurrentPlayerRoomShortcuts();
+
+  expect(shortcuts[0]?.nextMatchLabel).toBe("Spain vs Cape Verde");
+  expect(shortcuts[0]?.nextMatchHref).toBe("/r/bon-jor-wc26/matches/api-match-live");
+  expect(shortcuts[0]?.nextMatch).toEqual({
+    awayTeam: liveMatch.awayTeam,
+    homeTeam: liveMatch.homeTeam
+  });
 });

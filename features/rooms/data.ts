@@ -1,6 +1,6 @@
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { getUpcomingMatches, type AppMatch } from "@/features/matches/data";
-import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
+import { getActiveMatchIds, getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
 import { getPlayerSessions } from "@/features/players/session";
 
 export type RoomSummary = {
@@ -156,8 +156,9 @@ function withMemberTones(members: Array<Omit<RoomMemberSummary, "tone">>): RoomM
 
 export async function getCurrentPlayerRoomShortcuts(): Promise<PlayerRoomShortcut[]> {
   const matches = await getUpcomingMatches();
+  const activeMatchIds = getActiveMatchIds(matches);
   const openMatchIds = getOpenPredictionMatchIds(matches);
-  const nextMatch = matches.find((match) => openMatchIds.has(match.id) || openMatchIds.has(match.apiMatchId)) ?? matches[0];
+  const nextMatch = getRoomShortcutMatch(matches, activeMatchIds, openMatchIds);
 
   if (process.env.E2E_USE_FALLBACK_FIXTURES === "1") {
     return [
@@ -225,6 +226,14 @@ export async function getCurrentPlayerRoomShortcuts(): Promise<PlayerRoomShortcu
   } catch {
     return [];
   }
+}
+
+function getRoomShortcutMatch(matches: AppMatch[], activeMatchIds: Set<string>, openMatchIds: Set<string>): AppMatch | undefined {
+  return (
+    matches.find((match) => activeMatchIds.has(match.id) || activeMatchIds.has(match.apiMatchId)) ??
+    matches.find((match) => openMatchIds.has(match.id) || openMatchIds.has(match.apiMatchId)) ??
+    matches[0]
+  );
 }
 
 function titleFromSlug(slug: string): string {

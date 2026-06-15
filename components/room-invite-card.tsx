@@ -3,13 +3,14 @@
 import { useState } from "react";
 
 type RoomInviteCardProps = {
+  collapsible?: boolean;
   inviteCode?: string;
   inviteError?: string;
   recoverInviteAction?: (formData: FormData) => void | Promise<void>;
   shortLink: string;
 };
 
-export function RoomInviteCard({ inviteCode, inviteError, recoverInviteAction, shortLink }: RoomInviteCardProps) {
+export function RoomInviteCard({ collapsible = false, inviteCode, inviteError, recoverInviteAction, shortLink }: RoomInviteCardProps) {
   const [copiedInvite, setCopiedInvite] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
@@ -37,8 +38,8 @@ export function RoomInviteCard({ inviteCode, inviteError, recoverInviteAction, s
     }
   }
 
-  return (
-    <section className="invite-card" aria-labelledby="invite-title">
+  const inviteBody = (
+    <>
       <p className="eyebrow">Invite link</p>
       <h3 id="invite-title">{shortLink}</h3>
       <p className="invite-code-label">Room code</p>
@@ -70,6 +71,29 @@ export function RoomInviteCard({ inviteCode, inviteError, recoverInviteAction, s
           {copiedInvite ? "Copied" : "Copy invite link"}
         </button>
       ) : null}
+    </>
+  );
+
+  if (collapsible) {
+    return (
+      <details className="invite-card room-accordion" aria-labelledby="invite-summary-title">
+        <summary className="room-accordion-summary">
+          <div>
+            <p className="eyebrow">Invite link</p>
+            <h2 id="invite-summary-title">Invite link</h2>
+          </div>
+          <span className="status-chip">Expand</span>
+        </summary>
+        <div className="room-accordion-body">
+          {inviteBody}
+        </div>
+      </details>
+    );
+  }
+
+  return (
+    <section className="invite-card" aria-labelledby="invite-title">
+      {inviteBody}
     </section>
   );
 }

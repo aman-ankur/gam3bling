@@ -4588,6 +4588,56 @@ body {
   font-weight: 800;
 }
 
+.match-list + .other-open-matches {
+  margin-top: 16px;
+}
+
+.room-accordion {
+  gap: 0;
+}
+
+.room-accordion-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.room-accordion-summary::-webkit-details-marker {
+  display: none;
+}
+
+.room-accordion-summary h2 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.15;
+}
+
+.room-accordion-summary .status-chip {
+  flex: 0 0 auto;
+}
+
+.room-accordion[open] .room-accordion-summary {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.room-accordion-body {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.invite-card.room-accordion {
+  display: block;
+}
+
+.invite-card .room-accordion-body {
+  gap: 12px;
+}
+
 @media (max-width: 420px) {
   .post-result-hero h2,
   .latest-result-hero h2 {

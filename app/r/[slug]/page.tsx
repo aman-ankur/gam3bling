@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { headers } from "next/headers";
+import type { ReactNode } from "react";
 import { AppShell } from "@/components/app-shell";
 import { LatestResultCard } from "@/components/latest-result-card";
 import { MatchCard } from "@/components/match-card";
@@ -158,13 +159,7 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
           ) : null}
         </section>
 
-        <section className="section-stack" aria-labelledby="room-score-title">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Room score</p>
-              <h2 id="room-score-title">Room score</h2>
-            </div>
-          </div>
+        <RoomAccordion eyebrow="Room score" title="Room score">
           <ol className="compact-leader-list">
             {roomScoreRows.length > 0 ? (
               roomScoreRows.map((entry) => (
@@ -182,15 +177,9 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
             )}
           </ol>
           <ScoringGuide variant="details" />
-        </section>
+        </RoomAccordion>
 
-        <section className="section-stack" aria-labelledby="room-history-title">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Results ledger</p>
-              <h2 id="room-history-title">History</h2>
-            </div>
-          </div>
+        <RoomAccordion eyebrow="Results ledger" title="History">
           {latestCompletedMatch ? (
             <LatestResultCard match={latestCompletedMatch} picks={latestResultPicks} slug={slug} />
           ) : (
@@ -199,9 +188,10 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
               <span>Round winners, exact-score hits, and score changes will live in this section.</span>
             </div>
           )}
-        </section>
+        </RoomAccordion>
 
         <RoomInviteCard
+          collapsible
           inviteCode={visibleInvite}
           inviteError={inviteError}
           recoverInviteAction={room.inviteCode ? undefined : recoverInviteAction}
@@ -299,57 +289,76 @@ function AdminRoomControls({
   const removableMembers = members.filter((member) => member.playerId && member.playerId !== roomCreatorPlayerId);
 
   return (
-    <section className="section-stack admin-room-panel" aria-labelledby="room-admin-title">
-      <div className="section-heading">
+    <details className="section-stack room-accordion admin-room-panel" aria-labelledby="room-admin-title">
+      <summary className="room-accordion-summary">
         <div>
           <p className="eyebrow">Admin</p>
           <h2 id="room-admin-title">Manage room</h2>
         </div>
         <span className="status-chip">Creator only</span>
-      </div>
+      </summary>
 
-      {adminStatus === "playerRemoved" ? <p className="admin-feedback success">Player removed from this room.</p> : null}
-      {adminError ? <p className="admin-feedback error">Could not complete that admin action.</p> : null}
+      <div className="room-accordion-body">
+        {adminStatus === "playerRemoved" ? <p className="admin-feedback success">Player removed from this room.</p> : null}
+        {adminError ? <p className="admin-feedback error">Could not complete that admin action.</p> : null}
 
-      <div className="admin-member-list" aria-label="Remove room members">
-        {members.map((member) => {
-          const canRemove = Boolean(member.playerId && member.playerId !== roomCreatorPlayerId);
+        <div className="admin-member-list" aria-label="Remove room members">
+          {members.map((member) => {
+            const canRemove = Boolean(member.playerId && member.playerId !== roomCreatorPlayerId);
 
-          return (
-            <div className="admin-member-row" key={member.playerId ?? member.name}>
-              <div>
-                <strong>{member.name}</strong>
-                <span>{member.status}</span>
+            return (
+              <div className="admin-member-row" key={member.playerId ?? member.name}>
+                <div>
+                  <strong>{member.name}</strong>
+                  <span>{member.status}</span>
+                </div>
+                {canRemove ? (
+                  <form action={removeMemberAction}>
+                    <input name="playerId" type="hidden" value={member.playerId ?? ""} />
+                    <SubmitButton className="danger-button compact-danger-button" pendingLabel="Removing...">
+                      Remove
+                    </SubmitButton>
+                  </form>
+                ) : (
+                  <span className="admin-lock-label">Creator</span>
+                )}
               </div>
-              {canRemove ? (
-                <form action={removeMemberAction}>
-                  <input name="playerId" type="hidden" value={member.playerId ?? ""} />
-                  <SubmitButton className="danger-button compact-danger-button" pendingLabel="Removing...">
-                    Remove
-                  </SubmitButton>
-                </form>
-              ) : (
-                <span className="admin-lock-label">Creator</span>
-              )}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+
+        {removableMembers.length === 0 ? (
+          <p className="section-note">No removable players yet. Invite friends first, then they will appear here.</p>
+        ) : null}
+
+        <details className="delete-room-disclosure">
+          <summary>Delete this room</summary>
+          <form action={deleteRoomAction}>
+            <p>Deletes {roomName} and removes it from everyone&apos;s room list. Predictions stay in the database, but this room disappears.</p>
+            <SubmitButton className="danger-button" pendingLabel="Deleting room...">
+              Delete room
+            </SubmitButton>
+          </form>
+        </details>
       </div>
+    </details>
+  );
+}
 
-      {removableMembers.length === 0 ? (
-        <p className="section-note">No removable players yet. Invite friends first, then they will appear here.</p>
-      ) : null}
-
-      <details className="delete-room-disclosure">
-        <summary>Delete this room</summary>
-        <form action={deleteRoomAction}>
-          <p>Deletes {roomName} and removes it from everyone&apos;s room list. Predictions stay in the database, but this room disappears.</p>
-          <SubmitButton className="danger-button" pendingLabel="Deleting room...">
-            Delete room
-          </SubmitButton>
-        </form>
-      </details>
-    </section>
+function RoomAccordion({ children, eyebrow, title }: { children: ReactNode; eyebrow: string; title: string }) {
+  return (
+    <details className="section-stack room-accordion">
+      <summary className="room-accordion-summary">
+        <div>
+          <p className="eyebrow">{eyebrow}</p>
+          <h2>{title}</h2>
+        </div>
+        <span className="status-chip">Expand</span>
+      </summary>
+      <div className="room-accordion-body">
+        {children}
+      </div>
+    </details>
   );
 }
 
