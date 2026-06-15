@@ -10,6 +10,7 @@ import { ScoringGuide } from "@/components/scoring-guide";
 import { SubmitButton } from "@/components/submit-button";
 import { TeamName } from "@/components/team-name";
 import { getRoomLeaderboard } from "@/features/leaderboards/data";
+import { getRoomScoreRows } from "@/features/leaderboards/room-score-preview";
 import { getUpcomingMatches } from "@/features/matches/data";
 import type { AppMatch } from "@/features/matches/data";
 import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
@@ -58,6 +59,7 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
     const openMatches = matches.filter((match) => openMatchIds.has(match.id) || openMatchIds.has(match.apiMatchId)).slice(0, 4);
     const featuredMatch = openMatches[0];
     const otherOpenMatches = openMatches.slice(1);
+    const roomScoreRows = getRoomScoreRows(leaderboard);
     const currentPlayerScore = session ? leaderboard.find((entry) => entry.playerId === session.playerId)?.score : undefined;
     const visibleInvite = room.inviteCode ?? invite ?? (room.id === "fallback-room" ? "TIGER7" : undefined);
     const shareLink = await buildShareLink(slug, visibleInvite);
@@ -133,8 +135,8 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
             </div>
           </div>
           <ol className="compact-leader-list">
-            {leaderboard.length > 0 ? (
-              leaderboard.slice(0, 4).map((entry) => (
+            {roomScoreRows.length > 0 ? (
+              roomScoreRows.map((entry) => (
                 <li key={entry.playerId ?? entry.name}>
                   <span>{entry.rank}</span>
                   <strong>{entry.name}</strong>
