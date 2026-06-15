@@ -182,7 +182,7 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
             adminStatus={admin}
             adminError={adminError}
             deleteRoomAction={deleteRoom.bind(null, slug)}
-            members={room.members}
+            members={room.adminMembers ?? room.members}
             removeMemberAction={removeRoomMember.bind(null, slug)}
             roomName={room.name}
             roomCreatorPlayerId={room.creatorPlayerId}

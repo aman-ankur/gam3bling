@@ -93,6 +93,82 @@ test("collapses duplicate display names in room summary members", async () => {
   expect(room.members.map((member) => member.name)).toEqual(["Amanwa", "Kamesh", "Player", "Declan Rice"]);
 });
 
+test("keeps duplicate display names in admin member data", async () => {
+  vi.mocked(getSupabaseAdmin).mockReturnValue({
+    from: vi.fn((table: string) => {
+      if (table === "rooms") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn(async () => ({
+                data: {
+                  id: "room-1",
+                  creator_player_id: "player-active-admin",
+                  name: "Bon Jor WC26",
+                  slug: "bon-jor-wc26-63e7"
+                },
+                error: null
+              }))
+            }))
+          }))
+        };
+      }
+
+      if (table === "room_members") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              order: vi.fn(async () => ({
+                data: [
+                  {
+                    player_id: "player-old-admin",
+                    role: "member",
+                    players: { display_name: "Amanwa", avatar_initials: "A", avatar_color: "#26c66b" }
+                  },
+                  {
+                    player_id: "player-kamesh",
+                    role: "member",
+                    players: { display_name: "Kamesh", avatar_initials: "K", avatar_color: "#26c66b" }
+                  },
+                  {
+                    player_id: "player-active-admin",
+                    role: "admin",
+                    players: { display_name: "Amanwa", avatar_initials: "A", avatar_color: "#26c66b" }
+                  },
+                  {
+                    player_id: "player-declan-1",
+                    role: "member",
+                    players: { display_name: "Declan Rice", avatar_initials: "DR", avatar_color: "#26c66b" }
+                  },
+                  {
+                    player_id: "player-declan-2",
+                    role: "member",
+                    players: { display_name: "Declan Rice", avatar_initials: "DR", avatar_color: "#26c66b" }
+                  }
+                ],
+                error: null
+              }))
+            }))
+          }))
+        };
+      }
+
+      throw new Error(`Unexpected table ${table}`);
+    })
+  } as never);
+
+  const room = await getRoomSummary("bon-jor-wc26-63e7");
+
+  expect(room.members.map((member) => member.name)).toEqual(["Amanwa", "Kamesh", "Declan Rice"]);
+  expect(room.adminMembers?.map((member) => [member.playerId, member.name, member.role])).toEqual([
+    ["player-old-admin", "Amanwa", "member"],
+    ["player-kamesh", "Kamesh", "member"],
+    ["player-active-admin", "Amanwa", "admin"],
+    ["player-declan-1", "Declan Rice", "member"],
+    ["player-declan-2", "Declan Rice", "member"]
+  ]);
+});
+
 test("returns the visible invite code when a room stores one", async () => {
   vi.mocked(getSupabaseAdmin).mockReturnValue({
     from: vi.fn((table: string) => {

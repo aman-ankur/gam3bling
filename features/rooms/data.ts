@@ -4,20 +4,14 @@ import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window"
 import { getPlayerSessions } from "@/features/players/session";
 
 export type RoomSummary = {
+  adminMembers?: RoomMemberSummary[];
   creatorPlayerId?: string;
   exists: boolean;
   id: string;
   inviteCode?: string;
   name: string;
   slug: string;
-  members: Array<{
-    name: string;
-    initials: string;
-    playerId?: string;
-    role: "admin" | "member";
-    status: string;
-    tone: string;
-  }>;
+  members: RoomMemberSummary[];
 };
 
 export type PlayerRoomShortcut = {
@@ -29,6 +23,15 @@ export type PlayerRoomShortcut = {
   nextMatch?: Pick<AppMatch, "awayTeam" | "homeTeam">;
   savedCount: number;
   score: number;
+};
+
+export type RoomMemberSummary = {
+  name: string;
+  initials: string;
+  playerId?: string;
+  role: "admin" | "member";
+  status: string;
+  tone: string;
 };
 
 const fallbackRoom: RoomSummary = {
@@ -74,24 +77,24 @@ export async function getRoomSummary(slug: string): Promise<RoomSummary> {
       return { creatorPlayerId: room.creator_player_id ?? undefined, exists: true, id: room.id, name: room.name, slug: room.slug, members: [] };
     }
 
+    const allMembers = mapRoomMembers(memberships);
+
     return {
+      adminMembers: withMemberTones(allMembers),
       creatorPlayerId: room.creator_player_id ?? undefined,
       id: room.id,
       exists: true,
       inviteCode: typeof room.invite_code === "string" ? room.invite_code : undefined,
       name: room.name,
       slug: room.slug,
-      members: dedupeRoomMembers(memberships).map((member, index) => ({
-        ...member,
-        tone: index === 0 ? "gold" : index === 2 ? "blue" : index === 3 ? "red" : "green"
-      }))
+      members: withMemberTones(dedupeRoomMembers(allMembers))
     };
   } catch {
     return emptyRoom(slug);
   }
 }
 
-function dedupeRoomMembers(
+function mapRoomMembers(
   memberships: Array<{
     player_id?: string | null;
     role: string;
@@ -106,22 +109,30 @@ function dedupeRoomMembers(
         }>
       | null;
   }>
-): Array<Omit<RoomSummary["members"][number], "tone">> {
-  const membersByName = new Map<string, Omit<RoomSummary["members"][number], "tone">>();
-
-  for (const membership of memberships) {
+): Array<Omit<RoomMemberSummary, "tone">> {
+  return memberships.map((membership) => {
     const player = Array.isArray(membership.players) ? membership.players[0] : membership.players;
     const name = normalizeDisplayName(player?.display_name ?? "Player");
-    const nameKey = playerNameKey(name);
-    const currentMember = membersByName.get(nameKey);
     const role: "admin" | "member" = membership.role === "admin" ? "admin" : "member";
-    const nextMember = {
+
+    return {
       name,
       initials: normalizeDisplayName(player?.avatar_initials ?? "GB"),
       playerId: membership.player_id ?? undefined,
       role,
       status: role === "admin" ? "Admin" : "Joined"
     };
+  });
+}
+
+function dedupeRoomMembers(
+  members: Array<Omit<RoomMemberSummary, "tone">>
+): Array<Omit<RoomMemberSummary, "tone">> {
+  const membersByName = new Map<string, Omit<RoomMemberSummary, "tone">>();
+
+  for (const nextMember of members) {
+    const nameKey = playerNameKey(nextMember.name);
+    const currentMember = membersByName.get(nameKey);
 
     if (!currentMember) {
       membersByName.set(nameKey, nextMember);
@@ -134,6 +145,13 @@ function dedupeRoomMembers(
   }
 
   return Array.from(membersByName.values());
+}
+
+function withMemberTones(members: Array<Omit<RoomMemberSummary, "tone">>): RoomMemberSummary[] {
+  return members.map((member, index) => ({
+    ...member,
+    tone: index === 0 ? "gold" : index === 2 ? "blue" : index === 3 ? "red" : "green"
+  }));
 }
 
 export async function getCurrentPlayerRoomShortcuts(): Promise<PlayerRoomShortcut[]> {
