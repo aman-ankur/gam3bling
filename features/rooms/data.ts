@@ -1,7 +1,7 @@
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { getUpcomingMatches, type AppMatch } from "@/features/matches/data";
 import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
-import { getPlayerSession } from "@/features/players/session";
+import { getPlayerSessions } from "@/features/players/session";
 
 export type RoomSummary = {
   exists: boolean;
@@ -109,38 +109,54 @@ export async function getCurrentPlayerRoomShortcuts(): Promise<PlayerRoomShortcu
     ];
   }
 
-  const [session, supabase] = await Promise.all([getPlayerSession(), Promise.resolve(getSupabaseAdmin())]);
+  const [sessions, supabase] = await Promise.all([getPlayerSessions(), Promise.resolve(getSupabaseAdmin())]);
 
-  if (!session || !supabase) {
+  if (sessions.length === 0 || !supabase) {
     return [];
   }
 
   try {
-    const { data: room } = await supabase.from("rooms").select("id, name, slug").eq("id", session.roomId).single();
+    const roomIds = sessions.map((session) => session.roomId);
+    const playerIds = sessions.map((session) => session.playerId);
+    const { data: rooms } = await supabase.from("rooms").select("id, name, slug").in("id", roomIds);
 
-    if (!room) {
+    if (!rooms?.length) {
       return [];
     }
 
     const { data: predictions } = await supabase
       .from("predictions")
-      .select("score_total")
-      .eq("player_id", session.playerId);
-    const savedCount = predictions?.length ?? 0;
-    const score = predictions?.reduce((total, prediction) => total + (prediction.score_total ?? 0), 0) ?? 0;
+      .select("player_id, score_total")
+      .in("player_id", playerIds);
+    const roomById = new Map(rooms.map((room) => [room.id, room]));
+    const predictionsByPlayerId = new Map<string, Array<{ score_total: number | null }>>();
 
-    return [
-      {
+    for (const prediction of predictions ?? []) {
+      const playerPredictions = predictionsByPlayerId.get(prediction.player_id) ?? [];
+      playerPredictions.push(prediction);
+      predictionsByPlayerId.set(prediction.player_id, playerPredictions);
+    }
+
+    return sessions.flatMap((session) => {
+      const room = roomById.get(session.roomId);
+
+      if (!room) {
+        return [];
+      }
+
+      const playerPredictions = predictionsByPlayerId.get(session.playerId) ?? [];
+
+      return [{
         name: room.name,
         slug: room.slug,
         href: `/r/${room.slug}`,
         nextMatchLabel: nextMatch ? `${nextMatch.homeTeam.name} vs ${nextMatch.awayTeam.name}` : "Next fixture",
         nextMatchHref: nextMatch ? `/r/${room.slug}/matches/${nextMatch.apiMatchId}` : `/r/${room.slug}/matches`,
         nextMatch: nextMatch ? { awayTeam: nextMatch.awayTeam, homeTeam: nextMatch.homeTeam } : undefined,
-        savedCount,
-        score
-      }
-    ];
+        savedCount: playerPredictions.length,
+        score: playerPredictions.reduce((total, prediction) => total + (prediction.score_total ?? 0), 0)
+      }];
+    });
   } catch {
     return [];
   }

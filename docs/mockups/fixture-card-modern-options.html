@@ -1,0 +1,969 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gam3bling Fixture Card Mockups</title>
+  <style>
+    :root {
+      --bg: #f3f1f6;
+      --ink: #181621;
+      --muted: #746f7f;
+      --line: #e6dfed;
+      --purple: #6846bd;
+      --blue: #1767d8;
+      --teal: #16839b;
+      --green: #68bd62;
+      --green-soft: #e8f6e7;
+      --surface: rgba(255, 255, 255, 0.93);
+      --soft: #f8f5fb;
+      --shadow: 0 20px 48px rgba(44, 35, 64, 0.14);
+      --small-shadow: 0 10px 24px rgba(44, 35, 64, 0.09);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color-scheme: light;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(104, 70, 189, 0.12), transparent 34%),
+        radial-gradient(circle at 90% 10%, rgba(23, 103, 216, 0.11), transparent 36%),
+        var(--bg);
+    }
+
+    .page {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 28px 18px 54px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    .intro {
+      display: grid;
+      gap: 10px;
+      max-width: 780px;
+      margin: 0 auto 24px;
+    }
+
+    h1 {
+      font-size: clamp(32px, 5vw, 56px);
+      line-height: 0.96;
+      letter-spacing: 0;
+    }
+
+    .intro p {
+      color: var(--muted);
+      font-size: 16px;
+      font-weight: 760;
+      line-height: 1.5;
+    }
+
+    .eyebrow {
+      color: var(--purple);
+      font-size: 12px;
+      font-weight: 1000;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 22px;
+      align-items: start;
+    }
+
+    .option {
+      display: grid;
+      gap: 12px;
+    }
+
+    .note {
+      min-height: 132px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.76);
+      box-shadow: var(--small-shadow);
+    }
+
+    .note h2 {
+      margin: 6px 0 8px;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .note p {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 760;
+      line-height: 1.42;
+    }
+
+    .phone {
+      overflow: hidden;
+      width: min(390px, 100%);
+      min-height: 760px;
+      margin: 0 auto;
+      border: 1px solid rgba(255, 255, 255, 0.76);
+      border-radius: 36px;
+      background: #f7f4fb;
+      box-shadow: var(--shadow);
+    }
+
+    .screen {
+      display: grid;
+      gap: 18px;
+      padding: 22px 18px 96px;
+    }
+
+    .room-card,
+    .section,
+    .fixture {
+      border: 1px solid rgba(255, 255, 255, 0.78);
+      border-radius: 26px;
+      background: var(--surface);
+      box-shadow: var(--small-shadow);
+    }
+
+    .room-card {
+      padding: 18px;
+    }
+
+    .room-card h2 {
+      margin-top: 5px;
+      font-size: 31px;
+      line-height: 1;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .stats div {
+      min-height: 58px;
+      padding: 10px;
+      border-radius: 18px;
+      background: var(--soft);
+    }
+
+    .stats small {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 1000;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .stats strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 20px;
+    }
+
+    .section {
+      display: grid;
+      gap: 14px;
+      padding: 16px;
+    }
+
+    .section-head,
+    .ticket-top,
+    .action-row,
+    .team-line,
+    .bottom-nav,
+    .mini-meta {
+      display: flex;
+      align-items: center;
+    }
+
+    .section-head,
+    .ticket-top,
+    .action-row,
+    .mini-meta {
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .section-head h2 {
+      margin-top: 4px;
+      font-size: 23px;
+      line-height: 1;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      padding: 0 11px;
+      border-radius: 999px;
+      color: #fff;
+      background: var(--purple);
+      font-size: 13px;
+      font-weight: 1000;
+      white-space: nowrap;
+    }
+
+    .fixture {
+      overflow: hidden;
+    }
+
+    .ticket-top {
+      min-height: 64px;
+      padding: 16px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+    }
+
+    .ticket-top strong {
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.17);
+      font-size: 13px;
+    }
+
+    .matchup {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 18px 16px 12px;
+    }
+
+    .team {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+      justify-items: center;
+      text-align: center;
+    }
+
+    .flag {
+      display: grid;
+      width: 48px;
+      height: 42px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: #fff;
+      box-shadow: 0 8px 18px rgba(42, 35, 64, 0.08);
+      font-size: 23px;
+    }
+
+    .flag-round {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      font-size: 28px;
+    }
+
+    .team b {
+      overflow: hidden;
+      max-width: 100%;
+      font-size: 18px;
+      line-height: 1.06;
+      text-overflow: ellipsis;
+    }
+
+    .vs {
+      color: var(--muted);
+      font-size: 20px;
+      font-weight: 1000;
+    }
+
+    .kickoff {
+      padding: 0 16px 14px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .action-row {
+      margin: 0 16px 16px;
+      padding-top: 13px;
+      border-top: 1px solid var(--line);
+    }
+
+    .state {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .state span {
+      width: fit-content;
+      padding: 5px 9px;
+      border-radius: 999px;
+      color: #174317;
+      background: var(--green-soft);
+      font-size: 12px;
+      font-weight: 1000;
+    }
+
+    .button {
+      display: grid;
+      min-width: 112px;
+      min-height: 50px;
+      place-items: center;
+      border-radius: 17px;
+      color: #fff;
+      background: var(--purple);
+      font-size: 15px;
+      font-weight: 1000;
+      box-shadow: 0 12px 22px rgba(104, 70, 189, 0.2);
+    }
+
+    .button.secondary {
+      min-width: 0;
+      padding: 0 18px;
+      color: var(--ink);
+      background: #fff;
+      box-shadow: var(--small-shadow);
+    }
+
+    .other-matches {
+      display: grid;
+      gap: 8px;
+      margin-top: -2px;
+    }
+
+    .other-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      min-height: 58px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+    }
+
+    .other-row b,
+    .handoff-card b {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 15px;
+    }
+
+    .other-row small,
+    .handoff-card small {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .mini-button {
+      display: grid;
+      min-width: 76px;
+      min-height: 38px;
+      place-items: center;
+      border-radius: 14px;
+      color: #fff;
+      background: var(--purple);
+      font-size: 13px;
+      font-weight: 1000;
+    }
+
+    .handoff-card {
+      display: grid;
+      gap: 14px;
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: #fff;
+    }
+
+    .handoff-card .button {
+      width: 100%;
+    }
+
+    .leader-card {
+      padding: 16px;
+      border-radius: 26px;
+      background: #fff;
+      box-shadow: var(--small-shadow);
+    }
+
+    .leader-card h2 {
+      margin-top: 4px;
+      font-size: 28px;
+    }
+
+    .leader-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 9px 0;
+      font-size: 18px;
+      font-weight: 850;
+    }
+
+    .bottom-nav {
+      position: sticky;
+      bottom: 12px;
+      gap: 4px;
+      padding: 7px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: var(--shadow);
+    }
+
+    .bottom-nav span {
+      flex: 1;
+      display: grid;
+      min-height: 50px;
+      place-items: center;
+      border-radius: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 1000;
+    }
+
+    .bottom-nav .active {
+      color: #fff;
+      background: var(--purple);
+    }
+
+    .option-b .ticket-top,
+    .option-c .ticket-top {
+      background: linear-gradient(135deg, var(--teal), var(--blue));
+    }
+
+    .option-b .matchup {
+      grid-template-columns: minmax(0, 1fr) 92px minmax(0, 1fr);
+      padding-top: 22px;
+    }
+
+    .center-lock {
+      display: grid;
+      justify-items: center;
+      gap: 2px;
+      color: var(--ink);
+      font-weight: 1000;
+    }
+
+    .center-lock b {
+      font-size: 42px;
+      line-height: 0.95;
+    }
+
+    .center-lock small {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .bars {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 0 16px 16px;
+    }
+
+    .bar {
+      overflow: hidden;
+      height: 9px;
+      border-radius: 999px;
+      background: #eee9f4;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--green);
+    }
+
+    .bar:last-child span {
+      width: 33%;
+      background: #e20d35;
+    }
+
+    .option-c .fixture {
+      padding: 0;
+    }
+
+    .option-c .team-line {
+      justify-content: space-between;
+      gap: 12px;
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .option-c .team-name {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 0;
+      font-size: 20px;
+      font-weight: 1000;
+    }
+
+    .option-c .team-name span:last-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .option-c .team-line strong {
+      color: var(--muted);
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .option-c .mini-meta {
+      padding: 14px 16px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    @media (max-width: 980px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .note {
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="intro">
+      <p class="eyebrow">Fixture card cleanup</p>
+      <h1>One matchup, no repeated team row</h1>
+      <p>These options remove the duplicate Spain vs Cape Verde row. The flags move into the main matchup, while status and action stay below as supporting info.</p>
+    </section>
+
+    <section class="grid" aria-label="Fixture card mockup options">
+      <article class="option option-b">
+        <div class="note">
+          <p class="eyebrow">Recommended</p>
+          <h2>Combined: Command center plus sport card</h2>
+          <p>Room command center stays on top, then the sportier center-lock fixture card carries the next prediction. One matchup, big flags, date plus IST time.</p>
+        </div>
+
+        <div class="phone">
+          <div class="screen">
+            <section class="room-card">
+              <p class="eyebrow">Room command center</p>
+              <h2>Bon Jor WC26</h2>
+              <div class="stats">
+                <div><small>Members</small><strong>3</strong></div>
+                <div><small>Your score</small><strong>0</strong></div>
+                <div><small>Leader</small><strong>0</strong></div>
+              </div>
+            </section>
+
+            <section class="section">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Current round</p>
+                  <h2>Predict next</h2>
+                </div>
+                <span class="pill">2 open</span>
+              </div>
+
+              <article class="fixture">
+                <div class="ticket-top">
+                  <div>
+                    <strong style="padding:0;background:transparent;font-size:21px;">Group H</strong>
+                    <p style="font-size:13px;margin-top:2px;">Predictions open</p>
+                  </div>
+                  <strong>6h 52m</strong>
+                </div>
+                <div class="matchup">
+                  <div class="team">
+                    <span class="flag flag-round">🇪🇸</span>
+                    <b>Spain</b>
+                  </div>
+                  <div class="center-lock">
+                    <b>vs</b>
+                    <small>15 Jun, 9:30 PM IST</small>
+                  </div>
+                  <div class="team">
+                    <span class="flag flag-round">🇨🇻</span>
+                    <b>Cape Verde</b>
+                  </div>
+                </div>
+                <div class="bars">
+                  <div class="bar"><span style="width:68%;"></span></div>
+                  <div class="bar"><span></span></div>
+                </div>
+                <div class="action-row">
+                  <div class="state">Room predictions hidden until saved</div>
+                  <div class="button">Predict</div>
+                </div>
+              </article>
+
+              <article class="fixture">
+                <div class="ticket-top">
+                  <div>
+                    <strong style="padding:0;background:transparent;font-size:21px;">Group G</strong>
+                    <p style="font-size:13px;margin-top:2px;">Predictions open</p>
+                  </div>
+                  <strong>9h 52m</strong>
+                </div>
+                <div class="matchup">
+                  <div class="team">
+                    <span class="flag flag-round">🇧🇪</span>
+                    <b>Belgium</b>
+                  </div>
+                  <div class="center-lock">
+                    <b>vs</b>
+                    <small>16 Jun, 12:30 AM IST</small>
+                  </div>
+                  <div class="team">
+                    <span class="flag flag-round">🇪🇬</span>
+                    <b>Egypt</b>
+                  </div>
+                </div>
+                <div class="bars">
+                  <div class="bar"><span style="width:54%;"></span></div>
+                  <div class="bar"><span style="width:46%;"></span></div>
+                </div>
+                <div class="action-row">
+                  <div class="state">Room predictions hidden until saved</div>
+                  <div class="button">Predict</div>
+                </div>
+              </article>
+            </section>
+
+            <nav class="bottom-nav">
+              <span>Home</span><span>Matches</span><span>Board</span><span class="active">Room</span>
+            </nav>
+          </div>
+        </div>
+      </article>
+
+      <article class="option option-b">
+        <div class="note">
+          <p class="eyebrow">Sportier</p>
+          <h2>Option B: Center lock card</h2>
+          <p>Inspired by your second screenshot. Bigger countdown-energy, central “vs”, and flags as team identities. Good for a more game-like feel.</p>
+        </div>
+
+        <div class="phone">
+          <div class="screen">
+            <section class="section">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Current round</p>
+                  <h2>Predict next</h2>
+                </div>
+                <span class="pill">2 open</span>
+              </div>
+
+              <article class="fixture">
+                <div class="ticket-top">
+                  <div>
+                    <strong style="padding:0;background:transparent;font-size:21px;">Group H</strong>
+                    <p style="font-size:13px;margin-top:2px;">Predictions open</p>
+                  </div>
+                  <strong>6h 52m</strong>
+                </div>
+                <div class="matchup">
+                  <div class="team">
+                    <span class="flag flag-round">🇪🇸</span>
+                    <b>Spain</b>
+                  </div>
+                  <div class="center-lock">
+                    <b>vs</b>
+                    <small>15 Jun</small>
+                  </div>
+                  <div class="team">
+                    <span class="flag flag-round">🇨🇻</span>
+                    <b>Cape Verde</b>
+                  </div>
+                </div>
+                <div class="bars">
+                  <div class="bar"><span style="width:68%;"></span></div>
+                  <div class="bar"><span></span></div>
+                </div>
+                <div class="action-row">
+                  <div class="state">Room predictions hidden until saved</div>
+                  <div class="button">Predict</div>
+                </div>
+              </article>
+            </section>
+
+            <section class="leader-card">
+              <p class="eyebrow">Leaderboard</p>
+              <h2>Room score</h2>
+              <div class="leader-row"><span>1 John</span><span>48 pts</span></div>
+              <div class="leader-row"><span>2 You</span><span>44 pts</span></div>
+              <div class="leader-row"><span>3 Jane</span><span>41 pts</span></div>
+            </section>
+
+            <nav class="bottom-nav">
+              <span class="active">Home</span><span>Matches</span><span>Board</span><span>Room</span>
+            </nav>
+          </div>
+        </div>
+      </article>
+
+      <article class="option option-c">
+        <div class="note">
+          <p class="eyebrow">Calmest</p>
+          <h2>Option C: Team rows</h2>
+          <p>Most restrained and easiest to scan. Each team gets one row with flag, name, and small metadata. Best if you want less hero energy.</p>
+        </div>
+
+        <div class="phone">
+          <div class="screen">
+            <section class="room-card">
+              <p class="eyebrow">Room command center</p>
+              <h2>Bon Jor WC26</h2>
+            </section>
+
+            <section class="section">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Current round</p>
+                  <h2>Predict next</h2>
+                </div>
+                <span class="pill">2 open</span>
+              </div>
+
+              <article class="fixture">
+                <div class="ticket-top">
+                  <span>Group H</span>
+                  <strong>6h 52m to go</strong>
+                </div>
+                <div class="team-line">
+                  <div class="team-name"><span class="flag">🇪🇸</span><span>Spain</span></div>
+                  <strong>Home</strong>
+                </div>
+                <div class="team-line">
+                  <div class="team-name"><span class="flag">🇨🇻</span><span>Cape Verde</span></div>
+                  <strong>Away</strong>
+                </div>
+                <div class="mini-meta">
+                  <span>15 Jun, 9:30 PM IST</span>
+                  <span>Open</span>
+                </div>
+                <div class="action-row">
+                  <div class="state">Room predictions open</div>
+                  <div class="button">Predict</div>
+                </div>
+              </article>
+
+              <article class="fixture">
+                <div class="ticket-top">
+                  <span>Group G</span>
+                  <strong>9h 52m to go</strong>
+                </div>
+                <div class="team-line">
+                  <div class="team-name"><span class="flag">🇧🇪</span><span>Belgium</span></div>
+                  <strong>Home</strong>
+                </div>
+                <div class="team-line">
+                  <div class="team-name"><span class="flag">🇪🇬</span><span>Egypt</span></div>
+                  <strong>Away</strong>
+                </div>
+                <div class="mini-meta">
+                  <span>16 Jun, 12:30 AM IST</span>
+                  <span>Open</span>
+                </div>
+                <div class="action-row">
+                  <div class="state">Room predictions open</div>
+                  <div class="button">Predict</div>
+                </div>
+              </article>
+            </section>
+
+            <nav class="bottom-nav">
+              <span>Home</span><span>Matches</span><span>Board</span><span class="active">Room</span>
+            </nav>
+          </div>
+        </div>
+      </article>
+
+      <article class="option option-b">
+        <div class="note">
+          <p class="eyebrow">Access pattern 1</p>
+          <h2>Featured card plus other matches</h2>
+          <p>Best usability. The main card stays beautiful, and the other open matches are one-tap rows directly below it.</p>
+        </div>
+
+        <div class="phone">
+          <div class="screen">
+            <section class="room-card">
+              <p class="eyebrow">Room command center</p>
+              <h2>Bon Jor WC26</h2>
+              <div class="stats">
+                <div><small>Members</small><strong>3</strong></div>
+                <div><small>Your score</small><strong>0</strong></div>
+                <div><small>Leader</small><strong>0</strong></div>
+              </div>
+            </section>
+
+            <section class="section">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Current round</p>
+                  <h2>Predict next</h2>
+                </div>
+                <span class="pill">3 open</span>
+              </div>
+
+              <article class="fixture">
+                <div class="ticket-top">
+                  <div>
+                    <strong style="padding:0;background:transparent;font-size:21px;">Group H</strong>
+                    <p style="font-size:13px;margin-top:2px;">Predictions open</p>
+                  </div>
+                  <strong>6h 52m</strong>
+                </div>
+                <div class="matchup">
+                  <div class="team">
+                    <span class="flag flag-round">🇪🇸</span>
+                    <b>Spain</b>
+                  </div>
+                  <div class="center-lock">
+                    <b>vs</b>
+                    <small>15 Jun, 9:30 PM IST</small>
+                  </div>
+                  <div class="team">
+                    <span class="flag flag-round">🇨🇻</span>
+                    <b>Cape Verde</b>
+                  </div>
+                </div>
+                <div class="bars">
+                  <div class="bar"><span style="width:68%;"></span></div>
+                  <div class="bar"><span></span></div>
+                </div>
+                <div class="action-row">
+                  <div class="state">Room predictions hidden until saved</div>
+                  <div class="button">Predict</div>
+                </div>
+              </article>
+
+              <div class="other-matches" aria-label="Other open matches">
+                <p class="eyebrow">Other open matches</p>
+                <div class="other-row">
+                  <div>
+                    <b>🇧🇪 Belgium vs 🇪🇬 Egypt</b>
+                    <small>16 Jun, 12:30 AM IST · 9h 52m</small>
+                  </div>
+                  <span class="mini-button">Predict</span>
+                </div>
+                <div class="other-row">
+                  <div>
+                    <b>🇸🇦 Saudi Arabia vs 🇺🇾 Uruguay</b>
+                    <small>16 Jun, 3:30 AM IST · 12h 52m</small>
+                  </div>
+                  <span class="mini-button">Predict</span>
+                </div>
+              </div>
+            </section>
+
+            <nav class="bottom-nav">
+              <span>Home</span><span class="active">Matches</span><span>Board</span><span>Room</span>
+            </nav>
+          </div>
+        </div>
+      </article>
+
+      <article class="option option-b">
+        <div class="note">
+          <p class="eyebrow">Access pattern 2</p>
+          <h2>Featured card plus View all</h2>
+          <p>Cleanest visually. One big next-match card, then a simple handoff to the full Matches tab for the rest.</p>
+        </div>
+
+        <div class="phone">
+          <div class="screen">
+            <section class="room-card">
+              <p class="eyebrow">Room command center</p>
+              <h2>Bon Jor WC26</h2>
+              <div class="stats">
+                <div><small>Members</small><strong>3</strong></div>
+                <div><small>Your score</small><strong>0</strong></div>
+                <div><small>Leader</small><strong>0</strong></div>
+              </div>
+            </section>
+
+            <section class="section">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Current round</p>
+                  <h2>Predict next</h2>
+                </div>
+                <span class="pill">3 open</span>
+              </div>
+
+              <article class="fixture">
+                <div class="ticket-top">
+                  <div>
+                    <strong style="padding:0;background:transparent;font-size:21px;">Group H</strong>
+                    <p style="font-size:13px;margin-top:2px;">Predictions open</p>
+                  </div>
+                  <strong>6h 52m</strong>
+                </div>
+                <div class="matchup">
+                  <div class="team">
+                    <span class="flag flag-round">🇪🇸</span>
+                    <b>Spain</b>
+                  </div>
+                  <div class="center-lock">
+                    <b>vs</b>
+                    <small>15 Jun, 9:30 PM IST</small>
+                  </div>
+                  <div class="team">
+                    <span class="flag flag-round">🇨🇻</span>
+                    <b>Cape Verde</b>
+                  </div>
+                </div>
+                <div class="bars">
+                  <div class="bar"><span style="width:68%;"></span></div>
+                  <div class="bar"><span></span></div>
+                </div>
+                <div class="action-row">
+                  <div class="state">Room predictions hidden until saved</div>
+                  <div class="button">Predict</div>
+                </div>
+              </article>
+
+              <div class="handoff-card">
+                <div>
+                  <b>2 more open fixtures</b>
+                  <small>Belgium vs Egypt and Saudi Arabia vs Uruguay are also open for predictions.</small>
+                </div>
+                <div class="button secondary">View all open matches</div>
+              </div>
+            </section>
+
+            <nav class="bottom-nav">
+              <span>Home</span><span class="active">Matches</span><span>Board</span><span>Room</span>
+            </nav>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

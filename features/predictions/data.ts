@@ -1,5 +1,5 @@
 import type { AppMatch } from "@/features/matches/data";
-import { getPlayerSession } from "@/features/players/session";
+import { getPlayerSessionForRoom } from "@/features/players/session";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 export type RoomMatchPick = {
@@ -28,7 +28,7 @@ export async function getRoomMatchPicks(roomSlug: string, match: AppMatch): Prom
   }
 
   const supabase = getSupabaseAdmin();
-  const session = await getPlayerSession();
+  const session = await getPlayerSessionForRoom(roomSlug);
 
   if (!supabase) {
     return [];
@@ -94,7 +94,7 @@ export async function getCurrentPlayerPredictedMatchIds(roomSlug: string, matche
   }
 
   const supabase = getSupabaseAdmin();
-  const session = await getPlayerSession();
+  const session = await getPlayerSessionForRoom(roomSlug);
 
   if (!supabase || !session || matches.length === 0) {
     return new Set();

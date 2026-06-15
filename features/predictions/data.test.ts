@@ -1,6 +1,6 @@
 import { beforeEach, expect, test, vi } from "vitest";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
-import { getPlayerSession } from "@/features/players/session";
+import { getPlayerSessionForRoom } from "@/features/players/session";
 import { getRoomMatchPicks } from "./data";
 import type { AppMatch } from "@/features/matches/data";
 
@@ -9,7 +9,7 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 vi.mock("@/features/players/session", () => ({
-  getPlayerSession: vi.fn(async () => null)
+  getPlayerSessionForRoom: vi.fn(async () => null)
 }));
 
 const match: AppMatch = {
@@ -24,7 +24,7 @@ const match: AppMatch = {
 
 beforeEach(() => {
   vi.mocked(getSupabaseAdmin).mockReturnValue(null);
-  vi.mocked(getPlayerSession).mockResolvedValue(null);
+  vi.mocked(getPlayerSessionForRoom).mockResolvedValue(null);
   delete process.env.E2E_USE_FALLBACK_FIXTURES;
 });
 

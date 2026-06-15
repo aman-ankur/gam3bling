@@ -7,12 +7,15 @@ import { RoomInviteCard } from "@/components/room-invite-card";
 import { RoomMissing } from "@/components/room-missing";
 import { ScoringGuide } from "@/components/scoring-guide";
 import { SubmitButton } from "@/components/submit-button";
+import { TeamName } from "@/components/team-name";
 import { getRoomLeaderboard } from "@/features/leaderboards/data";
 import { getUpcomingMatches } from "@/features/matches/data";
+import type { AppMatch } from "@/features/matches/data";
 import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
-import { getPlayerSession } from "@/features/players/session";
+import { getPlayerSessionForRoom } from "@/features/players/session";
 import { joinRoom } from "@/features/rooms/actions";
 import { getRoomSummary } from "@/features/rooms/data";
+import { formatKickoffInIst } from "@/features/time/match-time";
 
 type RoomPageProps = {
   params: Promise<{
@@ -29,8 +32,8 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
   const { slug } = await params;
   const { error, hub, invite } = await searchParams;
   const room = await getRoomSummary(slug);
-  const session = await getPlayerSession();
-  const shouldShowHub = hub === "1" || session?.roomSlug === slug;
+  const session = await getPlayerSessionForRoom(slug);
+  const shouldShowHub = hub === "1" || Boolean(session);
 
   if (!room.exists) {
     return <RoomMissing slug={slug} />;
@@ -39,7 +42,9 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
   if (shouldShowHub) {
     const [matches, leaderboard] = await Promise.all([getUpcomingMatches(), getRoomLeaderboard(slug)]);
     const openMatchIds = getOpenPredictionMatchIds(matches);
-    const openMatches = matches.filter((match) => openMatchIds.has(match.id) || openMatchIds.has(match.apiMatchId)).slice(0, 2);
+    const openMatches = matches.filter((match) => openMatchIds.has(match.id) || openMatchIds.has(match.apiMatchId)).slice(0, 4);
+    const featuredMatch = openMatches[0];
+    const otherOpenMatches = openMatches.slice(1);
     const currentPlayerScore = session ? leaderboard.find((entry) => entry.playerId === session.playerId)?.score : undefined;
 
     return (
@@ -72,20 +77,29 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
             <span className="status-chip">{openMatches.length} open</span>
           </div>
           <div className="match-list">
-            {openMatches.map((match, index) => (
+            {featuredMatch ? (
               <MatchCard
-                awayTeam={match.awayTeam}
-                featured={index === 0}
-                homeTeam={match.homeTeam}
-                href={`/r/${slug}/matches/${match.apiMatchId}`}
-                key={match.id}
-                kickoffAt={match.kickoffAt}
-                progress="Room predictions open"
-                stage={match.stage}
+                awayTeam={featuredMatch.awayTeam}
+                featured
+                homeTeam={featuredMatch.homeTeam}
+                href={`/r/${slug}/matches/${featuredMatch.apiMatchId}`}
+                kickoffAt={featuredMatch.kickoffAt}
+                progress="Room predictions hidden until saved"
+                stage={featuredMatch.stage}
                 status="open"
+                variant="sport"
               />
-            ))}
+            ) : null}
           </div>
+
+          {otherOpenMatches.length > 0 ? (
+            <div className="other-open-matches" aria-label="Other open matches">
+              <p className="eyebrow">Other open matches</p>
+              {otherOpenMatches.map((match) => (
+                <OtherOpenMatchLink key={match.id} match={match} slug={slug} />
+              ))}
+            </div>
+          ) : null}
         </section>
 
         <section className="section-stack" aria-labelledby="room-score-title">
@@ -164,6 +178,28 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
         Create a new room
       </Link>
     </AppShell>
+  );
+}
+
+function OtherOpenMatchLink({ match, slug }: { match: AppMatch; slug: string }) {
+  const matchTitle = `${match.homeTeam.name} vs ${match.awayTeam.name}`;
+
+  return (
+    <Link
+      aria-label={`Predict ${matchTitle}`}
+      className="other-open-match-row"
+      href={`/r/${slug}/matches/${match.apiMatchId}`}
+    >
+      <div>
+        <strong>
+          <TeamName team={match.homeTeam} />
+          <span>vs</span>
+          <TeamName team={match.awayTeam} />
+        </strong>
+        <small>{formatKickoffInIst(match.kickoffAt)}</small>
+      </div>
+      <span>Predict</span>
+    </Link>
   );
 }
 

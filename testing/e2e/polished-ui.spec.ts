@@ -33,13 +33,13 @@ test("core pages use the polished Stadium Glass shell", async ({ page }) => {
   await expect(page.locator(".match-card").first()).toHaveCSS("border-radius", "24px");
 });
 
-test("room hub fixture rows show country names beside flags", async ({ page }) => {
+test("room hub other open matches show country names beside flags", async ({ page }) => {
   await page.goto("/r/world-cup-room?hub=1");
 
-  const firstFixture = page.locator(".match-card .fixture-row").first();
+  const firstFixture = page.locator(".other-open-match-row").first();
 
-  await expect(firstFixture.getByText("Netherlands")).toBeVisible();
-  await expect(firstFixture.getByText("Japan")).toBeVisible();
+  await expect(firstFixture.getByText("Ivory Coast")).toBeVisible();
+  await expect(firstFixture.getByText("Ecuador")).toBeVisible();
 
   const labelWidths = await firstFixture.locator(".team-name > span:last-child").evaluateAll((labels) =>
     labels.map((label) => Math.round(label.getBoundingClientRect().width))

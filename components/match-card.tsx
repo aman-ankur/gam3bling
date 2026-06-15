@@ -15,6 +15,7 @@ type MatchCardProps = {
   progress: string;
   featured?: boolean;
   status?: "open" | "locked" | "live";
+  variant?: "standard" | "sport";
 };
 
 export function MatchCard({
@@ -27,16 +28,64 @@ export function MatchCard({
   awayTeam,
   progress,
   featured = false,
-  status = "open"
+  status = "open",
+  variant = "standard"
 }: MatchCardProps) {
   const matchTitle = `${homeTeam.name} vs ${awayTeam.name}`;
   const isLocked = status === "locked";
   const className = [
     "match-ticket",
     "match-card",
+    variant === "sport" ? "sport-card" : "",
     featured ? "featured" : "",
     isLocked ? "locked" : ""
   ].filter(Boolean).join(" ");
+
+  if (variant === "sport") {
+    return (
+      <article className={className}>
+        <div className="ticket-meta">
+          <div>
+            <span>{stage}</span>
+            <small>Predictions open</small>
+          </div>
+          <strong>
+            <CountdownTimer kickoffAt={kickoffAt} />
+          </strong>
+        </div>
+        <div className="sport-matchup" aria-label={matchTitle}>
+          <div className="sport-team">
+            <TeamName team={homeTeam} />
+          </div>
+          <div className="center-lock">
+            <b>vs</b>
+            <small>{formatKickoffInIst(kickoffAt)}</small>
+          </div>
+          <div className="sport-team">
+            <TeamName team={awayTeam} />
+          </div>
+        </div>
+        <div className="match-energy-bars" aria-hidden="true">
+          <span />
+          <span />
+        </div>
+        <div className="match-action-row">
+          <div>
+            <small>{progress}</small>
+          </div>
+          {href && !isLocked ? (
+            <Link aria-label={ariaActionLabel ?? `${actionLabel} ${matchTitle}`} className="card-link" href={href}>
+              {actionLabel}
+            </Link>
+          ) : (
+            <span aria-label={`${matchTitle} locked`} className="card-link disabled">
+              Locked
+            </span>
+          )}
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article className={className}>

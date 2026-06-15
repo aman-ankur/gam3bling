@@ -4,16 +4,16 @@ import { redirect } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { getUpcomingMatches } from "@/features/matches/data";
 import { isMatchInOpenPredictionWindow } from "@/features/matches/prediction-window";
-import { getPlayerSession } from "@/features/players/session";
+import { getPlayerSessionForRoom } from "@/features/players/session";
 import { isPredictionLocked } from "@/features/predictions/locking";
 
 export async function savePrediction(roomSlug: string, matchRouteId: string, formData: FormData): Promise<void> {
   const supabase = getSupabaseAdmin();
-  const session = await getPlayerSession();
+  const session = await getPlayerSessionForRoom(roomSlug);
 
   console.info("[predictions.save] start", { roomSlug, matchRouteId, hasSession: Boolean(session) });
 
-  if (!session || session.roomSlug !== roomSlug) {
+  if (!session) {
     console.warn("[predictions.save] missing_session", { roomSlug, matchRouteId });
     redirect(`/r/${roomSlug}`);
   }
