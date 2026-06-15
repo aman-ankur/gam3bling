@@ -13,6 +13,7 @@ type MatchCardProps = {
   homeTeam: AppTeam;
   awayTeam: AppTeam;
   progress: string;
+  metaLabel?: string;
   featured?: boolean;
   status?: "open" | "locked" | "live";
   variant?: "standard" | "sport";
@@ -27,12 +28,14 @@ export function MatchCard({
   homeTeam,
   awayTeam,
   progress,
+  metaLabel,
   featured = false,
   status = "open",
   variant = "standard"
 }: MatchCardProps) {
   const matchTitle = `${homeTeam.name} vs ${awayTeam.name}`;
   const isLocked = status === "locked";
+  const isLive = status === "live";
   const className = [
     "match-ticket",
     "match-card",
@@ -47,10 +50,10 @@ export function MatchCard({
         <div className="ticket-meta">
           <div>
             <span>{stage}</span>
-            <small>Predictions open</small>
+            <small>{metaLabel ?? "Predictions open"}</small>
           </div>
           <strong>
-            <CountdownTimer kickoffAt={kickoffAt} />
+            {isLive ? "Live now" : <CountdownTimer kickoffAt={kickoffAt} />}
           </strong>
         </div>
         <div className="sport-matchup" aria-label={matchTitle}>

@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { AppMatch } from "./data";
-import { getOpenPredictionMatchIds, isMatchInOpenPredictionWindow } from "./prediction-window";
+import { getActiveMatchIds, getOpenPredictionMatchIds, isMatchInOpenPredictionWindow } from "./prediction-window";
 
 test("opens only the next four future scheduled matches", () => {
   const now = new Date("2026-06-14T12:00:00.000Z");
@@ -31,6 +31,28 @@ test("does not open past or non-scheduled matches", () => {
   ];
 
   expect([...getOpenPredictionMatchIds(matches, now)]).toEqual(["match-3", "api-3"]);
+});
+
+test("keeps a just-started match active after predictions lock", () => {
+  const now = new Date("2026-06-14T12:05:00.000Z");
+  const matches = [
+    buildMatch(1, { kickoffAt: "2026-06-14T12:00:00.000Z" }),
+    buildMatch(2, { kickoffAt: "2026-06-14T15:00:00.000Z" })
+  ];
+
+  expect([...getOpenPredictionMatchIds(matches, now)]).toEqual(["match-2", "api-2"]);
+  expect([...getActiveMatchIds(matches, now)]).toEqual(["match-1", "api-1"]);
+});
+
+test("drops final and stale unsynced matches from active matches", () => {
+  const now = new Date("2026-06-14T15:00:00.000Z");
+  const matches = [
+    buildMatch(1, { kickoffAt: "2026-06-14T12:00:00.000Z" }),
+    buildMatch(2, { kickoffAt: "2026-06-14T14:00:00.000Z", status: "final" }),
+    buildMatch(3, { kickoffAt: "2026-06-14T11:30:00.000Z", status: "live" })
+  ];
+
+  expect([...getActiveMatchIds(matches, now)]).toEqual(["match-3", "api-3"]);
 });
 
 function buildMatch(index: number, overrides: Partial<AppMatch> = {}): AppMatch {

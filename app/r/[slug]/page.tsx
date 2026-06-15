@@ -13,7 +13,7 @@ import { getRoomLeaderboard } from "@/features/leaderboards/data";
 import { getRoomScoreRows } from "@/features/leaderboards/room-score-preview";
 import { getUpcomingMatches } from "@/features/matches/data";
 import type { AppMatch } from "@/features/matches/data";
-import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
+import { getActiveMatchIds, getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
 import { getPlayerSessionForRoom } from "@/features/players/session";
 import { getCurrentPlayerPredictedMatchIds, getRoomMatchPicks } from "@/features/predictions/data";
 import { claimRoomPlayer, deleteRoom, joinRoom, rememberRoomInviteCode, removeRoomMember } from "@/features/rooms/actions";
@@ -55,10 +55,14 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
       getCurrentPlayerPredictedMatchIds(slug, matches)
     ]);
     const latestResultPicks = latestCompletedMatch ? await getRoomMatchPicks(slug, latestCompletedMatch) : [];
+    const activeMatchIds = getActiveMatchIds(matches);
     const openMatchIds = getOpenPredictionMatchIds(matches);
-    const openMatches = matches.filter((match) => openMatchIds.has(match.id) || openMatchIds.has(match.apiMatchId)).slice(0, 4);
-    const featuredMatch = openMatches[0];
-    const otherOpenMatches = openMatches.slice(1);
+    const activeMatches = matches.filter((match) => hasMatchId(activeMatchIds, match));
+    const openMatches = matches.filter((match) => hasMatchId(openMatchIds, match));
+    const currentMatches = [...activeMatches, ...openMatches.filter((match) => !hasMatchId(activeMatchIds, match))].slice(0, 4);
+    const featuredMatch = currentMatches[0];
+    const featuredMatchIsActive = featuredMatch ? hasMatchId(activeMatchIds, featuredMatch) : false;
+    const otherCurrentMatches = currentMatches.slice(1);
     const roomScoreRows = getRoomScoreRows(leaderboard);
     const currentPlayerScore = session ? leaderboard.find((entry) => entry.playerId === session.playerId)?.score : undefined;
     const visibleInvite = room.inviteCode ?? invite ?? (room.id === "fallback-room" ? "TIGER7" : undefined);
@@ -91,33 +95,49 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
           <div className="section-heading">
             <div>
               <p className="eyebrow">Current round</p>
-              <h2 id="room-current-title">Predict next</h2>
+              <h2 id="room-current-title">{featuredMatchIsActive ? "Live now" : "Predict next"}</h2>
             </div>
-            <span className="status-chip">{openMatches.length} open</span>
+            <span className="status-chip">{activeMatches.length > 0 ? `${activeMatches.length} live` : `${openMatches.length} open`}</span>
           </div>
           <div className="match-list">
             {featuredMatch ? (
               <MatchCard
-                actionLabel={predictedMatchIds.has(featuredMatch.id) || predictedMatchIds.has(featuredMatch.apiMatchId) ? "Show prediction" : "Predict"}
+                actionLabel={
+                  predictedMatchIds.has(featuredMatch.id) || predictedMatchIds.has(featuredMatch.apiMatchId)
+                    ? "Show prediction"
+                    : featuredMatchIsActive
+                      ? "View match"
+                      : "Predict"
+                }
                 awayTeam={featuredMatch.awayTeam}
                 featured
                 homeTeam={featuredMatch.homeTeam}
                 href={`/r/${slug}/matches/${featuredMatch.apiMatchId}`}
                 kickoffAt={featuredMatch.kickoffAt}
-                progress={predictedMatchIds.has(featuredMatch.id) || predictedMatchIds.has(featuredMatch.apiMatchId) ? "Your prediction is saved" : "Room predictions hidden until saved"}
+                metaLabel={featuredMatchIsActive ? "Match live" : "Predictions open"}
+                progress={
+                  predictedMatchIds.has(featuredMatch.id) || predictedMatchIds.has(featuredMatch.apiMatchId)
+                    ? featuredMatchIsActive
+                      ? "Predictions locked · your pick is saved"
+                      : "Your prediction is saved"
+                    : featuredMatchIsActive
+                      ? "Predictions locked"
+                      : "Room predictions hidden until saved"
+                }
                 stage={featuredMatch.stage}
-                status="open"
+                status={featuredMatchIsActive ? "live" : "open"}
                 variant="sport"
               />
             ) : null}
           </div>
 
-          {otherOpenMatches.length > 0 ? (
-            <div className="other-open-matches" aria-label="Other open matches">
-              <p className="eyebrow">Other open matches</p>
-              {otherOpenMatches.map((match) => (
+          {otherCurrentMatches.length > 0 ? (
+            <div className="other-open-matches" aria-label={activeMatches.length > 0 ? "Other matches" : "Other open matches"}>
+              <p className="eyebrow">{activeMatches.length > 0 ? "Other matches" : "Other open matches"}</p>
+              {otherCurrentMatches.map((match) => (
                 <OtherOpenMatchLink
                   isSaved={predictedMatchIds.has(match.id) || predictedMatchIds.has(match.apiMatchId)}
+                  isActive={hasMatchId(activeMatchIds, match)}
                   key={match.id}
                   match={match}
                   slug={slug}
@@ -328,13 +348,17 @@ function getLatestCompletedMatch(matches: AppMatch[]): AppMatch | undefined {
     .sort((left, right) => new Date(right.kickoffAt).getTime() - new Date(left.kickoffAt).getTime())[0];
 }
 
-function OtherOpenMatchLink({ isSaved, match, slug }: { isSaved: boolean; match: AppMatch; slug: string }) {
+function hasMatchId(matchIds: Set<string>, match: AppMatch): boolean {
+  return matchIds.has(match.id) || matchIds.has(match.apiMatchId);
+}
+
+function OtherOpenMatchLink({ isActive, isSaved, match, slug }: { isActive: boolean; isSaved: boolean; match: AppMatch; slug: string }) {
   const matchTitle = `${match.homeTeam.name} vs ${match.awayTeam.name}`;
-  const actionLabel = isSaved ? "Show" : "Predict";
+  const actionLabel = isSaved ? "Show" : isActive ? "View" : "Predict";
 
   return (
     <Link
-      aria-label={`${isSaved ? "Show prediction" : "Predict"} ${matchTitle}`}
+      aria-label={`${isSaved ? "Show prediction" : isActive ? "View match" : "Predict"} ${matchTitle}`}
       className="other-open-match-row"
       href={`/r/${slug}/matches/${match.apiMatchId}`}
     >
