@@ -27,7 +27,8 @@ test("room page renders join form, invite code, and members", async ({ page }) =
 test("room page can render a room hub for returning players", async ({ page }) => {
   await page.goto("/r/world-cup-room?hub=1");
 
-  await expect(page.getByRole("heading", { name: "Room hub" })).toBeVisible();
+  await expect(page.getByText("World Cup Room · Room hub")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "World Cup Room" })).toBeVisible();
   await expect(page.getByText("Netherlands vs Japan")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Room score" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "History" })).toBeVisible();

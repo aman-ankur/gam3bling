@@ -1,7 +1,4 @@
-import { Avatar } from "@/components/avatar";
 import { BottomNav } from "@/components/bottom-nav";
-import { getPlayerSession } from "@/features/players/session";
-import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -10,22 +7,19 @@ type AppShellProps = {
   subtitle?: string;
 };
 
-type HeaderProfile = {
-  initials: string;
-  label: string;
-};
-
-export async function AppShell({ children, roomName, roomSlug, subtitle = "3 predictions lock soon" }: AppShellProps) {
-  const profile = await getHeaderProfile(roomSlug);
-
+export async function AppShell({ children, roomName, roomSlug, subtitle = "Friend prediction rooms" }: AppShellProps) {
   return (
     <main className="app-frame">
       <header className="top-bar">
         <div>
-          <p className="room-label">{roomName}</p>
-          <h2>{subtitle}</h2>
+          <p className="room-label">FIFA World Cup 2026</p>
+          <h2>Gam3bling</h2>
+          <p className="header-subtitle">{headerSubtitle(roomName, subtitle)}</p>
         </div>
-        <Avatar initials={profile.initials} tone="green" label={profile.label} />
+        <div className="tournament-badge" aria-label="World Cup 2026">
+          <strong>WC</strong>
+          <span>26</span>
+        </div>
       </header>
       {children}
       <BottomNav roomSlug={roomSlug} />
@@ -33,37 +27,10 @@ export async function AppShell({ children, roomName, roomSlug, subtitle = "3 pre
   );
 }
 
-async function getHeaderProfile(roomSlug?: string): Promise<HeaderProfile> {
-  const fallback = { initials: "GB", label: "Gam3Bling profile" };
-
-  if (!roomSlug) {
-    return fallback;
+function headerSubtitle(roomName: string, subtitle: string): string {
+  if (roomName.toLowerCase() === "gam3bling") {
+    return subtitle;
   }
 
-  const session = await getPlayerSession();
-
-  if (!session || session.roomSlug !== roomSlug) {
-    return fallback;
-  }
-
-  const supabase = getSupabaseAdmin();
-
-  if (!supabase) {
-    return fallback;
-  }
-
-  const { data: player } = await supabase
-    .from("players")
-    .select("display_name, avatar_initials")
-    .eq("id", session.playerId)
-    .single();
-
-  if (!player) {
-    return fallback;
-  }
-
-  return {
-    initials: player.avatar_initials ?? fallback.initials,
-    label: `${player.display_name ?? "Player"} profile`
-  };
+  return `${roomName} · ${subtitle}`;
 }

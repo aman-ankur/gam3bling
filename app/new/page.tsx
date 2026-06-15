@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default function NewRoomPage() {
   return (
-    <AppShell roomName="Gam3Bling" subtitle="New prediction room">
+    <AppShell roomName="Gam3bling" subtitle="New prediction room">
       <section className="hero-card setup-hero" aria-labelledby="create-room-title">
         <div className="cup-mark">GB</div>
         <p className="eyebrow">World Cup 2026</p>

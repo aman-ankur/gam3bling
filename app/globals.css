@@ -1676,12 +1676,14 @@ body {
     radial-gradient(circle at 8% -8%, rgba(113, 205, 136, 0.24), transparent 25rem),
     radial-gradient(circle at 96% 0%, rgba(104, 70, 189, 0.16), transparent 24rem),
     linear-gradient(145deg, #ebeaf0 0%, #dddde2 48%, #e7e5ec 100%);
+  overflow-x: hidden;
 }
 
 .app-frame {
   position: relative;
   width: min(430px, 100%);
   min-height: 100vh;
+  overflow-x: hidden;
   padding: 16px 16px calc(112px + env(safe-area-inset-bottom));
   background-color: var(--soft);
   box-shadow:
@@ -1703,6 +1705,48 @@ body {
 .top-bar h2 {
   font-size: 25px;
   line-height: 1;
+}
+
+.top-bar > div:first-child {
+  display: grid;
+  min-width: 0;
+}
+
+.header-subtitle {
+  margin: 5px 0 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tournament-badge {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border: 3px solid rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  color: #fff;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(255, 255, 255, 0.2), transparent 1.2rem),
+    linear-gradient(145deg, var(--purple), var(--blue));
+  box-shadow: var(--shadow-soft);
+}
+
+.tournament-badge strong {
+  font-size: 14px;
+  line-height: 0.9;
+}
+
+.tournament-badge span {
+  margin-top: -7px;
+  font-size: 11px;
+  font-weight: 1000;
 }
 
 .room-label,
@@ -1773,11 +1817,17 @@ body {
   gap: 14px;
   margin-top: 16px;
   padding: 18px;
+  min-width: 0;
 }
 
 .section-heading h2,
 .section-heading h1 {
+  overflow-wrap: anywhere;
   font-size: 23px;
+}
+
+.section-heading > div {
+  min-width: 0;
 }
 
 .room-hub-hero {
@@ -1814,6 +1864,8 @@ body {
 }
 
 .match-ticket {
+  width: 100%;
+  min-width: 0;
   overflow: hidden;
   padding: 0;
   border-radius: 24px;
@@ -1884,7 +1936,12 @@ body {
 }
 
 .team-row {
+  min-width: 0;
   padding: 18px 0;
+}
+
+.team-row b {
+  min-width: 0;
 }
 
 .team-flag {
@@ -1958,10 +2015,16 @@ body {
 
 .ghost-link,
 .secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 18px;
   border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 14px;
   color: var(--text);
   background: #fff;
+  font-weight: 950;
   box-shadow: var(--shadow-soft);
 }
 
@@ -2266,6 +2329,42 @@ body {
 .bottom-nav a:hover {
   color: #fff;
   background: var(--purple);
+}
+
+.home-fixture .kickoff-line {
+  margin: 16px 16px 0;
+}
+
+.home-fixture .team-row {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 10px;
+  padding: 18px 16px;
+}
+
+.home-fixture .team-row b {
+  overflow: visible;
+  text-align: center;
+}
+
+.home-fixture .team-row .team-name {
+  justify-content: center;
+}
+
+.home-fixture .team-row .team-name > span:last-child {
+  overflow: visible;
+  white-space: normal;
+}
+
+.home-fixture .ticket-footer {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  padding: 0 16px 16px;
+  row-gap: 4px;
+}
+
+.home-fixture .ticket-footer span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .room-shortcut-card .matchup-name,

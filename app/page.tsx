@@ -27,10 +27,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const previewMatches = openMatches.slice(0, 3);
 
   return (
-    <AppShell roomName="Gam3Bling">
+    <AppShell roomName="Gam3bling">
       <section className="hero-card" aria-labelledby="home-title">
         <p className="eyebrow">World Cup prediction rooms</p>
-        <h1 id="home-title">Gam3Bling</h1>
+        <h1 id="home-title">Gam3bling</h1>
         <p>
           Create a room, invite friends, lock predictions before kickoff, and climb the
           leaderboard when the results land.

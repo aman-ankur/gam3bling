@@ -7,7 +7,7 @@ type RoomMissingProps = {
 
 export function RoomMissing({ slug }: RoomMissingProps) {
   return (
-    <AppShell roomName="Gam3Bling" roomSlug={slug} subtitle="Room unavailable">
+    <AppShell roomName="Gam3bling" roomSlug={slug} subtitle="Room unavailable">
       <section className="hero-card setup-hero" aria-labelledby="room-missing-title">
         <div className="cup-mark">GB</div>
         <p className="eyebrow">Room not found</p>

@@ -1,9 +1,10 @@
 import { expect, test } from "@playwright/test";
 
-test("home page renders the Gam3Bling shell", async ({ page }) => {
+test("home page renders the Gam3bling shell", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: "Gam3Bling" })).toBeVisible();
+  await expect(page.locator("header").getByRole("heading", { name: "Gam3bling" })).toBeVisible();
+  await expect(page.getByText("FIFA World Cup 2026")).toBeVisible();
   await expect(page.getByText("World Cup prediction rooms")).toBeVisible();
   await expect(page.getByRole("link", { name: "Create room" })).toHaveAttribute("href", "/new");
   await expect(page.getByRole("link", { name: "Join demo room" })).toHaveCount(0);
