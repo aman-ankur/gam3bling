@@ -8,8 +8,8 @@ post-launch polish pass.
 - Production URL: `https://game-bling.vercel.app`
 - GitHub repo: `aman-ankur/gam3bling`
 - Branch: `main`
-- Commit style: all work remains squashed into one launch commit.
-- Latest pushed commit at the time of this note: `a6cd5ac`
+- Commit style: small focused commits on `main`.
+- Latest functional pushed commit before this docs refresh: `0571c98`
 - Vercel project: `aman-ankurs-projects/game-bling`
 - Production deploy path: normal Vercel cloud build, not prebuilt.
 
@@ -27,6 +27,9 @@ actions.
 
 - Users create rooms at `/new`.
 - Room creators share the generated room link and invite code.
+- Returning room hubs show the invite link and room code below the Results ledger.
+- New rooms persist the visible room code in `rooms.invite_code` once the Supabase migration is applied.
+- Legacy rooms that predate `rooms.invite_code` cannot recover the code from `invite_code_hash`; users must enter the original code once in the room hub recovery form or join with it again to backfill the visible code.
 - Friends can join from:
   - `/r/[slug]?invite=CODE`
   - Home page room-code form
@@ -40,6 +43,7 @@ actions.
   - Current open fixtures first.
   - Room score/leaderboard preview next.
   - History/results preview after that.
+  - Invite link + room code panel below the Results ledger.
   - New visitors still see the invite-code join form.
 - `/r/[slug]/matches` shows the next four open fixtures and locks later
   fixtures.
@@ -83,6 +87,14 @@ actions.
   - `getCurrentPlayerRoomShortcuts()`
 - Room hub:
   - `app/r/[slug]/page.tsx`
+- Room invite panel:
+  - `components/room-invite-card.tsx`
+  - Copies link + code together, or code only.
+  - Shows legacy code recovery when a room has no stored visible code.
+- Room actions:
+  - `features/rooms/actions.ts`
+  - `createRoom`, `joinRoom`, `joinRoomByCode`, and `rememberRoomInviteCode`.
+  - Creation/join code is backward-compatible while `rooms.invite_code` is pending in production.
 - Saved match flow:
   - `app/r/[slug]/matches/[matchId]/page.tsx`
 - Approved HTML planning artifact:
@@ -99,10 +111,10 @@ npm run build
 npm run test:e2e
 ```
 
-Results:
+Latest verified results after invite-code recovery work:
 
-- Unit tests: 44/44 passed.
-- Browser tests: 15/15 passed.
+- Unit tests: 78/78 passed.
+- Browser tests: 22/22 passed.
 - Production Vercel cloud build passed.
 - Live smoke confirmed:
   - Room creation works.
@@ -138,28 +150,41 @@ The project must use the public npm registry. Keep `.npmrc` and
 Current production SQL files:
 
 - `db/migrations/0001_initial_schema.sql`
+- `db/migrations/0002_match_details.sql`
+- `db/migrations/0003_room_invite_code.sql`
 - `db/seeds/world-cup-2026.sql`
 
 No SQL change is needed for removing visible PINs. The `pin_hash` column remains
 in the schema and is filled internally.
 
+Run `0003_room_invite_code.sql` in production if the app logs:
+
+```text
+Could not find the 'invite_code' column of 'rooms' in the schema cache
+```
+
+Then reload PostgREST schema with:
+
+```sql
+notify pgrst, 'reload schema';
+```
+
 ## Current Known Limits
 
-- Session model remembers the current browser/player room, not a full account
-  across devices.
+- Session model remembers up to 12 room/player sessions in the current browser,
+  not a full account across devices.
 - A player cannot yet recover identity on a new device.
 - The global leaderboard is still basic and should eventually get better empty
   and real-data states.
 - API-FOOTBALL scorer event team IDs are not mapped to local `teams`, so
   first/last scorer official scoring needs a provider team mapping field.
-- Smoke tests create real test rooms; add cleanup later.
+- Smoke tests and manual production checks can create real test rooms; add cleanup later.
 
 ## Next Useful Improvements
 
-- Add a current-room list that can include multiple rooms per browser/player.
 - Add real history rows once final match scoring lands in production.
-- Add a production health endpoint for missing env var names without exposing
-  values.
+- Add a production health endpoint for missing env var names and unapplied DB
+  migrations without exposing values.
 - Add cleanup for smoke-test rooms.
 - Add provider team ID mapping for scorer markets.
 - Add a simple recovery/linking flow only if users actually need cross-device

@@ -129,11 +129,12 @@ Required fields:
 - `id uuid primary key`
 - `name text not null`
 - `slug text not null unique`
+- `invite_code text`
 - `invite_code_hash text not null`
 - `creator_player_id uuid references players(id)`
 - `created_at timestamptz not null default now()`
 
-Design decision: store only invite code hash. The raw invite code is shown when generated and can be shared by the creator.
+Design decision: `invite_code_hash` remains the canonical join secret for validation. `invite_code` is an optional display/recovery column so room hubs can show the join code alongside the invite link. Older production rooms may have `invite_code` as `null`; the app can backfill it only after a user proves the real code by joining or using the legacy recovery form. The original code cannot be derived from `invite_code_hash`.
 
 ### `players`
 
@@ -224,20 +225,29 @@ Required fields:
 - `createRoom(name, creatorProfile)`
   - Creates player with display name and generated avatar initials.
   - Creates room slug and invite code.
-  - Stores hashed invite code.
+  - Stores hashed invite code and, when the DB migration is present, the visible invite code.
+  - Falls back to the legacy insert shape if production has not applied `rooms.invite_code` yet.
   - Adds creator as admin member.
   - Sets signed player session cookie.
 
 - `joinRoom(slug, inviteCode, playerProfile)`
   - Validates invite code.
+  - Backfills `rooms.invite_code` for legacy rooms when the column exists.
   - Creates player with display name and generated avatar initials.
   - Adds room membership.
   - Sets signed player session cookie.
+  - Warns on duplicate display names and offers a "this is me" claim flow so an existing player can be restored instead of duplicated.
 
 - `joinRoomByCode(formData)`
   - Lets a player join directly from home with invite code + display name.
   - Looks up the room by hashed invite code.
+  - Backfills `rooms.invite_code` for legacy rooms when the column exists.
   - Creates membership, sets session, and redirects to the room match center.
+
+- `rememberRoomInviteCode(slug, formData)`
+  - Lets a returning room user enter the original room code for an older room that has no stored `invite_code`.
+  - Verifies the code against `invite_code_hash`.
+  - Stores the visible code when valid, then redirects back to the room hub with the invite code visible.
 
 ### Player Actions
 

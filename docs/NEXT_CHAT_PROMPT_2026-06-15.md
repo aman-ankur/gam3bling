@@ -11,8 +11,8 @@ Product:
 - Mobile-first World Cup prediction rooms for small friend groups.
 - Production URL: https://game-bling.vercel.app
 - GitHub repo: aman-ankur/gam3bling
-- Work is intentionally squashed into one launch commit on main.
-- Latest known commit after June 15 polish: a6cd5ac.
+- Work is now in small focused commits on main.
+- Latest functional commit before docs refresh: 0571c98.
 
 Stack:
 - Next.js 15 App Router
@@ -39,12 +39,16 @@ Deployment:
 Current product decisions:
 - Users join with room code + display name. No visible PIN.
 - The legacy players.pin_hash column remains for schema compatibility and is filled with a random internal server secret.
-- Current-browser continuity uses a signed HTTP-only session cookie.
-- Home shows "Your rooms" shortcut for the current browser session.
+- Current-browser continuity uses a signed HTTP-only session cookie with up to 12 remembered room/player sessions.
+- Home shows "Your rooms" shortcuts for the current browser session.
+- Room hubs show the invite link and room code below the Results ledger.
+- New rooms persist the visible room code in rooms.invite_code after db/migrations/0003_room_invite_code.sql is applied.
+- Legacy rooms with invite_code = null cannot recover the original room code from invite_code_hash. They can backfill invite_code only when a user enters the original code again through the room hub recovery form or by joining with that code.
 - /r/[slug] is a room hub for returning/session users:
   - current open fixtures
   - room score preview
   - history preview
+  - invite link + room code panel
   New visitors still see the invite-code join form.
 - /r/[slug]/matches lists open fixtures and locks later fixtures.
 - /r/[slug]/matches/[matchId] supports:
@@ -72,15 +76,25 @@ Important files:
 - app/r/[slug]/matches/page.tsx: match list.
 - app/r/[slug]/matches/[matchId]/page.tsx: prediction detail/saved receipt/edit flow.
 - components/submit-button.tsx: pending submit states.
+- components/room-invite-card.tsx: invite link/code copy UI and legacy room-code recovery form.
 - components/prediction-receipt.tsx: compact saved prediction receipt.
 - components/prediction-form.tsx: prediction form with initialPrediction support.
 - components/room-picks-board.tsx: friends' predictions board; internal names still include pick, visible copy says prediction.
-- features/rooms/actions.ts: createRoom, joinRoom, joinRoomByCode.
+- features/rooms/actions.ts: createRoom, joinRoom, joinRoomByCode, rememberRoomInviteCode. Room create/join is backward-compatible if the rooms.invite_code migration is pending.
 - features/rooms/data.ts: getRoomSummary, getCurrentPlayerRoomShortcuts.
 - features/predictions/data.ts: room prediction data, including raw saved values for edit.
 - mockuup/post-save-room-hub-flow.html: approved flow mockup for home, room hub, saved prediction, and history.
 - docs/SESSION_HANDOFF_2026-06-15.md: latest handoff.
 - docs/DEPLOYMENT.md: current deployment checklist.
+
+Supabase migrations:
+- db/migrations/0001_initial_schema.sql
+- db/migrations/0002_match_details.sql
+- db/migrations/0003_room_invite_code.sql
+- db/seeds/world-cup-2026.sql
+
+If production logs "Could not find the 'invite_code' column of 'rooms' in the schema cache", run 0003_room_invite_code.sql in Supabase SQL Editor and then:
+  notify pgrst, 'reload schema';
 
 Environment:
 NEXT_PUBLIC_SUPABASE_URL=
@@ -98,20 +112,18 @@ Required verification before shipping:
 - npm run test:e2e
 
 Latest verified counts:
-- Unit tests: 44/44
-- Browser tests: 15/15
+- Unit tests: 78/78
+- Browser tests: 22/22
 
 Known limits:
-- Current session model remembers one current room/player in the browser, not a full account across devices.
-- Multiple-room shortcut support should be improved later.
+- Current session model remembers up to 12 room/player sessions in the browser, not a full account across devices.
 - History section is currently a preview until scored final results exist.
 - API-FOOTBALL scorer team IDs are not mapped to local team IDs yet, so first/last scorer official scoring needs provider team mapping.
 - Smoke tests create real test rooms; cleanup should be added later.
 
 Likely next useful work:
 1. Improve real room history once final match scoring lands.
-2. Add multiple-room support to Your rooms.
-3. Add production health endpoint for missing env var names.
-4. Add cleanup for smoke-test rooms.
-5. Add provider team ID mapping for first/last scorer markets.
+2. Add production health endpoint for missing env var names and unapplied DB migrations.
+3. Add cleanup for smoke-test rooms.
+4. Add provider team ID mapping for first/last scorer markets.
 ```

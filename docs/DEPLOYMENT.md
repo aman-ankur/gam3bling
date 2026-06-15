@@ -7,9 +7,31 @@ This is the current deployable MVP path for sharing Game Bling with friends.
 Run these SQL files in Supabase SQL Editor, in order:
 
 1. `db/migrations/0001_initial_schema.sql`
-2. `db/seeds/world-cup-2026.sql`
+2. `db/migrations/0002_match_details.sql`
+3. `db/migrations/0003_room_invite_code.sql`
+4. `db/seeds/world-cup-2026.sql`
 
 The seed loads upcoming FIFA World Cup 2026 fixtures used by the app. Kickoff values are stored in UTC and displayed in IST in the UI.
+
+If production is already on an older schema, run this SQL before depending on persistent room-code display:
+
+```sql
+alter table public.rooms
+  add column if not exists invite_code text;
+
+do $$
+begin
+  alter table public.rooms
+    add constraint rooms_invite_code_format
+    check (invite_code is null or invite_code ~ '^[A-Z0-9]{4,10}$');
+exception
+  when duplicate_object then null;
+end $$;
+
+notify pgrst, 'reload schema';
+```
+
+The app is backward-compatible if this migration is not applied yet, but new/legacy rooms cannot persistently show the room code until the column exists. Existing old room codes cannot be recovered from `invite_code_hash`; enter the original code once through the room hub recovery form or by joining with that code to backfill `rooms.invite_code`.
 
 ## 2. Environment Variables
 
@@ -63,7 +85,7 @@ Expected production route table should show `/new` as dynamic:
 ## 4. Current User Flow
 
 - Create a room at `/new`.
-- Share the generated room link and invite code.
+- Share the generated room link and invite code. Returning room hubs also show the invite link and room code below the Results ledger.
 - Friends join with room code + display name.
 - Returning players see a `Your rooms` shortcut on the home page for the current browser session.
 - `/r/[slug]` acts as a room hub for returning players, with current fixtures, room score, and history preview.
@@ -73,6 +95,7 @@ Expected production route table should show `/new` as dynamic:
 - Locked matches become read-only at kickoff.
 - Room and global leaderboards read prediction score totals.
 - Create/join/save buttons use pending labels and disabled states so users get immediate feedback while server actions run.
+- If an older room has no stored visible code, the invite panel shows a legacy recovery form. Entering the original code verifies it against the hash and saves it for future display.
 
 ## 5. Live Football Sync
 
@@ -130,6 +153,16 @@ Check these in order:
 3. The deployment was a normal cloud build, not a prebuilt deployment.
 4. `/new` is dynamic in the build output.
 
+### `Could not find the 'invite_code' column of 'rooms' in the schema cache`
+
+Run the `0003_room_invite_code` migration SQL above, including:
+
+```sql
+notify pgrst, 'reload schema';
+```
+
+Current code falls back to the legacy schema so create/join should not crash, but persistent room-code display needs the column.
+
 ### Vercel cloud install fails with npm internal errors
 
 Make sure `.npmrc` points to `https://registry.npmjs.org/` and the lockfile
@@ -141,6 +174,8 @@ URLs pointing at a company registry, which made Vercel cloud installs unreliable
 Before sending a link to friends:
 
 - Run `db/migrations/0001_initial_schema.sql` in Supabase.
+- Run `db/migrations/0002_match_details.sql` in Supabase.
+- Run `db/migrations/0003_room_invite_code.sql` in Supabase.
 - Run `db/seeds/world-cup-2026.sql` in Supabase.
 - Deploy to Vercel with all env vars set.
 - Create a fresh room at `/new`.
@@ -150,4 +185,5 @@ Before sending a link to friends:
 - Confirm the home page shows the joined room under `Your rooms` in the same browser.
 - Confirm the room page opens as the room hub for that browser session.
 - Confirm the same room shows the joined player and saved leaderboard row.
+- Confirm the room hub invite panel shows both the invite link and room code, and that `Copy link + code` includes both values.
 - Click create/join/save buttons during smoke testing and confirm they immediately switch to pending copy such as `Creating room...`, `Joining room...`, or `Saving predictions...`.
