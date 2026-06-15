@@ -53,6 +53,8 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
     const featuredMatch = openMatches[0];
     const otherOpenMatches = openMatches.slice(1);
     const currentPlayerScore = session ? leaderboard.find((entry) => entry.playerId === session.playerId)?.score : undefined;
+    const visibleInvite = room.inviteCode ?? invite ?? (room.id === "fallback-room" ? "TIGER7" : undefined);
+    const shareLink = await buildShareLink(slug, visibleInvite);
 
     return (
       <AppShell roomName={room.name} roomSlug={slug} subtitle="Room hub">
@@ -153,6 +155,8 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
             <span>Round winners, exact-score hits, and score changes will live in this section.</span>
           </div>
         </section>
+
+        <RoomInviteCard inviteCode={visibleInvite} shortLink={shareLink} />
       </AppShell>
     );
   }

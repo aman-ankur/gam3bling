@@ -6,6 +6,7 @@ import { getPlayerSessions } from "@/features/players/session";
 export type RoomSummary = {
   exists: boolean;
   id: string;
+  inviteCode?: string;
   name: string;
   slug: string;
   members: Array<{
@@ -30,6 +31,7 @@ export type PlayerRoomShortcut = {
 const fallbackRoom: RoomSummary = {
   exists: true,
   id: "fallback-room",
+  inviteCode: "TIGER7",
   name: "World Cup Room",
   slug: "world-cup-room",
   members: [
@@ -71,6 +73,7 @@ export async function getRoomSummary(slug: string): Promise<RoomSummary> {
     return {
       id: room.id,
       exists: true,
+      inviteCode: typeof room.invite_code === "string" ? room.invite_code : undefined,
       name: room.name,
       slug: room.slug,
       members: dedupeRoomMembers(memberships).map((member, index) => ({

@@ -71,6 +71,7 @@ export async function createRoom(formData: FormData): Promise<void> {
       .insert({
         name: roomName,
         slug,
+        invite_code: normalizeInviteCode(inviteCode),
         invite_code_hash: hashSecret(normalizeInviteCode(inviteCode)),
         creator_player_id: player.id
       })

@@ -2,7 +2,7 @@ import { beforeEach, expect, test, vi } from "vitest";
 import { redirect } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { setPlayerSession } from "@/features/players/session";
-import { claimRoomPlayer, joinRoom } from "./actions";
+import { claimRoomPlayer, createRoom, joinRoom } from "./actions";
 
 vi.mock("next/navigation", () => ({
   redirect: vi.fn((target: string) => {
@@ -39,6 +39,55 @@ vi.mock("@/features/rooms/codes", () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+});
+
+test("creating a room stores the visible invite code for later sharing", async () => {
+  let roomInsertPayload: { invite_code?: string; invite_code_hash?: string } | null = null;
+  const supabase = {
+    from: vi.fn((table: string) => {
+      if (table === "players") {
+        return {
+          insert: vi.fn(() => ({
+            select: vi.fn(() => ({
+              single: vi.fn(async () => ({ data: { id: "player-1" }, error: null }))
+            }))
+          }))
+        };
+      }
+
+      if (table === "rooms") {
+        return {
+          insert: vi.fn((payload: { invite_code?: string; invite_code_hash?: string }) => {
+            roomInsertPayload = payload;
+
+            return {
+              select: vi.fn(() => ({
+                single: vi.fn(async () => ({ data: { id: "room-1" }, error: null }))
+              }))
+            };
+          })
+        };
+      }
+
+      if (table === "room_members") {
+        return {
+          insert: vi.fn(async () => ({ error: null }))
+        };
+      }
+
+      throw new Error(`Unexpected table ${table}`);
+    })
+  };
+  const formData = new FormData();
+  formData.set("roomName", "World Cup Room");
+  formData.set("displayName", "Amanwa");
+
+  vi.mocked(getSupabaseAdmin).mockReturnValue(supabase as never);
+
+  await expect(createRoom(formData)).rejects.toThrow(/NEXT_REDIRECT:\/r\/world-cup-room-[a-f0-9]{4}\?invite=[A-Z0-9]{6}/);
+
+  expect(roomInsertPayload?.invite_code).toMatch(/^[A-Z0-9]{6}$/);
+  expect(roomInsertPayload?.invite_code_hash).toBe(`hash:${roomInsertPayload?.invite_code}`);
 });
 
 test("warns before creating a duplicate room member with the same display name", async () => {

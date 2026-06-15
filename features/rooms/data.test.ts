@@ -93,6 +93,44 @@ test("collapses duplicate display names in room summary members", async () => {
   expect(room.members.map((member) => member.name)).toEqual(["Amanwa", "Kamesh", "Player", "Declan Rice"]);
 });
 
+test("returns the visible invite code when a room stores one", async () => {
+  vi.mocked(getSupabaseAdmin).mockReturnValue({
+    from: vi.fn((table: string) => {
+      if (table === "rooms") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn(async () => ({
+                data: { id: "room-1", invite_code: "TIGER7", name: "World Cup Room", slug: "world-cup-room" },
+                error: null
+              }))
+            }))
+          }))
+        };
+      }
+
+      if (table === "room_members") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              order: vi.fn(async () => ({
+                data: [],
+                error: null
+              }))
+            }))
+          }))
+        };
+      }
+
+      throw new Error(`Unexpected table ${table}`);
+    })
+  } as never);
+
+  const room = await getRoomSummary("world-cup-room");
+
+  expect(room.inviteCode).toBe("TIGER7");
+});
+
 test("returns shortcuts for every room stored in the current browser session", async () => {
   const match = {
     id: "match-1",
