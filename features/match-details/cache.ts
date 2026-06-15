@@ -7,11 +7,13 @@ const AVAILABLE_BEFORE_KICKOFF_FRESH_MS = 24 * 60 * 60 * 1000;
 const AVAILABLE_AFTER_KICKOFF_FRESH_MS = 7 * 24 * 60 * 60 * 1000;
 
 export async function ensureMatchDetailsForMatches({
+  force = false,
   matches,
   provider,
   store,
   now = () => new Date()
 }: {
+  force?: boolean;
   matches: AppMatch[];
   provider: FootballProvider;
   store: MatchDetailsCacheStore;
@@ -34,7 +36,7 @@ export async function ensureMatchDetailsForMatches({
 
     const cache = await store.getCache(match.id);
 
-    if (cache && isFreshEnough(cache.lastFetchedAt, cache.status, match.kickoffAt, fetchedAt)) {
+    if (!force && cache && isFreshEnough(cache.lastFetchedAt, cache.status, match.kickoffAt, fetchedAt)) {
       result.skippedFresh += 1;
       continue;
     }

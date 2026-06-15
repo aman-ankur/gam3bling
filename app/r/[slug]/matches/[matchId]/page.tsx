@@ -8,13 +8,16 @@ import { PredictionForm } from "@/components/prediction-form";
 import { PredictionReceipt } from "@/components/prediction-receipt";
 import { RoomMissing } from "@/components/room-missing";
 import { RoomPicksBoard } from "@/components/room-picks-board";
+import { SubmitButton } from "@/components/submit-button";
 import { MatchupName } from "@/components/team-name";
 import { savePrediction } from "@/features/predictions/actions";
 import { getMatchByRouteId, getUpcomingMatches } from "@/features/matches/data";
 import type { AppMatch } from "@/features/matches/data";
 import { isMatchInOpenPredictionWindow } from "@/features/matches/prediction-window";
+import { refreshMatchDetails } from "@/features/match-details/actions";
 import { ensureMatchDetailsForMatches } from "@/features/match-details/cache";
 import { createSupabaseMatchDetailsStore, getCachedMatchDetails } from "@/features/match-details/data";
+import { getPlayerSessionForRoom } from "@/features/players/session";
 import { isPredictionLocked } from "@/features/predictions/locking";
 import { getRoomMatchPicks } from "@/features/predictions/data";
 import { checkMatchResult } from "@/features/results/actions";
@@ -31,6 +34,7 @@ type MatchPredictionPageProps = {
     matchId: string;
   }>;
   searchParams: Promise<{
+    details?: string;
     error?: string;
     result?: string;
     saved?: string;
@@ -39,7 +43,7 @@ type MatchPredictionPageProps = {
 
 export default async function MatchPredictionPage({ params, searchParams }: MatchPredictionPageProps) {
   const { matchId, slug } = await params;
-  const { error, result, saved } = await searchParams;
+  const { details, error, result, saved } = await searchParams;
   const matches = await getUpcomingMatches();
   const room = await getRoomSummary(slug);
 
@@ -72,6 +76,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
   const locked = kickoffLocked || windowLocked;
   const predictionAction = savePrediction.bind(null, slug, match.apiMatchId);
   const resultCheckAction = checkMatchResult.bind(null, slug, match.apiMatchId);
+  const refreshDetailsAction = refreshMatchDetails.bind(null, slug, match.apiMatchId);
   const resultCheckState = getResultCheckState(
     {
       kickoffAt: match.kickoffAt,
@@ -92,9 +97,14 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
 
   const matchDetails = await getCachedMatchDetails(supabase, match);
   const roomPicks = await getRoomMatchPicks(slug, match);
+  const session = await getPlayerSessionForRoom(slug);
   const currentPrediction = roomPicks.find((pick) => pick.isCurrentPlayer && pick.saved);
   const receiptPrediction = currentPrediction ?? (saved ? createFallbackReceipt(match) : undefined);
   const isSettledPrediction = Boolean(receiptPrediction && match.status === "final");
+  const isRoomCreator = Boolean(session && room.creatorPlayerId && session.playerId === room.creatorPlayerId);
+  const refreshDetailsPanel = isRoomCreator ? (
+    <MatchDetailsRefreshPanel action={refreshDetailsAction} status={details} />
+  ) : null;
 
   console.info("[matches.prediction] loaded", {
     slug,
@@ -113,6 +123,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
       {error === "invalid" ? <p className="locked-banner">That prediction combination did not make sense. Adjust the score and try again.</p> : null}
       {error === "locked" ? <p className="locked-banner">This match is locked for predictions.</p> : null}
       {result === "checked" && !isSettledPrediction ? <p className="success-banner">Final result checked and room scores refreshed.</p> : null}
+      {detailsMessage(details) ? <p className={details === "checked" ? "success-banner" : "locked-banner"}>{detailsMessage(details)}</p> : null}
 
       {isSettledPrediction && receiptPrediction ? (
         <div className="post-result-stack">
@@ -178,13 +189,48 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
                 </details>
               </>
             )}
-            lineups={<LineupPitch lineups={matchDetails.lineups} teams={[match.homeTeam, match.awayTeam]} />}
-            stats={<MatchStatsPanel match={match} statistics={matchDetails.statistics} />}
+            lineups={<LineupPitch emptyAction={refreshDetailsPanel} lineups={matchDetails.lineups} teams={[match.homeTeam, match.awayTeam]} />}
+            stats={<MatchStatsPanel emptyAction={refreshDetailsPanel} match={match} statistics={matchDetails.statistics} />}
           />
         </>
       )}
     </AppShell>
   );
+}
+
+function MatchDetailsRefreshPanel({ action, status }: { action: (formData: FormData) => Promise<void>; status?: string }) {
+  return (
+    <form action={action} className="match-details-refresh">
+      <p>{status === "checked" ? "Latest provider check completed." : "Lineups usually arrive 20-40 minutes before kickoff."}</p>
+      <SubmitButton className="secondary-button" pendingLabel="Checking provider...">
+        Fetch latest lineups & stats
+      </SubmitButton>
+    </form>
+  );
+}
+
+function detailsMessage(details: string | undefined): string | undefined {
+  if (details === "checked") {
+    return "Latest lineups and stats checked.";
+  }
+
+  if (details === "permission") {
+    return "Only the room creator can refresh match details.";
+  }
+
+  if (details === "invalid") {
+    return "This fixture cannot fetch provider details yet.";
+  }
+
+  if (details === "missing") {
+    return "This fixture could not be found.";
+  }
+
+  if (details === "error") {
+    return "The provider details check failed. Try again in a few minutes.";
+  }
+
+  return undefined;
 }
 
 function resultMessage(result: string | undefined): string | undefined {

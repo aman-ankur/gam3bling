@@ -3,11 +3,12 @@ import type { AppMatch } from "@/features/matches/data";
 import type { MatchTeamStatisticView } from "@/features/match-details/types";
 
 type MatchStatsPanelProps = {
+  emptyAction?: React.ReactNode;
   match: AppMatch;
   statistics: MatchTeamStatisticView[];
 };
 
-export function MatchStatsPanel({ match, statistics }: MatchStatsPanelProps) {
+export function MatchStatsPanel({ emptyAction, match, statistics }: MatchStatsPanelProps) {
   const groupedStats = groupStats(statistics, match);
 
   return (
@@ -39,7 +40,10 @@ export function MatchStatsPanel({ match, statistics }: MatchStatsPanelProps) {
           ))}
         </div>
       ) : (
-        <p className="section-note">Stats are not available yet.</p>
+        <>
+          <p className="section-note">Stats are not available yet.</p>
+          {emptyAction}
+        </>
       )}
     </article>
   );

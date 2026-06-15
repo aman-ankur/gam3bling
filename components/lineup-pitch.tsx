@@ -7,11 +7,12 @@ import type { MatchLineupView } from "@/features/match-details/types";
 import type { AppTeam } from "@/features/matches/data";
 
 type LineupPitchProps = {
+  emptyAction?: React.ReactNode;
   lineups: MatchLineupView[];
   teams?: AppTeam[];
 };
 
-export function LineupPitch({ lineups, teams = [] }: LineupPitchProps) {
+export function LineupPitch({ emptyAction, lineups, teams = [] }: LineupPitchProps) {
   const [selectedTeamId, setSelectedTeamId] = useState(lineups[0]?.teamId ?? "");
   const selectedLineup = lineups.find((lineup) => lineup.teamId === selectedTeamId) ?? lineups[0];
   const starters = useMemo(
@@ -29,6 +30,7 @@ export function LineupPitch({ lineups, teams = [] }: LineupPitchProps) {
       <article className="section-stack match-detail-panel">
         <h2>Lineups</h2>
         <p className="section-note">Lineups are not confirmed yet</p>
+        {emptyAction}
       </article>
     );
   }
@@ -83,7 +85,10 @@ export function LineupPitch({ lineups, teams = [] }: LineupPitchProps) {
           ))}
         </div>
       ) : (
-        <p className="section-note">Lineups are not confirmed yet</p>
+        <>
+          <p className="section-note">Lineups are not confirmed yet</p>
+          {emptyAction}
+        </>
       )}
 
       <div className="lineup-player-list">

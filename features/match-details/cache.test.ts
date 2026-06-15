@@ -82,6 +82,32 @@ describe("ensureMatchDetailsForMatches", () => {
     expect(provider.fetchMatchDetails).not.toHaveBeenCalled();
   });
 
+  test("force refresh fetches even when unavailable cache is still fresh", async () => {
+    const store = createStore({
+      "match-1": {
+        status: "unavailable",
+        lineupsStatus: "unavailable",
+        statsStatus: "unavailable",
+        lastFetchedAt: "2026-06-15T00:45:00.000Z"
+      }
+    });
+    const provider = createProvider(providerDetails());
+
+    await expect(ensureMatchDetailsForMatches({
+      matches: [match()],
+      provider,
+      store,
+      now: fixedNow,
+      force: true
+    })).resolves.toMatchObject({
+      fetched: 1,
+      saved: 1,
+      skippedFresh: 0
+    });
+
+    expect(provider.fetchMatchDetails).toHaveBeenCalledWith("123");
+  });
+
   test("skips non-numeric API ids", async () => {
     const store = createStore();
     const provider = createProvider(providerDetails());

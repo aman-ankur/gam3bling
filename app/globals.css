@@ -593,6 +593,24 @@ a {
   font-weight: 850;
 }
 
+.match-details-refresh {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.match-details-refresh p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
 .football-pitch {
   position: relative;
   width: 100%;
