@@ -7,10 +7,11 @@ type RoomPicksBoardProps = {
   eyebrow?: string;
   homeTeam: AppTeam;
   picks: RoomMatchPick[];
+  showResults?: boolean;
   title?: string;
 };
 
-export function RoomPicksBoard({ awayTeam, eyebrow = "Room predictions", homeTeam, picks, title = "Friends' predictions" }: RoomPicksBoardProps) {
+export function RoomPicksBoard({ awayTeam, eyebrow = "Room predictions", homeTeam, picks, showResults = false, title = "Friends' predictions" }: RoomPicksBoardProps) {
   const savedCount = picks.filter((pick) => pick.saved).length;
 
   return (
@@ -52,11 +53,32 @@ export function RoomPicksBoard({ awayTeam, eyebrow = "Room predictions", homeTea
               )}
             </div>
 
+            {showResults && pick.saved ? <PickResultMarkers pick={pick} /> : null}
           </article>
           ))}
         </div>
       )}
     </section>
+  );
+}
+
+function PickResultMarkers({ pick }: { pick: RoomMatchPick }) {
+  return (
+    <div className="pick-result-markers" aria-label={`${pick.playerName} result breakdown`}>
+      <ResultMarker label="Exact" points={pick.scoreFinal} />
+      <ResultMarker label="Result" points={pick.scoreResult} />
+      <ResultMarker label="HT" points={pick.scoreHalftime} />
+      <ResultMarker label="First" points={pick.scoreFirstScorer} />
+      <ResultMarker label="Last" points={pick.scoreLastScorer} />
+    </div>
+  );
+}
+
+function ResultMarker({ label, points }: { label: string; points: number }) {
+  return (
+    <span className={points > 0 ? "pick-result-marker hit" : "pick-result-marker"}>
+      {points > 0 ? `${label} +${points}` : `${label} Miss`}
+    </span>
   );
 }
 

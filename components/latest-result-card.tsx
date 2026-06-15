@@ -16,10 +16,11 @@ export function LatestResultCard({ match, picks, slug }: LatestResultCardProps) 
   const rankedPicks = savedPicks
     .slice()
     .sort((left, right) => right.points - left.points || left.playerName.localeCompare(right.playerName));
+  const matchHref = `/r/${slug}/matches/${match.apiMatchId}`;
 
   return (
     <section className="latest-result-card" aria-labelledby="latest-result-title">
-      <div className="latest-result-hero">
+      <Link className="latest-result-hero latest-result-hero-link" href={matchHref} aria-label={`Open full breakdown for ${match.homeTeam.name} vs ${match.awayTeam.name}`}>
         <p className="eyebrow">Final just landed</p>
         <h2 id="latest-result-title">{resultHeadline(match)}</h2>
         <p>{currentPick ? `You earned ${currentPick.points} points.` : "Room scores are ready."} First and last scorer may stay pending until official event data is mapped.</p>
@@ -28,7 +29,7 @@ export function LatestResultCard({ match, picks, slug }: LatestResultCardProps) 
           <b>{match.homeScore}-{match.awayScore}</b>
           <strong><TeamName team={match.awayTeam} /></strong>
         </div>
-      </div>
+      </Link>
 
       <div className="latest-return-card">
         <p className="eyebrow">Your return</p>
@@ -68,7 +69,7 @@ export function LatestResultCard({ match, picks, slug }: LatestResultCardProps) 
         </div>
       ) : null}
 
-      <Link className="latest-result-action" href={`/r/${slug}/matches/${match.apiMatchId}`}>
+      <Link className="latest-result-action" href={matchHref}>
         <span>View full breakdown</span>
         <b>Open</b>
       </Link>

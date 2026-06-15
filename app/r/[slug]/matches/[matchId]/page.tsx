@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
+import { CountdownTimer } from "@/components/countdown-timer";
 import { LiveMatchClock } from "@/components/live-match-clock";
 import { LineupPitch } from "@/components/lineup-pitch";
 import { MatchDetailTabs } from "@/components/match-detail-tabs";
@@ -104,7 +105,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
   const session = await getPlayerSessionForRoom(slug);
   const currentPrediction = roomPicks.find((pick) => pick.isCurrentPlayer && pick.saved);
   const receiptPrediction = currentPrediction ?? (saved ? createFallbackReceipt(match) : undefined);
-  const isSettledPrediction = Boolean(receiptPrediction && match.status === "final");
+  const isFinalMatch = match.status === "final" && match.homeScore != null && match.awayScore != null;
   const isRoomCreator = Boolean(session && room.creatorPlayerId && session.playerId === room.creatorPlayerId);
   const refreshDetailsPanel = isRoomCreator ? (
     <MatchDetailsRefreshPanel action={refreshDetailsAction} status={details} />
@@ -126,14 +127,18 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
 
       {error === "invalid" ? <p className="locked-banner">That prediction combination did not make sense. Adjust the score and try again.</p> : null}
       {error === "locked" ? <p className="locked-banner">This match is locked for predictions.</p> : null}
-      {result === "checked" && !isSettledPrediction ? <p className="success-banner">Final result checked and room scores refreshed.</p> : null}
+      {result === "checked" && !isFinalMatch ? <p className="success-banner">Final result checked and room scores refreshed.</p> : null}
       {scoreMessage(score) ? <p className={score === "updated" ? "success-banner" : "locked-banner"}>{scoreMessage(score)}</p> : null}
       {detailsMessage(details) ? <p className={details === "checked" ? "success-banner" : "locked-banner"}>{detailsMessage(details)}</p> : null}
 
-      {isSettledPrediction && receiptPrediction ? (
+      {isFinalMatch ? (
         <div className="post-result-stack">
-          <MatchResultBreakdown match={match} pick={receiptPrediction} />
-          <RoomPicksBoard awayTeam={match.awayTeam} eyebrow="Friends" homeTeam={match.homeTeam} picks={roomPicks} title="Room predictions" />
+          {receiptPrediction ? (
+            <MatchResultBreakdown match={match} pick={receiptPrediction} />
+          ) : (
+            <FinalMatchSummary match={match} />
+          )}
+          <RoomPicksBoard awayTeam={match.awayTeam} eyebrow="Friends" homeTeam={match.homeTeam} picks={roomPicks} showResults title="Room predictions" />
           <details className="edit-prediction-panel">
             <summary>
               <span>Edit prediction</span>
@@ -150,38 +155,48 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
         </div>
       ) : (
         <>
-          <section className="hero-card match-hero" aria-labelledby="match-title">
-            <p className="eyebrow">{match.stage}</p>
+          <section className="match-ticket match-card sport-card match-hero-score-card" aria-labelledby="match-title">
+            <div className="ticket-meta match-hero-meta">
+              <div>
+                <span>{match.stage}</span>
+                <small>{formatKickoffInIst(match.kickoffAt)}</small>
+              </div>
+              <strong>
+                {match.status === "live" || match.status === "halftime" ? "Live now" : <CountdownTimer kickoffAt={match.kickoffAt} />}
+              </strong>
+            </div>
             <h1 aria-label={`${match.homeTeam.name} vs ${match.awayTeam.name}`} id="match-title">
               <MatchupName awayTeam={match.awayTeam} homeTeam={match.homeTeam} />
             </h1>
             <p>{formatKickoffInIst(match.kickoffAt)}. {windowLocked && !kickoffLocked ? "Only the next 4 matches are open for predictions." : "Kickoff locks this match."}</p>
-            {match.homeScore != null && match.awayScore != null ? (
-              <div className="match-scoreboard" aria-label={`${match.homeTeam.name} ${match.homeScore}-${match.awayScore} ${match.awayTeam.name}`}>
-                <div className="scoreboard-team">
-                  <TeamName team={match.homeTeam} />
-                </div>
-                <div className="scoreboard-core">
-                  <strong>{match.homeScore}-{match.awayScore}</strong>
+            <div className="sport-matchup" aria-label={`${match.homeTeam.name} vs ${match.awayTeam.name}`}>
+              <div className="sport-team">
+                <TeamName team={match.homeTeam} />
+              </div>
+              <div className="center-lock">
+                <b>{match.homeScore != null && match.awayScore != null ? `${match.homeScore}-${match.awayScore}` : "vs"}</b>
+                <small>
                   {match.status === "live" || match.status === "halftime" ? (
                     <LiveMatchClock initialNow={initialNow} kickoffAt={match.kickoffAt} status={match.status} />
+                  ) : match.homeScore != null && match.awayScore != null ? (
+                    "Latest"
                   ) : (
-                    <span>{match.status === "final" ? "FT" : "Latest score"}</span>
+                    "No score"
                   )}
-                </div>
-                <div className="scoreboard-team away">
-                  <TeamName team={match.awayTeam} />
-                </div>
+                </small>
               </div>
-            ) : null}
-            <div className="match-action-row">
+              <div className="sport-team">
+                <TeamName team={match.awayTeam} />
+              </div>
+            </div>
+            <div className="match-action-row match-score-sync-row">
               <div>
-                <span className={`state-dot ${match.status === "halftime" ? "live" : match.status}`}>{match.status}</span>
+                <strong className="score-sync-label">{match.homeScore != null && match.awayScore != null ? "Latest score synced" : "Score not fetched yet"}</strong>
                 <small>{match.homeScore != null && match.awayScore != null ? "Latest provider score is shown above" : "Provider score not fetched yet"}</small>
               </div>
-              <form action={refreshScoreAction}>
-                <SubmitButton className="secondary-button" pendingLabel="Refreshing...">
-                  Refresh score
+              <form action={refreshScoreAction} className="match-score-refresh">
+                <SubmitButton className="secondary-button subtle-refresh-button" pendingLabel="Refreshing...">
+                  Refresh
                 </SubmitButton>
               </form>
             </div>
@@ -229,6 +244,19 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
         </>
       )}
     </AppShell>
+  );
+}
+
+function FinalMatchSummary({ match }: { match: AppMatch }) {
+  return (
+    <section className="post-result-hero" aria-labelledby="post-result-title">
+      <p className="eyebrow">{match.groupName ? `${match.groupName} · Final` : `${match.stage} · Final`}</p>
+      <h2 id="post-result-title">
+        <span>{match.homeTeam.name} {match.homeScore}-{match.awayScore}</span>
+        <span>{match.awayTeam.name}</span>
+      </h2>
+      <p>Room predictions are settled below, including points and market hits for every saved pick.</p>
+    </section>
   );
 }
 

@@ -16,6 +16,9 @@ test("prediction page includes all MVP markets for an open fixture", async ({ pa
   await page.goto("/r/world-cup-room/matches/1489376");
 
   await expect(page.getByRole("heading", { name: "Netherlands vs Japan" })).toBeVisible();
+  await expect(page.locator(".match-hero-score-card")).toBeVisible();
+  await expect(page.locator(".match-hero-score-card").getByText("scheduled")).toHaveCount(0);
+  await expect(page.locator(".match-score-refresh").getByRole("button", { name: "Refresh" })).toBeVisible();
   await expect(page.getByLabel("Netherlands flag").first()).toBeVisible();
   await expect(page.getByLabel("Japan flag").first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Final score" })).toBeVisible();

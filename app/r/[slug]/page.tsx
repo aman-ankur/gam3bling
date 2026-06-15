@@ -54,12 +54,12 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
 
   if (shouldShowHub) {
     const matches = await getUpcomingMatches({ includeDemo: isDemoRoomSlug(slug) });
-    const latestCompletedMatch = getLatestCompletedMatch(matches);
+    const latestCompletedMatches = getLatestCompletedMatches(matches, 5);
     const [leaderboard, predictedMatchIds] = await Promise.all([
       getRoomLeaderboard(slug),
       getCurrentPlayerPredictedMatchIds(slug, matches)
     ]);
-    const latestResultPicks = latestCompletedMatch ? await getRoomMatchPicks(slug, latestCompletedMatch) : [];
+    const latestResultPickSets = await Promise.all(latestCompletedMatches.map((match) => getRoomMatchPicks(slug, match)));
     const now = getCurrentDate();
     const initialNow = now.toISOString();
     const activeMatchIds = getActiveMatchIds(matches, now);
@@ -188,8 +188,12 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
         </RoomAccordion>
 
         <RoomAccordion eyebrow="Results ledger" title="History">
-          {latestCompletedMatch ? (
-            <LatestResultCard match={latestCompletedMatch} picks={latestResultPicks} slug={slug} />
+          {latestCompletedMatches.length > 0 ? (
+            <div className="latest-results-list" aria-label="Recent completed predictions">
+              {latestCompletedMatches.map((match, index) => (
+                <LatestResultCard key={match.id} match={match} picks={latestResultPickSets[index] ?? []} slug={slug} />
+              ))}
+            </div>
           ) : (
             <div className="history-preview">
               <strong>Completed matches will appear here</strong>
@@ -370,10 +374,11 @@ function RoomAccordion({ children, eyebrow, title }: { children: ReactNode; eyeb
   );
 }
 
-function getLatestCompletedMatch(matches: AppMatch[]): AppMatch | undefined {
+function getLatestCompletedMatches(matches: AppMatch[], limit: number): AppMatch[] {
   return matches
     .filter((match) => match.status === "final" && match.homeScore != null && match.awayScore != null)
-    .sort((left, right) => new Date(right.kickoffAt).getTime() - new Date(left.kickoffAt).getTime())[0];
+    .sort((left, right) => new Date(right.kickoffAt).getTime() - new Date(left.kickoffAt).getTime())
+    .slice(0, limit);
 }
 
 function hasMatchId(matchIds: Set<string>, match: AppMatch): boolean {
