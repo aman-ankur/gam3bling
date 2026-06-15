@@ -34,6 +34,7 @@ export type MatchDetailsCacheStore = {
 };
 
 export type EnsureMatchDetailsResult = {
+  failureMessages: string[];
   fetched: number;
   saved: number;
   skippedFresh: number;

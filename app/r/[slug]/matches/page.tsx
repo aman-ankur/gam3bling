@@ -18,7 +18,7 @@ type MatchesPageProps = {
 
 export default async function MatchesPage({ params }: MatchesPageProps) {
   const { slug } = await params;
-  const [matches, room] = await Promise.all([getUpcomingMatches(), getRoomSummary(slug)]);
+  const [matches, room] = await Promise.all([getUpcomingMatches({ includeDemo: isDemoRoomSlug(slug) }), getRoomSummary(slug)]);
 
   if (!room.exists) {
     return <RoomMissing slug={slug} />;
@@ -89,4 +89,8 @@ export default async function MatchesPage({ params }: MatchesPageProps) {
       </section>
     </AppShell>
   );
+}
+
+function isDemoRoomSlug(slug: string): boolean {
+  return slug.startsWith("demo-room-");
 }

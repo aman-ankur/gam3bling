@@ -297,6 +297,27 @@ describe("createApiFootballProvider", () => {
       }
     });
   });
+
+  test("includes provider access errors in match detail failures", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        errors: {
+          access: "Your account is suspended, check on https://dashboard.api-football.com."
+        },
+        response: []
+      })
+    });
+    const provider = createApiFootballProvider({
+      apiKey: "test-key",
+      baseUrl: "https://v3.football.api-sports.io",
+      fetchImpl
+    });
+
+    await expect(provider.fetchMatchDetails("123")).rejects.toThrow(
+      "API-FOOTBALL returned errors: access: Your account is suspended, check on https://dashboard.api-football.com."
+    );
+  });
 });
 
 describe("normalizeApiFootballLineups", () => {

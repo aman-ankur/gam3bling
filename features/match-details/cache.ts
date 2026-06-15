@@ -21,6 +21,7 @@ export async function ensureMatchDetailsForMatches({
 }): Promise<EnsureMatchDetailsResult> {
   const fetchedAt = now();
   const result: EnsureMatchDetailsResult = {
+    failureMessages: [],
     fetched: 0,
     saved: 0,
     skippedFresh: 0,
@@ -57,12 +58,19 @@ export async function ensureMatchDetailsForMatches({
       });
       result.saved += 1;
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown match details fetch error";
+      console.error("[match-details.cache] fetch_failed", {
+        apiMatchId: match.apiMatchId,
+        matchId: match.id,
+        message: errorMessage
+      });
       await store.recordFailure({
         matchId: match.id,
         provider: provider.name,
         fetchedAt: fetchedAt.toISOString(),
-        errorMessage: error instanceof Error ? error.message : "Unknown match details fetch error"
+        errorMessage
       });
+      result.failureMessages.push(errorMessage);
       result.failed += 1;
     }
   }

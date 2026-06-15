@@ -52,6 +52,7 @@ test("room creator can force refresh match lineups and stats", async () => {
   });
   vi.mocked(getMatchByRouteId).mockResolvedValue(match());
   vi.mocked(ensureMatchDetailsForMatches).mockResolvedValue({
+    failureMessages: [],
     fetched: 1,
     saved: 1,
     skippedFresh: 0,
@@ -67,6 +68,28 @@ test("room creator can force refresh match lineups and stats", async () => {
     force: true,
     matches: [expect.objectContaining({ apiMatchId: "123" })]
   }));
+});
+
+test("room creator sees a provider access message when API-Football rejects the key", async () => {
+  vi.mocked(getSupabaseAdmin).mockReturnValue(createSupabase("creator-player") as never);
+  vi.mocked(getPlayerSessionForRoom).mockResolvedValue({
+    playerId: "creator-player",
+    roomId: "room-1",
+    roomSlug: "world-cup-room"
+  });
+  vi.mocked(getMatchByRouteId).mockResolvedValue(match());
+  vi.mocked(ensureMatchDetailsForMatches).mockResolvedValue({
+    fetched: 1,
+    saved: 0,
+    skippedFresh: 0,
+    skippedInvalidApiId: 0,
+    failed: 1,
+    failureMessages: ["API-FOOTBALL returned errors: access: Your account is suspended, check on https://dashboard.api-football.com."]
+  });
+
+  await expect(refreshMatchDetails("world-cup-room", "123")).rejects.toThrow(
+    "NEXT_REDIRECT:/r/world-cup-room/matches/123?details=access"
+  );
 });
 
 test("non-creators cannot force refresh match details", async () => {

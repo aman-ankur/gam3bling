@@ -13,6 +13,7 @@ export type AppTeam = {
 export type AppMatch = {
   id: string;
   apiMatchId: string;
+  apiProvider?: string | null;
   homeTeam: AppTeam;
   awayTeam: AppTeam;
   kickoffAt: string;
@@ -37,6 +38,7 @@ type TeamRow = {
 
 type MatchRow = {
   id: string;
+  api_provider?: string | null;
   api_match_id?: string | null;
   home_team_id: string;
   away_team_id: string;
@@ -53,7 +55,11 @@ type MatchRow = {
   last_synced_at?: string | null;
 };
 
-export async function getUpcomingMatches(): Promise<AppMatch[]> {
+type GetUpcomingMatchesOptions = {
+  includeDemo?: boolean;
+};
+
+export async function getUpcomingMatches(options: GetUpcomingMatchesOptions = {}): Promise<AppMatch[]> {
   if (process.env.E2E_USE_FALLBACK_FIXTURES === "1") {
     return fallbackAppMatches();
   }
@@ -74,7 +80,8 @@ export async function getUpcomingMatches(): Promise<AppMatch[]> {
       return fallbackAppMatches();
     }
 
-    const mappedMatches = mapMatchRows(matchRows as MatchRow[], teamRows as TeamRow[]);
+    const visibleRows = (matchRows as MatchRow[]).filter((match) => options.includeDemo || match.api_provider !== "demo");
+    const mappedMatches = mapMatchRows(visibleRows, teamRows as TeamRow[]);
 
     return prioritizeUpcoming(mappedMatches);
   } catch {
@@ -175,6 +182,7 @@ function mapMatchRows(matchRows: MatchRow[], teamRows: TeamRow[]): AppMatch[] {
 
     return [{
       id: match.id,
+      apiProvider: match.api_provider,
       apiMatchId: match.api_match_id ?? match.id,
       homeTeam,
       awayTeam,

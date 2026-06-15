@@ -49,10 +49,21 @@ test("drops final and stale unsynced matches from active matches", () => {
   const matches = [
     buildMatch(1, { kickoffAt: "2026-06-14T12:00:00.000Z" }),
     buildMatch(2, { kickoffAt: "2026-06-14T14:00:00.000Z", status: "final" }),
-    buildMatch(3, { kickoffAt: "2026-06-14T11:30:00.000Z", status: "live" })
+    buildMatch(3, { kickoffAt: "2026-06-14T13:00:00.000Z", status: "live" })
   ];
 
   expect([...getActiveMatchIds(matches, now)]).toEqual(["match-3", "api-3"]);
+});
+
+test("keeps live matches active only when recently synced or within the normal match window", () => {
+  const now = new Date("2026-06-14T16:00:00.000Z");
+  const matches = [
+    buildMatch(1, { kickoffAt: "2026-06-14T12:00:00.000Z", status: "live" }),
+    buildMatch(2, { kickoffAt: "2026-06-14T12:00:00.000Z", status: "live", lastSyncedAt: "2026-06-14T15:45:00.000Z" }),
+    buildMatch(3, { kickoffAt: "2026-06-14T14:00:00.000Z", status: "live" })
+  ];
+
+  expect([...getActiveMatchIds(matches, now)]).toEqual(["match-2", "api-2", "match-3", "api-3"]);
 });
 
 function buildMatch(index: number, overrides: Partial<AppMatch> = {}): AppMatch {

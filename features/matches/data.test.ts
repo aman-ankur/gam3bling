@@ -1,10 +1,32 @@
 import { describe, expect, test, vi } from "vitest";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
-import { getMatchByRouteId } from "./data";
+import { getMatchByRouteId, getUpcomingMatches } from "./data";
 
 vi.mock("@/lib/supabase/server", () => ({
   getSupabaseAdmin: vi.fn()
 }));
+
+describe("getUpcomingMatches", () => {
+  test("excludes demo fixtures from normal room match lists", async () => {
+    vi.mocked(getSupabaseAdmin).mockReturnValue(createSupabaseForMatchList() as never);
+
+    await expect(getUpcomingMatches()).resolves.toEqual([
+      expect.objectContaining({
+        apiMatchId: "1489380",
+        homeTeam: expect.objectContaining({ name: "Spain" }),
+        awayTeam: expect.objectContaining({ name: "Cape Verde" })
+      })
+    ]);
+  });
+
+  test("can include demo fixtures for demo rooms", async () => {
+    vi.mocked(getSupabaseAdmin).mockReturnValue(createSupabaseForMatchList() as never);
+
+    const matches = await getUpcomingMatches({ includeDemo: true });
+
+    expect(matches.map((match) => match.apiMatchId)).toEqual(["demo-demo-room-123abc", "1489380"]);
+  });
+});
 
 describe("getMatchByRouteId", () => {
   test("loads a specific API match even when it is outside the general upcoming list", async () => {
@@ -42,6 +64,7 @@ describe("getMatchByRouteId", () => {
 function demoMatchRow() {
   return {
     id: "match-1",
+    api_provider: "demo",
     api_match_id: "demo-demo-room-123abc",
     home_team_id: "team-ned",
     away_team_id: "team-jpn",
@@ -54,6 +77,59 @@ function demoMatchRow() {
     first_scoring_team_id: "team-ned",
     last_scoring_team_id: "team-jpn",
     last_synced_at: "2026-06-15T13:46:07.993Z"
+  };
+}
+
+function createSupabaseForMatchList() {
+  const teams = [
+    { id: "team-ned", name: "Netherlands", short_code: "NED", flag_code: "nl" },
+    { id: "team-jpn", name: "Japan", short_code: "JPN", flag_code: "jp" },
+    { id: "team-esp", name: "Spain", short_code: "ESP", flag_code: "es" },
+    { id: "team-cpv", name: "Cape Verde", short_code: "CPV", flag_code: "cv" }
+  ];
+  const matches = [
+    {
+      ...demoMatchRow(),
+      status: "live"
+    },
+    {
+      id: "match-2",
+      api_provider: "api-football",
+      api_match_id: "1489380",
+      home_team_id: "team-esp",
+      away_team_id: "team-cpv",
+      kickoff_at: "2026-06-15T16:00:00.000Z",
+      stage: "Group H",
+      group_name: "H",
+      status: "scheduled",
+      home_score: null,
+      away_score: null,
+      first_scoring_team_id: null,
+      last_scoring_team_id: null,
+      last_synced_at: null
+    }
+  ];
+
+  return {
+    from: vi.fn((table: string) => {
+      if (table === "teams") {
+        return {
+          select: vi.fn(async () => ({ data: teams, error: null }))
+        };
+      }
+
+      if (table === "matches") {
+        return {
+          select: vi.fn(() => ({
+            order: vi.fn(() => ({
+              limit: vi.fn(async () => ({ data: matches, error: null }))
+            }))
+          }))
+        };
+      }
+
+      throw new Error(`Unexpected table ${table}`);
+    })
   };
 }
 

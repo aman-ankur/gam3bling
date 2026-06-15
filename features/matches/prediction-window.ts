@@ -3,6 +3,7 @@ import { getCurrentDate } from "../time/now";
 
 const OPEN_PREDICTION_MATCH_COUNT = 4;
 const ACTIVE_MATCH_WINDOW_MS = 150 * 60 * 1_000;
+const RECENT_LIVE_SYNC_MS = 30 * 60 * 1_000;
 
 export function getOpenPredictionMatchIds(matches: AppMatch[], now = getCurrentDate()): Set<string> {
   const nowMs = now.getTime();
@@ -31,11 +32,22 @@ function isMatchActive(match: AppMatch, nowMs: number): boolean {
     return false;
   }
 
+  const kickoffMs = new Date(match.kickoffAt).getTime();
+  const withinNormalMatchWindow = kickoffMs <= nowMs && nowMs - kickoffMs <= ACTIVE_MATCH_WINDOW_MS;
+
   if (match.status === "live" || match.status === "halftime") {
-    return true;
+    return withinNormalMatchWindow || hasRecentLiveSync(match.lastSyncedAt, nowMs);
   }
 
-  const kickoffMs = new Date(match.kickoffAt).getTime();
+  return withinNormalMatchWindow;
+}
 
-  return kickoffMs <= nowMs && nowMs - kickoffMs <= ACTIVE_MATCH_WINDOW_MS;
+function hasRecentLiveSync(lastSyncedAt: string | null | undefined, nowMs: number): boolean {
+  if (!lastSyncedAt) {
+    return false;
+  }
+
+  const syncedMs = new Date(lastSyncedAt).getTime();
+
+  return !Number.isNaN(syncedMs) && nowMs - syncedMs <= RECENT_LIVE_SYNC_MS;
 }

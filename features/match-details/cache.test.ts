@@ -15,6 +15,7 @@ describe("ensureMatchDetailsForMatches", () => {
       store,
       now: fixedNow
     })).resolves.toEqual({
+      failureMessages: [],
       fetched: 1,
       saved: 1,
       skippedFresh: 0,
@@ -51,6 +52,7 @@ describe("ensureMatchDetailsForMatches", () => {
       store,
       now: fixedNow
     })).resolves.toMatchObject({
+      failureMessages: [],
       fetched: 0,
       skippedFresh: 1
     });
@@ -75,6 +77,7 @@ describe("ensureMatchDetailsForMatches", () => {
       store,
       now: fixedNow
     })).resolves.toMatchObject({
+      failureMessages: [],
       fetched: 0,
       skippedFresh: 1
     });
@@ -100,6 +103,7 @@ describe("ensureMatchDetailsForMatches", () => {
       now: fixedNow,
       force: true
     })).resolves.toMatchObject({
+      failureMessages: [],
       fetched: 1,
       saved: 1,
       skippedFresh: 0
@@ -118,6 +122,7 @@ describe("ensureMatchDetailsForMatches", () => {
       store,
       now: fixedNow
     })).resolves.toMatchObject({
+      failureMessages: [],
       fetched: 0,
       skippedInvalidApiId: 1
     });
@@ -139,6 +144,7 @@ describe("ensureMatchDetailsForMatches", () => {
       store,
       now: fixedNow
     })).resolves.toMatchObject({
+      failureMessages: ["quota exhausted"],
       fetched: 1,
       saved: 0,
       failed: 1

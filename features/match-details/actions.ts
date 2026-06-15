@@ -49,10 +49,19 @@ export async function refreshMatchDetails(roomSlug: string, matchRouteId: string
     store: createSupabaseMatchDetailsStore(supabase)
   });
   const detailStatus =
-    result.failed > 0 ? "error" :
+    result.failed > 0 && hasProviderAccessFailure(result.failureMessages) ? "access" :
+      result.failed > 0 ? "error" :
       result.skippedInvalidApiId > 0 ? "invalid" :
         "checked";
 
   revalidatePath(targetPath);
   redirect(`${targetPath}?details=${detailStatus}`);
+}
+
+function hasProviderAccessFailure(messages: string[]): boolean {
+  return messages.some((message) => {
+    const normalized = message.toLowerCase();
+
+    return normalized.includes("access") || normalized.includes("suspended") || normalized.includes("api_football_key");
+  });
 }

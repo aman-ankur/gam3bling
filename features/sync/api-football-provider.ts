@@ -154,8 +154,10 @@ export function createApiFootballProvider(options: ApiFootballProviderOptions = 
 
           const payload = (await response.json()) as ApiFootballResponse;
 
-          if (hasProviderErrors(payload.errors)) {
-            throw new Error("API-FOOTBALL returned errors");
+          const providerErrorMessage = providerErrorsMessage(payload.errors);
+
+          if (providerErrorMessage) {
+            throw new Error(providerErrorMessage);
           }
 
           return (payload.response ?? []).map(normalizeApiFootballFixture);
@@ -297,8 +299,10 @@ async function fetchApiFootball<T>(fetchImpl: FetchImpl, url: string, apiKey: st
 
   const payload = (await response.json()) as T & { errors?: unknown };
 
-  if (hasProviderErrors(payload.errors)) {
-    throw new Error("API-FOOTBALL returned errors");
+  const providerErrorMessage = providerErrorsMessage(payload.errors);
+
+  if (providerErrorMessage) {
+    throw new Error(providerErrorMessage);
   }
 
   return payload;
@@ -370,14 +374,24 @@ function trimTrailingSlash(value: string): string {
   return value.replace(/\/+$/, "");
 }
 
-function hasProviderErrors(errors: unknown): boolean {
+function providerErrorsMessage(errors: unknown): string | null {
   if (!errors) {
-    return false;
+    return null;
   }
 
   if (Array.isArray(errors)) {
-    return errors.length > 0;
+    return errors.length > 0 ? `API-FOOTBALL returned errors: ${errors.map(String).join("; ")}` : null;
   }
 
-  return typeof errors === "object" && Object.keys(errors).length > 0;
+  if (typeof errors === "object") {
+    const entries = Object.entries(errors as Record<string, unknown>);
+
+    if (entries.length === 0) {
+      return null;
+    }
+
+    return `API-FOOTBALL returned errors: ${entries.map(([key, value]) => `${key}: ${String(value)}`).join("; ")}`;
+  }
+
+  return `API-FOOTBALL returned errors: ${String(errors)}`;
 }

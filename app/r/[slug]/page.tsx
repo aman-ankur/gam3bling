@@ -48,7 +48,7 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
   }
 
   if (shouldShowHub) {
-    const matches = await getUpcomingMatches();
+    const matches = await getUpcomingMatches({ includeDemo: isDemoRoomSlug(slug) });
     const latestCompletedMatch = getLatestCompletedMatch(matches);
     const [leaderboard, predictedMatchIds] = await Promise.all([
       getRoomLeaderboard(slug),
@@ -384,4 +384,8 @@ async function buildShareLink(slug: string, inviteCode?: string): Promise<string
   const inviteQuery = inviteCode ? `?invite=${encodeURIComponent(inviteCode)}` : "";
 
   return `${protocol}://${host}/r/${slug}${inviteQuery}`;
+}
+
+function isDemoRoomSlug(slug: string): boolean {
+  return slug.startsWith("demo-room-");
 }

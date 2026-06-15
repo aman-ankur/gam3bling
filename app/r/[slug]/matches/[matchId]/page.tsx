@@ -44,7 +44,7 @@ type MatchPredictionPageProps = {
 export default async function MatchPredictionPage({ params, searchParams }: MatchPredictionPageProps) {
   const { matchId, slug } = await params;
   const { details, error, result, saved } = await searchParams;
-  const matches = await getUpcomingMatches();
+  const matches = await getUpcomingMatches({ includeDemo: isDemoRoomSlug(slug) });
   const room = await getRoomSummary(slug);
 
   if (!room.exists) {
@@ -230,6 +230,10 @@ function detailsMessage(details: string | undefined): string | undefined {
     return "The provider details check failed. Try again in a few minutes.";
   }
 
+  if (details === "access") {
+    return "API-Football account access is blocked. Check the API key/account before fetching lineups or stats.";
+  }
+
   return undefined;
 }
 
@@ -282,4 +286,8 @@ function createFallbackReceipt(match: AppMatch) {
     saved: true,
     isCurrentPlayer: true
   };
+}
+
+function isDemoRoomSlug(slug: string): boolean {
+  return slug.startsWith("demo-room-");
 }
