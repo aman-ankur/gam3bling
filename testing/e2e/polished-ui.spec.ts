@@ -33,6 +33,22 @@ test("core pages use the polished Stadium Glass shell", async ({ page }) => {
   await expect(page.locator(".match-card").first()).toHaveCSS("border-radius", "24px");
 });
 
+test("room hub fixture rows show country names beside flags", async ({ page }) => {
+  await page.goto("/r/world-cup-room?hub=1");
+
+  const firstFixture = page.locator(".match-card .fixture-row").first();
+
+  await expect(firstFixture.getByText("Netherlands")).toBeVisible();
+  await expect(firstFixture.getByText("Japan")).toBeVisible();
+
+  const labelWidths = await firstFixture.locator(".team-name > span:last-child").evaluateAll((labels) =>
+    labels.map((label) => Math.round(label.getBoundingClientRect().width))
+  );
+
+  expect(labelWidths).toEqual(expect.arrayContaining([expect.any(Number), expect.any(Number)]));
+  expect(Math.min(...labelWidths)).toBeGreaterThan(42);
+});
+
 test("match prediction page uses the studio treatment across tabs", async ({ page }) => {
   await page.goto("/r/world-cup-room/matches/1489376");
 
