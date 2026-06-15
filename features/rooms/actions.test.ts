@@ -74,6 +74,11 @@ test("warns before creating a duplicate room member with the same display name",
               order: vi.fn(async () => ({
                 data: [
                   {
+                    player_id: "existing-old",
+                    joined_at: "2026-06-14T10:00:00.000Z",
+                    players: { display_name: "Amanwa", avatar_initials: "A" }
+                  },
+                  {
                     player_id: "existing-player",
                     joined_at: "2026-06-14T12:00:00.000Z",
                     players: { display_name: "Amanwa", avatar_initials: "A" }
@@ -84,6 +89,28 @@ test("warns before creating a duplicate room member with the same display name",
             }))
           })),
           upsert: upsertMember
+        };
+      }
+
+      if (table === "predictions") {
+        return {
+          select: vi.fn(() => ({
+            in: vi.fn(() => ({
+              order: vi.fn(async () => ({
+                data: [
+                  {
+                    player_id: "existing-player",
+                    submitted_at: "2026-06-14T15:00:00.000Z"
+                  },
+                  {
+                    player_id: "existing-old",
+                    submitted_at: "2026-06-14T13:00:00.000Z"
+                  }
+                ],
+                error: null
+              }))
+            }))
+          }))
         };
       }
 

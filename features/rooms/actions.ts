@@ -31,6 +31,11 @@ type RoomMemberIdentityRow = {
     | null;
 };
 
+type RoomMemberPredictionRow = {
+  player_id: string;
+  submitted_at: string;
+};
+
 export async function createRoom(formData: FormData): Promise<void> {
   const supabase = requireSupabase();
   const roomName = stringField(formData, "roomName", "World Cup Room");
@@ -285,11 +290,49 @@ async function findExistingRoomMemberByName({
   , { label: `${logLabel}.room_members.identity_select` }
   );
 
-  return (members ?? []).find((member) => {
+  const matchingMembers = (members ?? []).filter((member) => {
     const player = Array.isArray(member.players) ? member.players[0] : member.players;
 
     return playerNameKey(player?.display_name ?? "") === normalizedName;
-  }) ?? null;
+  });
+
+  if (matchingMembers.length <= 1) {
+    return matchingMembers[0] ?? null;
+  }
+
+  const latestPredictedMember = await findLatestPredictedMember({ matchingMembers, supabase, logLabel });
+
+  return latestPredictedMember ?? matchingMembers[0];
+}
+
+async function findLatestPredictedMember({
+  matchingMembers,
+  supabase,
+  logLabel
+}: {
+  matchingMembers: RoomMemberIdentityRow[];
+  supabase: ReturnType<typeof requireSupabase>;
+  logLabel: string;
+}): Promise<RoomMemberIdentityRow | null> {
+  const matchingMemberByPlayerId = new Map(matchingMembers.map((member) => [member.player_id, member]));
+  const { data: predictions } = await withSupabaseRetry<RoomMemberPredictionRow[]>(() =>
+    supabase
+      .from("predictions")
+      .select("player_id, submitted_at")
+      .in("player_id", Array.from(matchingMemberByPlayerId.keys()))
+      .order("submitted_at", { ascending: false })
+  , { label: `${logLabel}.predictions.latest_by_member_select` }
+  );
+
+  for (const prediction of predictions ?? []) {
+    const member = matchingMemberByPlayerId.get(prediction.player_id);
+
+    if (member) {
+      return member;
+    }
+  }
+
+  return null;
 }
 
 function buildClaimUrl({
