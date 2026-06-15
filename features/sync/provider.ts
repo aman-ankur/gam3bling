@@ -1,6 +1,7 @@
 import type { MatchResult, MatchStatus } from "../matches/types";
 
 export type ProviderMatchUpdate = {
+  localMatchId?: string;
   apiMatchId: string;
   status: MatchStatus;
   homeScore?: number | null;
@@ -15,6 +16,21 @@ export type ProviderMatchUpdate = {
   firstScoringTeamExternalId?: string | null;
   lastScoringTeamExternalId?: string | null;
   kickoffAt?: string;
+};
+
+export type ProviderMatchTeamContext = {
+  id: string;
+  name: string;
+  shortCode: string;
+};
+
+export type ProviderMatchQuery = {
+  localMatchId: string;
+  apiProvider: string | null;
+  apiMatchId: string | null;
+  kickoffAt: string;
+  homeTeam: ProviderMatchTeamContext;
+  awayTeam: ProviderMatchTeamContext;
 };
 
 export type ProviderAvailabilityStatus = "available" | "unavailable";
@@ -59,6 +75,6 @@ export type ProviderMatchDetails = {
 
 export type FootballProvider = {
   name: string;
-  fetchUpdates(apiMatchIds: string[]): Promise<ProviderMatchUpdate[]>;
-  fetchMatchDetails(apiMatchId: string): Promise<ProviderMatchDetails>;
+  fetchUpdates(matches: Array<string | ProviderMatchQuery>): Promise<ProviderMatchUpdate[]>;
+  fetchMatchDetails(match: string | ProviderMatchQuery): Promise<ProviderMatchDetails>;
 };

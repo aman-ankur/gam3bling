@@ -6,6 +6,12 @@ import {
   normalizeApiFootballStatistics,
   normalizeApiFootballStatus
 } from "./api-football-provider";
+import {
+  createEpsnProvider,
+  normalizeEpsnScoreboardEvent,
+  normalizeEpsnSummary
+} from "./espn-provider";
+import { createFallbackFootballProvider } from "./fallback-provider";
 
 describe("normalizeApiFootballStatus", () => {
   test.each([
@@ -385,5 +391,309 @@ describe("normalizeApiFootballStatistics", () => {
       { providerTeamId: "111", teamName: "Netherlands", statName: "Total Shots", statValue: "13", sortOrder: 1 },
       { providerTeamId: "111", teamName: "Netherlands", statName: "Expected Goals", statValue: null, sortOrder: 2 }
     ]);
+  });
+});
+
+describe("normalizeEpsnScoreboardEvent", () => {
+  test("maps ESPN live scoreboard events to provider match updates", () => {
+    const update = normalizeEpsnScoreboardEvent(
+      {
+        id: "760421",
+        date: "2026-06-14T04:00Z",
+        status: {
+          type: {
+            state: "in",
+            completed: false,
+            description: "Second Half",
+            name: "STATUS_SECOND_HALF"
+          }
+        },
+        competitions: [
+          {
+            competitors: [
+              {
+                homeAway: "home",
+                score: "2",
+                team: {
+                  id: "628",
+                  displayName: "Australia",
+                  abbreviation: "AUS"
+                }
+              },
+              {
+                homeAway: "away",
+                score: "0",
+                team: {
+                  id: "465",
+                  displayName: "Turkiye",
+                  abbreviation: "TUR"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        localMatchId: "match-1",
+        apiProvider: "api-football",
+        apiMatchId: "1539001",
+        kickoffAt: "2026-06-14T04:00:00.000Z",
+        homeTeam: { id: "team-home", name: "Australia", shortCode: "AUS" },
+        awayTeam: { id: "team-away", name: "Turkiye", shortCode: "TUR" }
+      }
+    );
+
+    expect(update).toEqual({
+      localMatchId: "match-1",
+      apiMatchId: "760421",
+      status: "live",
+      homeScore: 2,
+      awayScore: 0,
+      homeTeamExternalId: "628",
+      awayTeamExternalId: "465",
+      winner: "home",
+      homeHalftimeScore: null,
+      awayHalftimeScore: null,
+      firstScoringTeamExternalId: null,
+      lastScoringTeamExternalId: null,
+      kickoffAt: "2026-06-14T04:00:00.000Z"
+    });
+  });
+});
+
+describe("createEpsnProvider", () => {
+  test("enriches score updates with halftime and scorer teams from summary events", async () => {
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          events: [
+            {
+              id: "760421",
+              date: "2026-06-14T04:00Z",
+              status: { type: { state: "post", completed: true, description: "Full Time" } },
+              competitions: [
+                {
+                  competitors: [
+                    { homeAway: "home", score: "2", team: { id: "628", displayName: "Australia", abbreviation: "AUS" } },
+                    { homeAway: "away", score: "0", team: { id: "465", displayName: "Turkiye", abbreviation: "TUR" } }
+                  ]
+                }
+              ]
+            }
+          ]
+        })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          keyEvents: [
+            { scoringPlay: true, period: { number: 1 }, team: { id: "628" }, type: { type: "goal" } },
+            { scoringPlay: true, period: { number: 2 }, team: { id: "628" }, type: { type: "goal" } }
+          ]
+        })
+      });
+    const provider = createEpsnProvider({ baseUrl: "https://espn.test", fetchImpl });
+
+    await expect(provider.fetchUpdates([
+      {
+        localMatchId: "match-1",
+        apiProvider: "api-football",
+        apiMatchId: "1539001",
+        kickoffAt: "2026-06-14T04:00:00.000Z",
+        homeTeam: { id: "team-home", name: "Australia", shortCode: "AUS" },
+        awayTeam: { id: "team-away", name: "Turkiye", shortCode: "TUR" }
+      }
+    ])).resolves.toEqual([
+      expect.objectContaining({
+        localMatchId: "match-1",
+        apiMatchId: "760421",
+        status: "final",
+        homeScore: 2,
+        awayScore: 0,
+        homeHalftimeScore: 1,
+        awayHalftimeScore: 0,
+        firstScoringTeamExternalId: "628",
+        lastScoringTeamExternalId: "628"
+      })
+    ]);
+    expect(fetchImpl).toHaveBeenNthCalledWith(1, "https://espn.test/scoreboard?dates=20260614&limit=100");
+    expect(fetchImpl).toHaveBeenNthCalledWith(2, "https://espn.test/summary?event=760421");
+  });
+});
+
+describe("normalizeEpsnSummary", () => {
+  test("normalizes ESPN rosters, statistics, and scoring events", () => {
+    const details = normalizeEpsnSummary("760421", {
+      header: {
+        competitions: [
+          {
+            competitors: [
+              { homeAway: "home", team: { id: "628", displayName: "Australia", abbreviation: "AUS" }, score: "2" },
+              { homeAway: "away", team: { id: "465", displayName: "Turkiye", abbreviation: "TUR" }, score: "0" }
+            ]
+          }
+        ]
+      },
+      rosters: [
+        {
+          homeAway: "home",
+          team: { id: "628", displayName: "Australia" },
+          roster: [
+            {
+              starter: true,
+              jersey: "18",
+              formationPlace: "1",
+              athlete: { id: "335240", displayName: "Patrick Beach" },
+              position: { abbreviation: "G" }
+            },
+            {
+              starter: false,
+              jersey: "10",
+              athlete: { id: "123", displayName: "Sub Player" },
+              position: { abbreviation: "F" }
+            }
+          ]
+        },
+        {
+          homeAway: "away",
+          team: { id: "465", displayName: "Turkiye" },
+          roster: [
+            {
+              starter: true,
+              jersey: "23",
+              formationPlace: "1",
+              athlete: { id: "444", displayName: "Ugurcan Cakir" },
+              position: { abbreviation: "G" }
+            }
+          ]
+        }
+      ],
+      boxscore: {
+        teams: [
+          {
+            team: { id: "628", displayName: "Australia" },
+            statistics: [
+              { label: "Possession", displayValue: "28.4" },
+              { label: "Shots", displayValue: "9" }
+            ]
+          },
+          {
+            team: { id: "465", displayName: "Turkiye" },
+            statistics: [
+              { label: "Possession", displayValue: "71.6" }
+            ]
+          }
+        ]
+      },
+      keyEvents: [
+        { scoringPlay: true, period: { number: 1 }, team: { id: "628" }, type: { type: "goal" } },
+        { scoringPlay: true, period: { number: 2 }, team: { id: "628" }, type: { type: "goal" } }
+      ]
+    });
+
+    expect(details).toEqual({
+      apiMatchId: "760421",
+      lineupsStatus: "available",
+      statisticsStatus: "available",
+      lineups: [
+        {
+          providerTeamId: "628",
+          teamName: "Australia",
+          formation: null,
+          coachName: null,
+          players: [
+            {
+              providerPlayerId: "335240",
+              playerName: "Patrick Beach",
+              shirtNumber: 18,
+              position: "G",
+              grid: "1",
+              role: "starter",
+              sortOrder: 0
+            },
+            {
+              providerPlayerId: "123",
+              playerName: "Sub Player",
+              shirtNumber: 10,
+              position: "F",
+              grid: null,
+              role: "substitute",
+              sortOrder: 1
+            }
+          ]
+        },
+        {
+          providerTeamId: "465",
+          teamName: "Turkiye",
+          formation: null,
+          coachName: null,
+          players: [
+            {
+              providerPlayerId: "444",
+              playerName: "Ugurcan Cakir",
+              shirtNumber: 23,
+              position: "G",
+              grid: "1",
+              role: "starter",
+              sortOrder: 0
+            }
+          ]
+        }
+      ],
+      statistics: [
+        { providerTeamId: "628", teamName: "Australia", statName: "Possession", statValue: "28.4", sortOrder: 0 },
+        { providerTeamId: "628", teamName: "Australia", statName: "Shots", statValue: "9", sortOrder: 1 },
+        { providerTeamId: "465", teamName: "Turkiye", statName: "Possession", statValue: "71.6", sortOrder: 0 }
+      ],
+      rawPayload: {
+        lineups: expect.any(Array),
+        statistics: expect.any(Array)
+      }
+    });
+  });
+});
+
+describe("createFallbackFootballProvider", () => {
+  test("uses the next provider when the first provider fails", async () => {
+    const match = {
+      localMatchId: "match-1",
+      apiProvider: "api-football",
+      apiMatchId: "123",
+      kickoffAt: "2026-06-14T04:00:00.000Z",
+      homeTeam: { id: "team-home", name: "Australia", shortCode: "AUS" },
+      awayTeam: { id: "team-away", name: "Turkiye", shortCode: "TUR" }
+    };
+    const primary = {
+      name: "api-football",
+      fetchUpdates: vi.fn().mockRejectedValue(new Error("account suspended")),
+      fetchMatchDetails: vi.fn()
+    };
+    const backup = {
+      name: "espn",
+      fetchUpdates: vi.fn().mockResolvedValue([
+        {
+          localMatchId: "match-1",
+          apiMatchId: "760421",
+          status: "final",
+          homeScore: 2,
+          awayScore: 0
+        }
+      ]),
+      fetchMatchDetails: vi.fn()
+    };
+    const provider = createFallbackFootballProvider([primary, backup]);
+
+    await expect(provider.fetchUpdates([match])).resolves.toEqual([
+      {
+        localMatchId: "match-1",
+        apiMatchId: "760421",
+        status: "final",
+        homeScore: 2,
+        awayScore: 0
+      }
+    ]);
+    expect(primary.fetchUpdates).toHaveBeenCalledWith([match]);
+    expect(backup.fetchUpdates).toHaveBeenCalledWith([match]);
   });
 });

@@ -7,7 +7,7 @@ import { ensureMatchDetailsForMatches } from "@/features/match-details/cache";
 import { createSupabaseMatchDetailsStore } from "@/features/match-details/data";
 import { getCurrentPlayerPredictedMatchIds } from "@/features/predictions/data";
 import { getRoomSummary } from "@/features/rooms/data";
-import { createApiFootballProvider } from "@/features/sync/api-football-provider";
+import { createDefaultFootballProvider } from "@/features/sync/default-provider";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 type MatchesPageProps = {
@@ -32,7 +32,7 @@ export default async function MatchesPage({ params }: MatchesPageProps) {
   if (supabase && !process.env.E2E_USE_FALLBACK_FIXTURES) {
     await ensureMatchDetailsForMatches({
       matches: openMatches,
-      provider: createApiFootballProvider(),
+      provider: createDefaultFootballProvider(),
       store: createSupabaseMatchDetailsStore(supabase)
     });
   }

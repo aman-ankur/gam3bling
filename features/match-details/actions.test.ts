@@ -35,8 +35,8 @@ vi.mock("@/features/match-details/data", () => ({
   createSupabaseMatchDetailsStore: vi.fn(() => ({ kind: "store" }))
 }));
 
-vi.mock("@/features/sync/api-football-provider", () => ({
-  createApiFootballProvider: vi.fn(() => ({ name: "api-football" }))
+vi.mock("@/features/sync/default-provider", () => ({
+  createDefaultFootballProvider: vi.fn(() => ({ name: "espn+api-football" }))
 }));
 
 beforeEach(() => {

@@ -131,6 +131,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 APP_SESSION_SECRET=
 SYNC_JOB_SECRET=
+ESPN_SOCCER_BASE_URL=https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world
 API_FOOTBALL_KEY=
 API_FOOTBALL_BASE_URL=https://v3.football.api-sports.io
 ```
@@ -141,6 +142,8 @@ Server-only secrets must not be committed:
 - `APP_SESSION_SECRET`
 - `SYNC_JOB_SECRET`
 - `API_FOOTBALL_KEY`
+
+Football sync now uses the provider abstraction. ESPN is the active no-key provider for live/final scores, lineups, stats, and scorer events; API-Football remains wired as a fallback for when account access is restored.
 
 The project must use the public npm registry. Keep `.npmrc` and
 `package-lock.json` free of private/company registry URLs.

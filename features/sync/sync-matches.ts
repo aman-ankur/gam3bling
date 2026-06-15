@@ -1,17 +1,24 @@
 import { scorePrediction } from "../scoring/score-prediction";
 import type { MatchResult, MatchStatus } from "../matches/types";
-import { createApiFootballProvider } from "./api-football-provider";
-import type { FootballProvider, ProviderMatchUpdate } from "./provider";
+import { createDefaultFootballProvider } from "./default-provider";
+import type { FootballProvider, ProviderMatchQuery, ProviderMatchUpdate } from "./provider";
 
 type LocalMatchRow = {
   id: string;
   api_provider: string | null;
   api_match_id: string | null;
+  kickoff_at: string;
   home_team_id: string;
   away_team_id: string;
   status: MatchStatus;
   home_score: number | null;
   away_score: number | null;
+};
+
+type LocalTeamRow = {
+  id: string;
+  name: string;
+  short_code: string;
 };
 
 type PredictionRow = {
@@ -48,6 +55,10 @@ type MatchTable = {
   update(payload: Record<string, unknown>): {
     eq(column: string, value: string): Promise<MutationResult>;
   };
+};
+
+type TeamTable = {
+  select(columns: string): Promise<DbResult<LocalTeamRow[]>>;
 };
 
 type PredictionTable = {
@@ -90,23 +101,29 @@ export type SyncMatchesOptions = {
 
 export async function syncMatches({
   supabase,
-  provider = createApiFootballProvider(),
+  provider = createDefaultFootballProvider(),
   now = () => new Date()
 }: SyncMatchesOptions): Promise<SyncMatchesResult> {
   await logSync(supabase, provider.name, "started", "Starting football sync");
 
   try {
-    const { data: matches, error: matchError } = await matchTable(supabase)
-      .select("id, api_provider, api_match_id, home_team_id, away_team_id, status, home_score, away_score")
-      .not("api_match_id", "is", null);
+    const [{ data: matches, error: matchError }, { data: teams, error: teamError }] = await Promise.all([
+      matchTable(supabase)
+        .select("id, api_provider, api_match_id, kickoff_at, home_team_id, away_team_id, status, home_score, away_score")
+        .not("api_match_id", "is", null),
+      teamTable(supabase).select("id, name, short_code")
+    ]);
 
-    if (matchError) {
-      throw new Error(matchError.message);
+    if (matchError || teamError) {
+      throw new Error(matchError?.message ?? teamError?.message);
     }
 
-    const localMatches = ((matches ?? []) as LocalMatchRow[]).filter((match) => match.api_match_id);
-    const updates = await provider.fetchUpdates(localMatches.map((match) => match.api_match_id as string));
+    const teamsById = new Map(((teams ?? []) as LocalTeamRow[]).map((team) => [team.id, team]));
+    const localMatches = ((matches ?? []) as LocalMatchRow[]).filter((match) => match.api_match_id && match.api_provider !== "demo");
+    const providerMatches = localMatches.flatMap((match) => providerMatchQuery(match, teamsById));
+    const updates = await provider.fetchUpdates(providerMatches);
     const matchesByApiId = new Map(localMatches.map((match) => [match.api_match_id as string, match]));
+    const matchesByLocalId = new Map(localMatches.map((match) => [match.id, match]));
     const syncedAt = now().toISOString();
 
     let updatedMatches = 0;
@@ -114,7 +131,9 @@ export async function syncMatches({
     let skippedMatches = 0;
 
     for (const update of updates) {
-      const localMatch = matchesByApiId.get(update.apiMatchId);
+      const localMatch = update.localMatchId
+        ? matchesByLocalId.get(update.localMatchId)
+        : matchesByApiId.get(update.apiMatchId);
 
       if (!localMatch) {
         skippedMatches += 1;
@@ -154,11 +173,11 @@ export async function syncMatches({
 export async function syncMatchResult({
   supabase,
   matchId,
-  provider = createApiFootballProvider(),
+  provider = createDefaultFootballProvider(),
   now = () => new Date()
 }: SyncMatchesOptions & { matchId: string }): Promise<SyncMatchResultResult> {
   const { data: localMatch, error: matchError } = await matchTable(supabase)
-    .select("id, api_provider, api_match_id, home_team_id, away_team_id, status, home_score, away_score")
+    .select("id, api_provider, api_match_id, kickoff_at, home_team_id, away_team_id, status, home_score, away_score")
     .eq("id", matchId)
     .single();
 
@@ -177,10 +196,19 @@ export async function syncMatchResult({
   }
 
   const syncedAt = now().toISOString();
+  const { data: teams, error: teamError } = await teamTable(supabase).select("id, name, short_code");
+
+  if (teamError) {
+    throw new Error(teamError.message);
+  }
+
+  const matchQuery = providerMatchQuery(localMatch, new Map(((teams ?? []) as LocalTeamRow[]).map((team) => [team.id, team])))[0];
   const updates = localMatch.api_provider === "demo"
     ? [createDemoMatchUpdate(localMatch)]
-    : await provider.fetchUpdates([localMatch.api_match_id]);
-  const update = updates.find((candidate) => candidate.apiMatchId === localMatch.api_match_id);
+    : matchQuery ? await provider.fetchUpdates([matchQuery]) : [];
+  const update = updates.find((candidate) =>
+    candidate.localMatchId === localMatch.id || candidate.apiMatchId === localMatch.api_match_id
+  );
 
   if (!update) {
     return {
@@ -215,6 +243,32 @@ function resolveMatchUpdateTeams(localMatch: LocalMatchRow, update: ProviderMatc
     firstScoringTeamId: update.firstScoringTeamId ?? resolveExternalTeamId(localMatch, update, update.firstScoringTeamExternalId),
     lastScoringTeamId: update.lastScoringTeamId ?? resolveExternalTeamId(localMatch, update, update.lastScoringTeamExternalId)
   };
+}
+
+function providerMatchQuery(localMatch: LocalMatchRow, teamsById: Map<string, LocalTeamRow>): ProviderMatchQuery[] {
+  const homeTeam = teamsById.get(localMatch.home_team_id);
+  const awayTeam = teamsById.get(localMatch.away_team_id);
+
+  if (!homeTeam || !awayTeam) {
+    return [];
+  }
+
+  return [{
+    localMatchId: localMatch.id,
+    apiProvider: localMatch.api_provider,
+    apiMatchId: localMatch.api_match_id,
+    kickoffAt: localMatch.kickoff_at,
+    homeTeam: {
+      id: homeTeam.id,
+      name: homeTeam.name,
+      shortCode: homeTeam.short_code
+    },
+    awayTeam: {
+      id: awayTeam.id,
+      name: awayTeam.name,
+      shortCode: awayTeam.short_code
+    }
+  }];
 }
 
 function resolveExternalTeamId(
@@ -357,6 +411,10 @@ async function logSync(
 
 function matchTable(supabase: SyncSupabaseClient): MatchTable {
   return supabase.from("matches") as MatchTable;
+}
+
+function teamTable(supabase: SyncSupabaseClient): TeamTable {
+  return supabase.from("teams") as TeamTable;
 }
 
 function predictionTable(supabase: SyncSupabaseClient): PredictionTable {

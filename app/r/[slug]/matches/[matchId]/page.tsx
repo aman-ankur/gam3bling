@@ -23,7 +23,7 @@ import { getRoomMatchPicks } from "@/features/predictions/data";
 import { checkMatchResult } from "@/features/results/actions";
 import { getResultCheckState } from "@/features/results/check-window";
 import { getRoomSummary } from "@/features/rooms/data";
-import { createApiFootballProvider } from "@/features/sync/api-football-provider";
+import { createDefaultFootballProvider } from "@/features/sync/default-provider";
 import { getCurrentDate } from "@/features/time/now";
 import { formatKickoffInIst } from "@/features/time/match-time";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
@@ -90,7 +90,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
   if (supabase && !windowLocked && !process.env.E2E_USE_FALLBACK_FIXTURES) {
     await ensureMatchDetailsForMatches({
       matches: [match],
-      provider: createApiFootballProvider(),
+      provider: createDefaultFootballProvider(),
       store: createSupabaseMatchDetailsStore(supabase)
     });
   }

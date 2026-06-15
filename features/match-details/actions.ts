@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getMatchByRouteId } from "@/features/matches/data";
 import { getPlayerSessionForRoom } from "@/features/players/session";
-import { createApiFootballProvider } from "@/features/sync/api-football-provider";
+import { createDefaultFootballProvider } from "@/features/sync/default-provider";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { ensureMatchDetailsForMatches } from "./cache";
 import { createSupabaseMatchDetailsStore } from "./data";
@@ -45,7 +45,7 @@ export async function refreshMatchDetails(roomSlug: string, matchRouteId: string
   const result = await ensureMatchDetailsForMatches({
     force: true,
     matches: [match],
-    provider: createApiFootballProvider(),
+    provider: createDefaultFootballProvider(),
     store: createSupabaseMatchDetailsStore(supabase)
   });
   const detailStatus =

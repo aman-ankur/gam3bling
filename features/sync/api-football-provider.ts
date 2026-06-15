@@ -3,6 +3,7 @@ import type {
   ProviderLineup,
   ProviderLineupPlayer,
   ProviderMatchDetails,
+  ProviderMatchQuery,
   ProviderMatchUpdate,
   ProviderTeamStatistic
 } from "./provider";
@@ -134,15 +135,17 @@ export function createApiFootballProvider(options: ApiFootballProviderOptions = 
 
   return {
     name: "api-football",
-    async fetchUpdates(apiMatchIds: string[]): Promise<ProviderMatchUpdate[]> {
+    async fetchUpdates(matches: Array<string | ProviderMatchQuery>): Promise<ProviderMatchUpdate[]> {
       if (!apiKey) {
         throw new Error("API_FOOTBALL_KEY is not configured");
       }
 
-      const numericIds = apiMatchIds.filter((apiMatchId) => /^\d+$/.test(apiMatchId));
+      const numericMatches = matches
+        .map(toApiFootballMatchReference)
+        .filter((match): match is { apiMatchId: string; localMatchId?: string } => Boolean(match && /^\d+$/.test(match.apiMatchId)));
       const updates = await Promise.all(
-        numericIds.map(async (apiMatchId) => {
-          const response = await fetchImpl(`${baseUrl}/fixtures?id=${encodeURIComponent(apiMatchId)}`, {
+        numericMatches.map(async (match) => {
+          const response = await fetchImpl(`${baseUrl}/fixtures?id=${encodeURIComponent(match.apiMatchId)}`, {
             headers: {
               "x-apisports-key": apiKey
             }
@@ -160,15 +163,24 @@ export function createApiFootballProvider(options: ApiFootballProviderOptions = 
             throw new Error(providerErrorMessage);
           }
 
-          return (payload.response ?? []).map(normalizeApiFootballFixture);
+          return (payload.response ?? []).map((fixture) => ({
+            ...normalizeApiFootballFixture(fixture),
+            localMatchId: match.localMatchId
+          }));
         })
       );
 
       return updates.flat();
     },
-    async fetchMatchDetails(apiMatchId: string): Promise<ProviderMatchDetails> {
+    async fetchMatchDetails(match: string | ProviderMatchQuery): Promise<ProviderMatchDetails> {
       if (!apiKey) {
         throw new Error("API_FOOTBALL_KEY is not configured");
+      }
+
+      const apiMatchId = typeof match === "string" ? match : match.apiMatchId;
+
+      if (!apiMatchId) {
+        throw new Error("API-FOOTBALL match id is not configured");
       }
 
       const [lineupsPayload, statisticsPayload] = await Promise.all([
@@ -193,6 +205,18 @@ export function createApiFootballProvider(options: ApiFootballProviderOptions = 
       };
     }
   };
+}
+
+function toApiFootballMatchReference(match: string | ProviderMatchQuery): { apiMatchId: string; localMatchId?: string } | null {
+  if (typeof match === "string") {
+    return { apiMatchId: match };
+  }
+
+  if (match.apiProvider && match.apiProvider !== "api-football") {
+    return null;
+  }
+
+  return match.apiMatchId ? { apiMatchId: match.apiMatchId, localMatchId: match.localMatchId } : null;
 }
 
 export function normalizeApiFootballFixture(fixture: ApiFootballFixture): ProviderMatchUpdate {

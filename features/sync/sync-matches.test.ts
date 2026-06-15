@@ -53,7 +53,13 @@ describe("syncMatches", () => {
       skippedMatches: 0
     });
 
-    expect(provider.fetchUpdates).toHaveBeenCalledWith(["123"]);
+    expect(provider.fetchUpdates).toHaveBeenCalledWith([
+      expect.objectContaining({
+        localMatchId: "match-1",
+        apiProvider: "api-football",
+        apiMatchId: "123"
+      })
+    ]);
     expect(db.matchUpdates).toEqual([
       {
         id: "match-1",
@@ -174,6 +180,72 @@ describe("syncMatches", () => {
       score_total: 29
     });
   });
+
+  test("matches fallback provider updates by local match id when provider ids differ", async () => {
+    const db = createFakeSyncDb({
+      matches: [
+        {
+          id: "match-1",
+          api_provider: "api-football",
+          api_match_id: "1489380",
+          kickoff_at: "2026-06-14T04:00:00.000Z",
+          home_team_id: "team-home",
+          away_team_id: "team-away",
+          status: "scheduled",
+          home_score: null,
+          away_score: null
+        }
+      ],
+      teams: [
+        { id: "team-home", name: "Spain", short_code: "ESP" },
+        { id: "team-away", name: "Cape Verde", short_code: "CPV" }
+      ],
+      predictions: []
+    });
+    const provider: FootballProvider = {
+      name: "espn",
+      fetchUpdates: vi.fn().mockResolvedValue([
+        {
+          localMatchId: "match-1",
+          apiMatchId: "760428",
+          status: "live",
+          homeScore: 1,
+          awayScore: 0,
+          homeTeamExternalId: "164",
+          awayTeamExternalId: "2597",
+          winner: "home"
+        }
+      ]),
+      fetchMatchDetails: vi.fn()
+    };
+
+    await expect(syncMatches({ supabase: db.client, provider, now: fixedNow })).resolves.toMatchObject({
+      fetchedMatches: 1,
+      updatedMatches: 1,
+      skippedMatches: 0
+    });
+
+    expect(provider.fetchUpdates).toHaveBeenCalledWith([
+      {
+        localMatchId: "match-1",
+        apiProvider: "api-football",
+        apiMatchId: "1489380",
+        kickoffAt: "2026-06-14T04:00:00.000Z",
+        homeTeam: { id: "team-home", name: "Spain", shortCode: "ESP" },
+        awayTeam: { id: "team-away", name: "Cape Verde", shortCode: "CPV" }
+      }
+    ]);
+    expect(db.matchUpdates).toEqual([
+      {
+        id: "match-1",
+        payload: expect.objectContaining({
+          status: "live",
+          home_score: 1,
+          away_score: 0
+        })
+      }
+    ]);
+  });
 });
 
 describe("syncMatchResult", () => {
@@ -246,7 +318,13 @@ describe("syncMatchResult", () => {
       status: "final"
     });
 
-    expect(provider.fetchUpdates).toHaveBeenCalledWith(["123"]);
+    expect(provider.fetchUpdates).toHaveBeenCalledWith([
+      expect.objectContaining({
+        localMatchId: "match-1",
+        apiProvider: "api-football",
+        apiMatchId: "123"
+      })
+    ]);
     expect(db.matchUpdates.map((update) => update.id)).toEqual(["match-1"]);
     expect(db.predictionUpdates).toHaveLength(1);
     expect(db.predictionUpdates[0]).toMatchObject({
@@ -401,11 +479,23 @@ function fixedNow(): Date {
 
 function createFakeSyncDb({
   matches,
-  predictions
+  predictions,
+  teams = [
+    { id: "team-home", name: "Home", short_code: "HOM" },
+    { id: "team-away", name: "Away", short_code: "AWY" }
+  ]
 }: {
   matches: Array<Record<string, unknown>>;
   predictions: Array<Record<string, unknown>>;
+  teams?: Array<Record<string, unknown>>;
 }) {
+  const normalizedMatches = matches.map((match) => ({
+    api_provider: "api-football",
+    home_team_id: "team-home",
+    away_team_id: "team-away",
+    kickoff_at: "2026-06-14T04:00:00.000Z",
+    ...match
+  }));
   const logs: Array<Record<string, unknown>> = [];
   const matchUpdates: Array<{ id: string; payload: Record<string, unknown> }> = [];
   const predictionUpdates: Array<{ id: string; payload: Record<string, unknown> }> = [];
@@ -428,10 +518,10 @@ function createFakeSyncDb({
         if (table === "matches") {
           return {
             select: () => ({
-              not: async () => ({ data: matches, error: null }),
+              not: async () => ({ data: normalizedMatches, error: null }),
               eq: (_column: string, value: string) => ({
                 single: async () => ({
-                  data: matches.find((match) => match.id === value) ?? null,
+                  data: normalizedMatches.find((match) => match.id === value) ?? null,
                   error: null
                 })
               })
@@ -459,6 +549,12 @@ function createFakeSyncDb({
                 return { error: null };
               }
             })
+          };
+        }
+
+        if (table === "teams") {
+          return {
+            select: () => Promise.resolve({ data: teams, error: null })
           };
         }
 

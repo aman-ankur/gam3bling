@@ -23,7 +23,14 @@ describe("ensureMatchDetailsForMatches", () => {
       failed: 0
     });
 
-    expect(provider.fetchMatchDetails).toHaveBeenCalledWith("123");
+    expect(provider.fetchMatchDetails).toHaveBeenCalledWith({
+      localMatchId: "match-1",
+      apiProvider: null,
+      apiMatchId: "123",
+      kickoffAt: "2026-06-15T20:00:00.000Z",
+      homeTeam: { id: "team-home", name: "Netherlands", shortCode: "NED" },
+      awayTeam: { id: "team-away", name: "Japan", shortCode: "JPN" }
+    });
     expect(store.saved[0]).toMatchObject({
       matchId: "match-1",
       homeTeamId: "team-home",
@@ -109,10 +116,13 @@ describe("ensureMatchDetailsForMatches", () => {
       skippedFresh: 0
     });
 
-    expect(provider.fetchMatchDetails).toHaveBeenCalledWith("123");
+    expect(provider.fetchMatchDetails).toHaveBeenCalledWith(expect.objectContaining({
+      localMatchId: "match-1",
+      apiMatchId: "123"
+    }));
   });
 
-  test("skips non-numeric API ids", async () => {
+  test("fetches non-numeric API ids with local match context", async () => {
     const store = createStore();
     const provider = createProvider(providerDetails());
 
@@ -123,11 +133,17 @@ describe("ensureMatchDetailsForMatches", () => {
       now: fixedNow
     })).resolves.toMatchObject({
       failureMessages: [],
-      fetched: 0,
-      skippedInvalidApiId: 1
+      fetched: 1,
+      skippedInvalidApiId: 0,
+      saved: 1
     });
 
-    expect(provider.fetchMatchDetails).not.toHaveBeenCalled();
+    expect(provider.fetchMatchDetails).toHaveBeenCalledWith(expect.objectContaining({
+      localMatchId: "match-1",
+      apiMatchId: "wc2026-irn-nzl",
+      homeTeam: { id: "team-home", name: "Netherlands", shortCode: "NED" },
+      awayTeam: { id: "team-away", name: "Japan", shortCode: "JPN" }
+    }));
   });
 
   test("records failed fetch attempts", async () => {

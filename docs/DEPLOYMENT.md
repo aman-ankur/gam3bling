@@ -43,11 +43,14 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 APP_SESSION_SECRET=
 SYNC_JOB_SECRET=
+ESPN_SOCCER_BASE_URL=https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world
 API_FOOTBALL_KEY=
 API_FOOTBALL_BASE_URL=https://v3.football.api-sports.io
 ```
 
-`API_FOOTBALL_KEY` is optional for prediction entry. It is required for `/api/sync/football`.
+ESPN is the default football sync provider and does not require a key. `ESPN_SOCCER_BASE_URL` is optional and only needed if the ESPN endpoint needs to be overridden.
+
+`API_FOOTBALL_KEY` is optional while ESPN sync is active. Keep it configured when API-Football access is restored so it can remain available as a fallback provider.
 
 Keep `SUPABASE_SERVICE_ROLE_KEY`, `APP_SESSION_SECRET`, and `SYNC_JOB_SECRET` server-only.
 
@@ -109,12 +112,12 @@ curl -X POST https://YOUR_DEPLOYMENT_URL/api/sync/football \
 The route:
 
 - Requires `SYNC_JOB_SECRET`.
-- Pulls fixture updates from API-FOOTBALL using `API_FOOTBALL_KEY` and `API_FOOTBALL_BASE_URL`.
+- Pulls fixture updates through the provider abstraction. ESPN is tried first, with API-Football kept as a fallback when configured.
 - Updates `matches.status`, score fields, winner, kickoff time, and sync timestamps.
 - Writes `sync_logs` rows for started, success, and failed attempts.
 - Recalculates prediction scores when a synced match is final.
 
-The bundled seed includes API-FOOTBALL numeric fixture IDs for the June 14-15 fixtures that the provider already exposes. Any future rows that still use app-owned IDs like `wc2026-...` remain usable for prediction entry but are skipped by the API adapter until they are mapped to provider fixture IDs.
+Provider adapters receive local match context, so ESPN can resolve matches by kickoff date plus team names/codes even when the row still stores an API-Football fixture id or an app-owned id like `wc2026-...`.
 
 ## 6. Manual Scoring Recovery
 

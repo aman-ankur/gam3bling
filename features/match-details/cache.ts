@@ -30,7 +30,7 @@ export async function ensureMatchDetailsForMatches({
   };
 
   for (const match of matches) {
-    if (!/^\d+$/.test(match.apiMatchId)) {
+    if (!match.apiMatchId) {
       result.skippedInvalidApiId += 1;
       continue;
     }
@@ -45,7 +45,22 @@ export async function ensureMatchDetailsForMatches({
     result.fetched += 1;
 
     try {
-      const details = await provider.fetchMatchDetails(match.apiMatchId);
+      const details = await provider.fetchMatchDetails({
+        localMatchId: match.id,
+        apiProvider: match.apiProvider ?? null,
+        apiMatchId: match.apiMatchId,
+        kickoffAt: match.kickoffAt,
+        homeTeam: {
+          id: match.homeTeam.id,
+          name: match.homeTeam.name,
+          shortCode: match.homeTeam.shortCode
+        },
+        awayTeam: {
+          id: match.awayTeam.id,
+          name: match.awayTeam.name,
+          shortCode: match.awayTeam.shortCode
+        }
+      });
       await store.saveDetails({
         matchId: match.id,
         provider: provider.name,
