@@ -50,16 +50,19 @@ export async function getPlayerSessions(): Promise<PlayerSession[]> {
 
 export async function setPlayerSession(session: PlayerSession): Promise<void> {
   const sessions = mergeSessions(session, await getPlayerSessions());
-  const payload = Buffer.from(JSON.stringify({ ...session, roomSessions: sessions }), "utf8").toString("base64url");
+  await writePlayerSessionCookie(session, sessions);
+}
+
+export async function removePlayerSessionForRoom(roomId: string): Promise<void> {
+  const sessions = (await getPlayerSessions()).filter((session) => session.roomId !== roomId);
   const cookieStore = await cookies();
 
-  cookieStore.set(COOKIE_NAME, `${payload}.${sign(payload)}`, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 120
-  });
+  if (sessions.length === 0) {
+    cookieStore.delete(COOKIE_NAME);
+    return;
+  }
+
+  await writePlayerSessionCookie(sessions[0], sessions);
 }
 
 export function hashSecret(value: string): string {
@@ -86,6 +89,19 @@ function mergeSessions(activeSession: PlayerSession, existingSessions: PlayerSes
   }
 
   return Array.from(sessionsByRoom.values()).slice(0, MAX_ROOM_SESSIONS);
+}
+
+async function writePlayerSessionCookie(activeSession: PlayerSession, sessions: PlayerSession[]): Promise<void> {
+  const payload = Buffer.from(JSON.stringify({ ...activeSession, roomSessions: sessions }), "utf8").toString("base64url");
+  const cookieStore = await cookies();
+
+  cookieStore.set(COOKIE_NAME, `${payload}.${sign(payload)}`, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 120
+  });
 }
 
 function isValidSignature(payload: string, signature: string): boolean {

@@ -4,6 +4,7 @@ import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window"
 import { getPlayerSessions } from "@/features/players/session";
 
 export type RoomSummary = {
+  creatorPlayerId?: string;
   exists: boolean;
   id: string;
   inviteCode?: string;
@@ -12,6 +13,8 @@ export type RoomSummary = {
   members: Array<{
     name: string;
     initials: string;
+    playerId?: string;
+    role: "admin" | "member";
     status: string;
     tone: string;
   }>;
@@ -29,16 +32,17 @@ export type PlayerRoomShortcut = {
 };
 
 const fallbackRoom: RoomSummary = {
+  creatorPlayerId: "fallback-john",
   exists: true,
   id: "fallback-room",
   inviteCode: "TIGER7",
   name: "World Cup Room",
   slug: "world-cup-room",
-  members: [
-    { name: "John Doe", initials: "JD", status: "Admin", tone: "gold" },
-    { name: "Jane Doe", initials: "JD", status: "Joined", tone: "green" },
-    { name: "Alex Doe", initials: "AD", status: "Joined", tone: "blue" },
-    { name: "Sam Doe", initials: "SD", status: "Joined", tone: "red" }
+    members: [
+    { name: "John Doe", initials: "JD", playerId: "fallback-john", role: "admin", status: "Admin", tone: "gold" },
+    { name: "Jane Doe", initials: "JD", playerId: "fallback-jane", role: "member", status: "Joined", tone: "green" },
+    { name: "Alex Doe", initials: "AD", playerId: "fallback-alex", role: "member", status: "Joined", tone: "blue" },
+    { name: "Sam Doe", initials: "SD", playerId: "fallback-sam", role: "member", status: "Joined", tone: "red" }
   ]
 };
 
@@ -62,15 +66,16 @@ export async function getRoomSummary(slug: string): Promise<RoomSummary> {
 
     const { data: memberships, error: memberError } = await supabase
       .from("room_members")
-      .select("role, players(display_name, avatar_initials, avatar_color)")
+      .select("player_id, role, players(display_name, avatar_initials, avatar_color)")
       .eq("room_id", room.id)
       .order("joined_at", { ascending: true });
 
     if (memberError || !memberships) {
-      return { exists: true, id: room.id, name: room.name, slug: room.slug, members: [] };
+      return { creatorPlayerId: room.creator_player_id ?? undefined, exists: true, id: room.id, name: room.name, slug: room.slug, members: [] };
     }
 
     return {
+      creatorPlayerId: room.creator_player_id ?? undefined,
       id: room.id,
       exists: true,
       inviteCode: typeof room.invite_code === "string" ? room.invite_code : undefined,
@@ -88,6 +93,7 @@ export async function getRoomSummary(slug: string): Promise<RoomSummary> {
 
 function dedupeRoomMembers(
   memberships: Array<{
+    player_id?: string | null;
     role: string;
     players:
       | {
@@ -108,10 +114,13 @@ function dedupeRoomMembers(
     const name = normalizeDisplayName(player?.display_name ?? "Player");
     const nameKey = playerNameKey(name);
     const currentMember = membersByName.get(nameKey);
+    const role: "admin" | "member" = membership.role === "admin" ? "admin" : "member";
     const nextMember = {
       name,
       initials: normalizeDisplayName(player?.avatar_initials ?? "GB"),
-      status: membership.role === "admin" ? "Admin" : "Joined"
+      playerId: membership.player_id ?? undefined,
+      role,
+      status: role === "admin" ? "Admin" : "Joined"
     };
 
     if (!currentMember) {
@@ -120,7 +129,7 @@ function dedupeRoomMembers(
     }
 
     if (nextMember.status === "Admin" && currentMember.status !== "Admin") {
-      membersByName.set(nameKey, { ...currentMember, status: "Admin" });
+      membersByName.set(nameKey, { ...currentMember, playerId: nextMember.playerId, role: "admin", status: "Admin" });
     }
   }
 

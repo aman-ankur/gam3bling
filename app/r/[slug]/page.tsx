@@ -15,8 +15,8 @@ import type { AppMatch } from "@/features/matches/data";
 import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
 import { getPlayerSessionForRoom } from "@/features/players/session";
 import { getCurrentPlayerPredictedMatchIds, getRoomMatchPicks } from "@/features/predictions/data";
-import { claimRoomPlayer, joinRoom, rememberRoomInviteCode } from "@/features/rooms/actions";
-import { getRoomSummary } from "@/features/rooms/data";
+import { claimRoomPlayer, deleteRoom, joinRoom, rememberRoomInviteCode, removeRoomMember } from "@/features/rooms/actions";
+import { getRoomSummary, type RoomSummary } from "@/features/rooms/data";
 import { formatKickoffInIst } from "@/features/time/match-time";
 
 type RoomPageProps = {
@@ -26,6 +26,8 @@ type RoomPageProps = {
   searchParams: Promise<{
     claimName?: string;
     claimPlayerId?: string;
+    admin?: string;
+    adminError?: string;
     error?: string;
     hub?: string;
     invite?: string;
@@ -35,7 +37,7 @@ type RoomPageProps = {
 
 export default async function RoomPage({ params, searchParams }: RoomPageProps) {
   const { slug } = await params;
-  const { claimName, claimPlayerId, error, hub, invite, inviteError } = await searchParams;
+  const { admin, adminError, claimName, claimPlayerId, error, hub, invite, inviteError } = await searchParams;
   const room = await getRoomSummary(slug);
   const session = await getPlayerSessionForRoom(slug);
   const shouldShowHub = hub === "1" || Boolean(session);
@@ -60,6 +62,7 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
     const visibleInvite = room.inviteCode ?? invite ?? (room.id === "fallback-room" ? "TIGER7" : undefined);
     const shareLink = await buildShareLink(slug, visibleInvite);
     const recoverInviteAction = rememberRoomInviteCode.bind(null, slug);
+    const isRoomCreator = Boolean(session && room.creatorPlayerId && session.playerId === room.creatorPlayerId);
 
     return (
       <AppShell roomName={room.name} roomSlug={slug} subtitle="Room hub">
@@ -171,6 +174,18 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
           recoverInviteAction={room.inviteCode ? undefined : recoverInviteAction}
           shortLink={shareLink}
         />
+
+        {isRoomCreator ? (
+          <AdminRoomControls
+            adminStatus={admin}
+            adminError={adminError}
+            deleteRoomAction={deleteRoom.bind(null, slug)}
+            members={room.members}
+            removeMemberAction={removeRoomMember.bind(null, slug)}
+            roomName={room.name}
+            roomCreatorPlayerId={room.creatorPlayerId}
+          />
+        ) : null}
       </AppShell>
     );
   }
@@ -228,6 +243,80 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
         Create a new room
       </Link>
     </AppShell>
+  );
+}
+
+function AdminRoomControls({
+  adminError,
+  adminStatus,
+  deleteRoomAction,
+  members,
+  removeMemberAction,
+  roomCreatorPlayerId,
+  roomName
+}: {
+  adminError?: string;
+  adminStatus?: string;
+  deleteRoomAction: (formData: FormData) => Promise<void>;
+  members: RoomSummary["members"];
+  removeMemberAction: (formData: FormData) => Promise<void>;
+  roomCreatorPlayerId?: string;
+  roomName: string;
+}) {
+  const removableMembers = members.filter((member) => member.playerId && member.playerId !== roomCreatorPlayerId);
+
+  return (
+    <section className="section-stack admin-room-panel" aria-labelledby="room-admin-title">
+      <div className="section-heading">
+        <div>
+          <p className="eyebrow">Admin</p>
+          <h2 id="room-admin-title">Manage room</h2>
+        </div>
+        <span className="status-chip">Creator only</span>
+      </div>
+
+      {adminStatus === "playerRemoved" ? <p className="admin-feedback success">Player removed from this room.</p> : null}
+      {adminError ? <p className="admin-feedback error">Could not complete that admin action.</p> : null}
+
+      <div className="admin-member-list" aria-label="Remove room members">
+        {members.map((member) => {
+          const canRemove = Boolean(member.playerId && member.playerId !== roomCreatorPlayerId);
+
+          return (
+            <div className="admin-member-row" key={member.playerId ?? member.name}>
+              <div>
+                <strong>{member.name}</strong>
+                <span>{member.status}</span>
+              </div>
+              {canRemove ? (
+                <form action={removeMemberAction}>
+                  <input name="playerId" type="hidden" value={member.playerId ?? ""} />
+                  <SubmitButton className="danger-button compact-danger-button" pendingLabel="Removing...">
+                    Remove
+                  </SubmitButton>
+                </form>
+              ) : (
+                <span className="admin-lock-label">Creator</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {removableMembers.length === 0 ? (
+        <p className="section-note">No removable players yet. Invite friends first, then they will appear here.</p>
+      ) : null}
+
+      <details className="delete-room-disclosure">
+        <summary>Delete this room</summary>
+        <form action={deleteRoomAction}>
+          <p>Deletes {roomName} and removes it from everyone&apos;s room list. Predictions stay in the database, but this room disappears.</p>
+          <SubmitButton className="danger-button" pendingLabel="Deleting room...">
+            Delete room
+          </SubmitButton>
+        </form>
+      </details>
+    </section>
   );
 }
 

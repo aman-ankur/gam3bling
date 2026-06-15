@@ -131,6 +131,65 @@ test("returns the visible invite code when a room stores one", async () => {
   expect(room.inviteCode).toBe("TIGER7");
 });
 
+test("returns member ids and creator id for room admin controls", async () => {
+  vi.mocked(getSupabaseAdmin).mockReturnValue({
+    from: vi.fn((table: string) => {
+      if (table === "rooms") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn(async () => ({
+                data: {
+                  id: "room-1",
+                  creator_player_id: "player-admin",
+                  invite_code: "TIGER7",
+                  name: "World Cup Room",
+                  slug: "world-cup-room"
+                },
+                error: null
+              }))
+            }))
+          }))
+        };
+      }
+
+      if (table === "room_members") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              order: vi.fn(async () => ({
+                data: [
+                  {
+                    player_id: "player-admin",
+                    role: "admin",
+                    players: { display_name: "Amanwa", avatar_initials: "A", avatar_color: "#26c66b" }
+                  },
+                  {
+                    player_id: "player-member",
+                    role: "member",
+                    players: { display_name: "Kamesh", avatar_initials: "K", avatar_color: "#26c66b" }
+                  }
+                ],
+                error: null
+              }))
+            }))
+          }))
+        };
+      }
+
+      throw new Error(`Unexpected table ${table}`);
+    })
+  } as never);
+
+  const room = await getRoomSummary("world-cup-room");
+
+  expect(room.creatorPlayerId).toBe("player-admin");
+  expect(room.members).toEqual([
+    expect.objectContaining({ playerId: "player-admin", role: "admin", status: "Admin" }),
+    expect.objectContaining({ playerId: "player-member", role: "member", status: "Joined" })
+  ]);
+});
+
 test("returns shortcuts for every room stored in the current browser session", async () => {
   const match = {
     id: "match-1",

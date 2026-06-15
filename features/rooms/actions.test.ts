@@ -1,8 +1,8 @@
 import { beforeEach, expect, test, vi } from "vitest";
 import { redirect } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
-import { setPlayerSession } from "@/features/players/session";
-import { claimRoomPlayer, createRoom, joinRoom, rememberRoomInviteCode } from "./actions";
+import { getPlayerSessionForRoom, removePlayerSessionForRoom, setPlayerSession } from "@/features/players/session";
+import { claimRoomPlayer, createRoom, deleteRoom, joinRoom, rememberRoomInviteCode, removeRoomMember } from "./actions";
 
 vi.mock("next/navigation", () => ({
   redirect: vi.fn((target: string) => {
@@ -25,9 +25,11 @@ vi.mock("@/features/players/identity", () => ({
 
 vi.mock("@/features/players/session", () => {
   return {
+    getPlayerSessionForRoom: vi.fn(async () => null),
     hashSecret: vi.fn((value: string) =>
       value === "TIGER7" ? "67985328ad86808121da46742ba759123b6e7bc1dae81edaeb39747d5b672302" : `hash:${value}`
     ),
+    removePlayerSessionForRoom: vi.fn(),
     setPlayerSession: vi.fn()
   };
 });
@@ -465,4 +467,143 @@ test("claiming an existing room member restores that player session", async () =
     roomId: "room-1",
     roomSlug: "world-cup-room"
   });
+});
+
+test("room creator can remove another player from their room", async () => {
+  const deleteMember = vi.fn(() => ({
+    eq: vi.fn(() => ({
+      eq: vi.fn(async () => ({ error: null }))
+    }))
+  }));
+  const supabase = {
+    from: vi.fn((table: string) => {
+      if (table === "rooms") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn(async () => ({
+                data: {
+                  id: "room-1",
+                  slug: "world-cup-room",
+                  creator_player_id: "admin-player"
+                },
+                error: null
+              }))
+            }))
+          }))
+        };
+      }
+
+      if (table === "room_members") {
+        return {
+          delete: deleteMember
+        };
+      }
+
+      throw new Error(`Unexpected table ${table}`);
+    })
+  };
+  const formData = new FormData();
+  formData.set("playerId", "member-player");
+
+  vi.mocked(getSupabaseAdmin).mockReturnValue(supabase as never);
+  vi.mocked(getPlayerSessionForRoom).mockResolvedValue({
+    playerId: "admin-player",
+    roomId: "room-1",
+    roomSlug: "world-cup-room"
+  });
+
+  await expect(removeRoomMember("world-cup-room", formData)).rejects.toThrow(
+    "NEXT_REDIRECT:/r/world-cup-room?hub=1&admin=playerRemoved"
+  );
+
+  expect(deleteMember).toHaveBeenCalled();
+});
+
+test("non-creators cannot remove room members", async () => {
+  const deleteMember = vi.fn();
+  const supabase = {
+    from: vi.fn((table: string) => {
+      if (table === "rooms") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn(async () => ({
+                data: {
+                  id: "room-1",
+                  slug: "world-cup-room",
+                  creator_player_id: "admin-player"
+                },
+                error: null
+              }))
+            }))
+          }))
+        };
+      }
+
+      if (table === "room_members") {
+        return {
+          delete: deleteMember
+        };
+      }
+
+      throw new Error(`Unexpected table ${table}`);
+    })
+  };
+  const formData = new FormData();
+  formData.set("playerId", "member-player");
+
+  vi.mocked(getSupabaseAdmin).mockReturnValue(supabase as never);
+  vi.mocked(getPlayerSessionForRoom).mockResolvedValue({
+    playerId: "member-player",
+    roomId: "room-1",
+    roomSlug: "world-cup-room"
+  });
+
+  await expect(removeRoomMember("world-cup-room", formData)).rejects.toThrow(
+    "NEXT_REDIRECT:/r/world-cup-room?hub=1&adminError=permission"
+  );
+
+  expect(deleteMember).not.toHaveBeenCalled();
+});
+
+test("room creator can delete the room", async () => {
+  const deleteRoomRecord = vi.fn(() => ({
+    eq: vi.fn(async () => ({ error: null }))
+  }));
+  const supabase = {
+    from: vi.fn((table: string) => {
+      if (table === "rooms") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn(async () => ({
+                data: {
+                  id: "room-1",
+                  slug: "world-cup-room",
+                  creator_player_id: "admin-player"
+                },
+                error: null
+              }))
+            }))
+          })),
+          delete: deleteRoomRecord
+        };
+      }
+
+      throw new Error(`Unexpected table ${table}`);
+    })
+  };
+
+  vi.mocked(getSupabaseAdmin).mockReturnValue(supabase as never);
+  vi.mocked(getPlayerSessionForRoom).mockResolvedValue({
+    playerId: "admin-player",
+    roomId: "room-1",
+    roomSlug: "world-cup-room"
+  });
+
+  await expect(deleteRoom("world-cup-room")).rejects.toThrow("NEXT_REDIRECT:/?roomDeleted=world-cup-room");
+
+  expect(deleteRoomRecord).toHaveBeenCalled();
+  expect(removePlayerSessionForRoom).toHaveBeenCalledWith("room-1");
 });

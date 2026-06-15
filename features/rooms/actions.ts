@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { withSupabaseRetry } from "@/lib/supabase/retry";
 import { initialsFromName, normalizeDisplayName } from "@/features/players/identity";
-import { hashSecret, setPlayerSession } from "@/features/players/session";
+import { getPlayerSessionForRoom, hashSecret, removePlayerSessionForRoom, setPlayerSession } from "@/features/players/session";
 import { isValidInviteCode, normalizeInviteCode } from "@/features/rooms/codes";
 
 type IdRow = {
@@ -17,6 +17,12 @@ type RoomInviteRow = {
   invite_code?: string | null;
   slug: string;
   invite_code_hash: string;
+};
+
+type RoomAdminRow = {
+  id: string;
+  creator_player_id: string | null;
+  slug: string;
 };
 
 type RoomMemberIdentityRow = {
@@ -229,6 +235,59 @@ export async function rememberRoomInviteCode(slug: string, formData: FormData): 
   redirect(`/r/${room.slug}?hub=1&invite=${inviteCode}`);
 }
 
+export async function removeRoomMember(slug: string, formData: FormData): Promise<void> {
+  const supabase = requireSupabase();
+  const targetPlayerId = stringField(formData, "playerId", "");
+  const adminCheck = await requireRoomCreator({ slug, supabase });
+
+  if (!adminCheck.ok) {
+    redirect(adminCheck.redirectTo);
+  }
+
+  const { room } = adminCheck;
+
+  if (!targetPlayerId || targetPlayerId === room.creator_player_id) {
+    redirect(`/r/${room.slug}?hub=1&adminError=creator`);
+  }
+
+  const { error } = await withSupabaseRetry<null>(() =>
+    supabase.from("room_members").delete().eq("room_id", room.id).eq("player_id", targetPlayerId)
+  , { label: "rooms.admin.room_members.delete" }
+  );
+
+  if (error) {
+    console.error("[rooms.admin.remove_member] failed", { roomSlug: room.slug, targetPlayerId, message: error.message });
+    throw new Error(error.message);
+  }
+
+  console.info("[rooms.admin.remove_member] success", { roomSlug: room.slug, targetPlayerId });
+  redirect(`/r/${room.slug}?hub=1&admin=playerRemoved`);
+}
+
+export async function deleteRoom(slug: string): Promise<void> {
+  const supabase = requireSupabase();
+  const adminCheck = await requireRoomCreator({ slug, supabase });
+
+  if (!adminCheck.ok) {
+    redirect(adminCheck.redirectTo);
+  }
+
+  const { room } = adminCheck;
+  const { error } = await withSupabaseRetry<null>(() =>
+    supabase.from("rooms").delete().eq("id", room.id)
+  , { label: "rooms.admin.rooms.delete" }
+  );
+
+  if (error) {
+    console.error("[rooms.admin.delete_room] failed", { roomSlug: room.slug, message: error.message });
+    throw new Error(error.message);
+  }
+
+  await removePlayerSessionForRoom(room.id);
+  console.info("[rooms.admin.delete_room] success", { roomSlug: room.slug });
+  redirect(`/?roomDeleted=${encodeURIComponent(room.slug)}`);
+}
+
 async function completeRoomJoin({
   displayName,
   inviteCode,
@@ -378,6 +437,38 @@ async function selectRoomByInviteHash({
     supabase.from("rooms").select("id, slug, invite_code_hash").eq("invite_code_hash", inviteCodeHash).single()
   , { label: `${label}_legacy` }
   );
+}
+
+async function requireRoomCreator({
+  slug,
+  supabase
+}: {
+  slug: string;
+  supabase: SupabaseClient;
+}): Promise<
+  | { ok: true; room: RoomAdminRow }
+  | { ok: false; redirectTo: string }
+> {
+  const [session, roomResult] = await Promise.all([
+    getPlayerSessionForRoom(slug),
+    withSupabaseRetry<RoomAdminRow>(() =>
+      supabase.from("rooms").select("id, slug, creator_player_id").eq("slug", slug).single()
+    , { label: "rooms.admin.rooms.select" }
+    )
+  ]);
+  const { data: room, error } = roomResult;
+
+  if (error || !room) {
+    console.warn("[rooms.admin] room_missing", { slug, message: error?.message ?? "No room returned" });
+    return { ok: false, redirectTo: `/r/${slug}?hub=1&adminError=room` };
+  }
+
+  if (!session || session.roomId !== room.id || session.playerId !== room.creator_player_id) {
+    console.warn("[rooms.admin] permission_denied", { slug, roomId: room.id, playerId: session?.playerId });
+    return { ok: false, redirectTo: `/r/${room.slug}?hub=1&adminError=permission` };
+  }
+
+  return { ok: true, room };
 }
 
 async function persistVisibleInviteCode({
