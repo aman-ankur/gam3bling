@@ -28,8 +28,9 @@ test("core pages use the polished Stadium Glass shell", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Generate room" })).toHaveCSS("background-color", "rgb(104, 70, 189)");
 
   await page.goto("/r/world-cup-room?hub=1");
-  await expect(page.getByText("World Cup Room · Room hub")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "World Cup Room" })).toBeVisible();
+  await expect(page.locator("header").getByRole("heading", { name: "World Cup Room" })).toBeVisible();
+  await expect(page.locator("header").getByText("Gam3bling · Room hub")).toBeVisible();
+  await expect(page.locator(".room-hub-hero").getByRole("heading", { name: "World Cup Room" })).toBeVisible();
   await expect(page.locator(".match-card").first()).toHaveCSS("border-radius", "24px");
 });
 

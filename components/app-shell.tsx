@@ -13,7 +13,7 @@ export async function AppShell({ children, roomName, roomSlug, subtitle = "Frien
       <header className="top-bar">
         <div>
           <p className="room-label">FIFA World Cup 2026</p>
-          <h2>Gam3bling</h2>
+          <h2>{headerTitle(roomName)}</h2>
           <p className="header-subtitle">{headerSubtitle(roomName, subtitle)}</p>
         </div>
         <div className="tournament-badge" aria-label="World Cup 2026">
@@ -27,10 +27,22 @@ export async function AppShell({ children, roomName, roomSlug, subtitle = "Frien
   );
 }
 
+function headerTitle(roomName: string): string {
+  if (isBrandShell(roomName)) {
+    return "Gam3bling";
+  }
+
+  return roomName;
+}
+
 function headerSubtitle(roomName: string, subtitle: string): string {
-  if (roomName.toLowerCase() === "gam3bling") {
+  if (isBrandShell(roomName)) {
     return subtitle;
   }
 
-  return `${roomName} · ${subtitle}`;
+  return `Gam3bling · ${subtitle}`;
+}
+
+function isBrandShell(roomName: string): boolean {
+  return roomName.toLowerCase() === "gam3bling";
 }
