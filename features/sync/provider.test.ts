@@ -43,6 +43,10 @@ describe("normalizeApiFootballFixture", () => {
           home: 2,
           away: 1
         },
+        teams: {
+          home: { id: 44 },
+          away: { id: 55 }
+        },
         score: {
           halftime: {
             home: null,
@@ -56,6 +60,8 @@ describe("normalizeApiFootballFixture", () => {
       status: "final",
       homeScore: 2,
       awayScore: 1,
+      homeTeamExternalId: "44",
+      awayTeamExternalId: "55",
       winner: "home",
       homeHalftimeScore: null,
       awayHalftimeScore: null,
@@ -79,6 +85,10 @@ describe("normalizeApiFootballFixture", () => {
           home: 2,
           away: 2
         },
+        teams: {
+          home: { id: 44 },
+          away: { id: 55 }
+        },
         score: {
           halftime: {
             home: 1,
@@ -95,10 +105,48 @@ describe("normalizeApiFootballFixture", () => {
       apiMatchId: "123",
       status: "final",
       winner: "draw",
+      homeTeamExternalId: "44",
+      awayTeamExternalId: "55",
       homeHalftimeScore: 1,
       awayHalftimeScore: 1,
       firstScoringTeamExternalId: "44",
       lastScoringTeamExternalId: "55"
+    });
+  });
+
+  test("ignores missed penalties when extracting scoring teams", () => {
+    expect(
+      normalizeApiFootballFixture({
+        fixture: {
+          id: 456,
+          date: "2026-06-14T17:00:00+00:00",
+          status: {
+            short: "FT"
+          }
+        },
+        goals: {
+          home: 1,
+          away: 0
+        },
+        teams: {
+          home: { id: 44 },
+          away: { id: 55 }
+        },
+        score: {
+          halftime: {
+            home: 0,
+            away: 0
+          }
+        },
+        events: [
+          { type: "Goal", detail: "Missed Penalty", team: { id: 55 } },
+          { type: "Goal", detail: "Normal Goal", team: { id: 44 } }
+        ]
+      })
+    ).toMatchObject({
+      apiMatchId: "456",
+      firstScoringTeamExternalId: "44",
+      lastScoringTeamExternalId: "44"
     });
   });
 });

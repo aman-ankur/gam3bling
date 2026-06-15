@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { syncMatches } from "./sync-matches";
+import { syncMatches, syncMatchResult } from "./sync-matches";
 import type { FootballProvider } from "./provider";
 
 describe("syncMatches", () => {
@@ -113,6 +113,286 @@ describe("syncMatches", () => {
       expect.objectContaining({ status: "failed", message: "quota exhausted" })
     ]);
   });
+
+  test("maps provider event team ids to local home and away teams before scoring scorer markets", async () => {
+    const db = createFakeSyncDb({
+      matches: [
+        {
+          id: "match-1",
+          api_match_id: "123",
+          home_team_id: "team-home",
+          away_team_id: "team-away",
+          status: "scheduled",
+          home_score: null,
+          away_score: null
+        }
+      ],
+      predictions: [
+        {
+          id: "prediction-1",
+          match_id: "match-1",
+          final_home_score: 2,
+          final_away_score: 1,
+          match_result: "home",
+          halftime_home_score: 1,
+          halftime_away_score: 0,
+          first_scoring_team_id: "team-home",
+          last_scoring_team_id: "team-away"
+        }
+      ]
+    });
+    const provider: FootballProvider = {
+      name: "api-football",
+      fetchUpdates: vi.fn().mockResolvedValue([
+        {
+          apiMatchId: "123",
+          status: "final",
+          homeScore: 2,
+          awayScore: 1,
+          homeTeamExternalId: "111",
+          awayTeamExternalId: "222",
+          winner: "home",
+          homeHalftimeScore: 1,
+          awayHalftimeScore: 0,
+          firstScoringTeamExternalId: "111",
+          lastScoringTeamExternalId: "222"
+        }
+      ])
+    };
+
+    await expect(syncMatches({ supabase: db.client, provider, now: fixedNow })).resolves.toMatchObject({
+      scoredPredictions: 1
+    });
+
+    expect(db.matchUpdates[0].payload).toMatchObject({
+      first_scoring_team_id: "team-home",
+      last_scoring_team_id: "team-away"
+    });
+    expect(db.predictionUpdates[0].payload).toMatchObject({
+      score_first_scorer: 4,
+      score_last_scorer: 4,
+      score_total: 29
+    });
+  });
+});
+
+describe("syncMatchResult", () => {
+  test("updates one final match and scores its predictions", async () => {
+    const db = createFakeSyncDb({
+      matches: [
+        {
+          id: "match-1",
+          api_match_id: "123",
+          status: "scheduled",
+          home_score: null,
+          away_score: null
+        },
+        {
+          id: "match-2",
+          api_match_id: "456",
+          status: "scheduled",
+          home_score: null,
+          away_score: null
+        }
+      ],
+      predictions: [
+        {
+          id: "prediction-1",
+          match_id: "match-1",
+          final_home_score: 2,
+          final_away_score: 1,
+          match_result: "home",
+          halftime_home_score: 1,
+          halftime_away_score: 0,
+          first_scoring_team_id: null,
+          last_scoring_team_id: null
+        },
+        {
+          id: "prediction-2",
+          match_id: "match-2",
+          final_home_score: 1,
+          final_away_score: 1,
+          match_result: "draw",
+          halftime_home_score: 0,
+          halftime_away_score: 0,
+          first_scoring_team_id: null,
+          last_scoring_team_id: null
+        }
+      ]
+    });
+    const provider: FootballProvider = {
+      name: "api-football",
+      fetchUpdates: vi.fn().mockResolvedValue([
+        {
+          apiMatchId: "123",
+          status: "final",
+          homeScore: 2,
+          awayScore: 1,
+          winner: "home",
+          homeHalftimeScore: 1,
+          awayHalftimeScore: 0,
+          firstScoringTeamExternalId: null,
+          lastScoringTeamExternalId: null,
+          kickoffAt: "2026-06-14T17:00:00.000Z"
+        }
+      ])
+    };
+
+    await expect(syncMatchResult({ supabase: db.client, matchId: "match-1", provider, now: fixedNow })).resolves.toEqual({
+      found: true,
+      fetchedMatches: 1,
+      updatedMatch: true,
+      scoredPredictions: 1,
+      status: "final"
+    });
+
+    expect(provider.fetchUpdates).toHaveBeenCalledWith(["123"]);
+    expect(db.matchUpdates.map((update) => update.id)).toEqual(["match-1"]);
+    expect(db.predictionUpdates).toHaveLength(1);
+    expect(db.predictionUpdates[0]).toMatchObject({
+      id: "prediction-1",
+      payload: {
+        score_final: 10,
+        score_result: 5,
+        score_halftime: 6,
+        score_total: 21
+      }
+    });
+  });
+
+  test("updates one non-final match without scoring predictions", async () => {
+    const db = createFakeSyncDb({
+      matches: [
+        {
+          id: "match-1",
+          api_match_id: "123",
+          status: "scheduled",
+          home_score: null,
+          away_score: null
+        }
+      ],
+      predictions: [
+        {
+          id: "prediction-1",
+          match_id: "match-1",
+          final_home_score: 2,
+          final_away_score: 1,
+          match_result: "home",
+          halftime_home_score: 1,
+          halftime_away_score: 0,
+          first_scoring_team_id: null,
+          last_scoring_team_id: null
+        }
+      ]
+    });
+    const provider: FootballProvider = {
+      name: "api-football",
+      fetchUpdates: vi.fn().mockResolvedValue([
+        {
+          apiMatchId: "123",
+          status: "live",
+          homeScore: 1,
+          awayScore: 0,
+          winner: "home",
+          homeHalftimeScore: 1,
+          awayHalftimeScore: 0,
+          firstScoringTeamExternalId: null,
+          lastScoringTeamExternalId: null
+        }
+      ])
+    };
+
+    await expect(syncMatchResult({ supabase: db.client, matchId: "match-1", provider, now: fixedNow })).resolves.toEqual({
+      found: true,
+      fetchedMatches: 1,
+      updatedMatch: true,
+      scoredPredictions: 0,
+      status: "live"
+    });
+
+    expect(db.matchUpdates).toEqual([
+      {
+        id: "match-1",
+        payload: expect.objectContaining({
+          status: "live",
+          home_score: 1,
+          away_score: 0,
+          last_synced_at: "2026-06-14T12:00:00.000Z"
+        })
+      }
+    ]);
+    expect(db.predictionUpdates).toEqual([]);
+  });
+
+  test("settles a demo match without calling the external provider", async () => {
+    const db = createFakeSyncDb({
+      matches: [
+        {
+          id: "match-1",
+          api_provider: "demo",
+          api_match_id: "demo-world-cup-room",
+          status: "live",
+          home_team_id: "home-team",
+          away_team_id: "away-team",
+          home_score: null,
+          away_score: null
+        }
+      ],
+      predictions: [
+        {
+          id: "prediction-1",
+          match_id: "match-1",
+          final_home_score: 2,
+          final_away_score: 1,
+          match_result: "home",
+          halftime_home_score: 1,
+          halftime_away_score: 0,
+          first_scoring_team_id: "home-team",
+          last_scoring_team_id: "away-team"
+        }
+      ]
+    });
+    const provider: FootballProvider = {
+      name: "api-football",
+      fetchUpdates: vi.fn()
+    };
+
+    await expect(syncMatchResult({ supabase: db.client, matchId: "match-1", provider, now: fixedNow })).resolves.toEqual({
+      found: true,
+      fetchedMatches: 1,
+      updatedMatch: true,
+      scoredPredictions: 1,
+      status: "final"
+    });
+
+    expect(provider.fetchUpdates).not.toHaveBeenCalled();
+    expect(db.matchUpdates).toEqual([
+      {
+        id: "match-1",
+        payload: expect.objectContaining({
+          status: "final",
+          home_score: 2,
+          away_score: 1,
+          home_halftime_score: 1,
+          away_halftime_score: 0,
+          winner: "home",
+          first_scoring_team_id: "home-team",
+          last_scoring_team_id: "away-team"
+        })
+      }
+    ]);
+    expect(db.predictionUpdates[0]).toMatchObject({
+      payload: {
+        score_final: 10,
+        score_result: 5,
+        score_halftime: 6,
+        score_first_scorer: 4,
+        score_last_scorer: 4,
+        score_total: 29,
+        scored_at: "2026-06-14T12:00:00.000Z"
+      }
+    });
+  });
 });
 
 function fixedNow(): Date {
@@ -148,7 +428,13 @@ function createFakeSyncDb({
         if (table === "matches") {
           return {
             select: () => ({
-              not: async () => ({ data: matches, error: null })
+              not: async () => ({ data: matches, error: null }),
+              eq: (_column: string, value: string) => ({
+                single: async () => ({
+                  data: matches.find((match) => match.id === value) ?? null,
+                  error: null
+                })
+              })
             }),
             update: (payload: Record<string, unknown>) => ({
               eq: async (_column: string, id: string) => {

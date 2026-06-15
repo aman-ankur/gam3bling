@@ -5,9 +5,13 @@ export type ProviderMatchUpdate = {
   status: MatchStatus;
   homeScore?: number | null;
   awayScore?: number | null;
+  homeTeamExternalId?: string | null;
+  awayTeamExternalId?: string | null;
   homeHalftimeScore?: number | null;
   awayHalftimeScore?: number | null;
   winner?: MatchResult | null;
+  firstScoringTeamId?: string | null;
+  lastScoringTeamId?: string | null;
   firstScoringTeamExternalId?: string | null;
   lastScoringTeamExternalId?: string | null;
   kickoffAt?: string;

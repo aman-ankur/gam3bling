@@ -34,8 +34,17 @@ type ApiFootballFixture = {
       away?: number | null;
     };
   };
+  teams?: {
+    home?: {
+      id?: number | string | null;
+    } | null;
+    away?: {
+      id?: number | string | null;
+    } | null;
+  };
   events?: Array<{
     type?: string | null;
+    detail?: string | null;
     team?: {
       id?: number | string | null;
     } | null;
@@ -94,6 +103,7 @@ type ApiFootballStatisticsResponse = {
 };
 
 const DEFAULT_BASE_URL = "https://v3.football.api-sports.io";
+const NON_SCORING_GOAL_EVENT_DETAILS = new Set(["MISSED PENALTY"]);
 
 const STATUS_MAP: Record<string, MatchStatus> = {
   TBD: "scheduled",
@@ -192,8 +202,10 @@ export function normalizeApiFootballFixture(fixture: ApiFootballFixture): Provid
 
   const homeScore = numberOrNull(fixture.goals?.home);
   const awayScore = numberOrNull(fixture.goals?.away);
+  const homeTeamExternalId = valueToString(fixture.teams?.home?.id);
+  const awayTeamExternalId = valueToString(fixture.teams?.away?.id);
   const goalTeamIds = (fixture.events ?? [])
-    .filter((event) => event.type === "Goal" && event.team?.id != null)
+    .filter(isScoringGoalEvent)
     .map((event) => String(event.team?.id));
 
   return {
@@ -201,6 +213,8 @@ export function normalizeApiFootballFixture(fixture: ApiFootballFixture): Provid
     status: normalizeApiFootballStatus(fixture.fixture?.status?.short),
     homeScore,
     awayScore,
+    homeTeamExternalId,
+    awayTeamExternalId,
     winner: winnerFromScore(homeScore, awayScore),
     homeHalftimeScore: numberOrNull(fixture.score?.halftime?.home),
     awayHalftimeScore: numberOrNull(fixture.score?.halftime?.away),
@@ -212,6 +226,13 @@ export function normalizeApiFootballFixture(fixture: ApiFootballFixture): Provid
 
 export function normalizeApiFootballStatus(status: string | null | undefined): MatchStatus {
   return STATUS_MAP[(status ?? "").toUpperCase()] ?? "scheduled";
+}
+
+function isScoringGoalEvent(event: NonNullable<ApiFootballFixture["events"]>[number]): boolean {
+  const type = event.type?.trim().toUpperCase();
+  const detail = event.detail?.trim().toUpperCase();
+
+  return type === "GOAL" && event.team?.id != null && !NON_SCORING_GOAL_EVENT_DETAILS.has(detail ?? "");
 }
 
 export function normalizeApiFootballLineups(lineups: ApiFootballLineup[]): ProviderLineup[] {

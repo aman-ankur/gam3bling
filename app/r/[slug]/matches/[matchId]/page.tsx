@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { LineupPitch } from "@/components/lineup-pitch";
 import { MatchDetailTabs } from "@/components/match-detail-tabs";
+import { MatchResultBreakdown, ResultCheckPanel } from "@/components/match-result-breakdown";
 import { MatchStatsPanel } from "@/components/match-stats-panel";
 import { PredictionForm } from "@/components/prediction-form";
 import { PredictionReceipt } from "@/components/prediction-receipt";
@@ -16,6 +17,8 @@ import { ensureMatchDetailsForMatches } from "@/features/match-details/cache";
 import { createSupabaseMatchDetailsStore, getCachedMatchDetails } from "@/features/match-details/data";
 import { isPredictionLocked } from "@/features/predictions/locking";
 import { getRoomMatchPicks } from "@/features/predictions/data";
+import { checkMatchResult } from "@/features/results/actions";
+import { getResultCheckState } from "@/features/results/check-window";
 import { getRoomSummary } from "@/features/rooms/data";
 import { createApiFootballProvider } from "@/features/sync/api-football-provider";
 import { getCurrentDate } from "@/features/time/now";
@@ -29,13 +32,14 @@ type MatchPredictionPageProps = {
   }>;
   searchParams: Promise<{
     error?: string;
+    result?: string;
     saved?: string;
   }>;
 };
 
 export default async function MatchPredictionPage({ params, searchParams }: MatchPredictionPageProps) {
   const { matchId, slug } = await params;
-  const { error, saved } = await searchParams;
+  const { error, result, saved } = await searchParams;
   const matches = await getUpcomingMatches();
   const room = await getRoomSummary(slug);
 
@@ -66,7 +70,16 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
   const kickoffLocked = isPredictionLocked({ now, kickoffAt: new Date(match.kickoffAt) });
   const windowLocked = !isMatchInOpenPredictionWindow(match, matches, now);
   const locked = kickoffLocked || windowLocked;
-  const action = savePrediction.bind(null, slug, match.apiMatchId);
+  const predictionAction = savePrediction.bind(null, slug, match.apiMatchId);
+  const resultCheckAction = checkMatchResult.bind(null, slug, match.apiMatchId);
+  const resultCheckState = getResultCheckState(
+    {
+      kickoffAt: match.kickoffAt,
+      lastSyncedAt: match.lastSyncedAt,
+      status: match.status
+    },
+    now
+  );
   const supabase = getSupabaseAdmin();
 
   if (supabase && !windowLocked && !process.env.E2E_USE_FALLBACK_FIXTURES) {
@@ -81,6 +94,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
   const roomPicks = await getRoomMatchPicks(slug, match);
   const currentPrediction = roomPicks.find((pick) => pick.isCurrentPlayer && pick.saved);
   const receiptPrediction = currentPrediction ?? (saved ? createFallbackReceipt(match) : undefined);
+  const isSettledPrediction = Boolean(receiptPrediction && match.status === "final");
 
   console.info("[matches.prediction] loaded", {
     slug,
@@ -95,54 +109,106 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
       <Link className="match-back-link" href={`/r/${slug}?hub=1`}>
         Back to room
       </Link>
-      <section className="hero-card match-hero" aria-labelledby="match-title">
-        <p className="eyebrow">{match.stage}</p>
-        <h1 aria-label={`${match.homeTeam.name} vs ${match.awayTeam.name}`} id="match-title">
-          <MatchupName awayTeam={match.awayTeam} homeTeam={match.homeTeam} />
-        </h1>
-        <p>{formatKickoffInIst(match.kickoffAt)}. {windowLocked && !kickoffLocked ? "Only the next 4 matches are open for predictions." : "Kickoff locks this match."}</p>
-      </section>
 
       {error === "invalid" ? <p className="locked-banner">That prediction combination did not make sense. Adjust the score and try again.</p> : null}
       {error === "locked" ? <p className="locked-banner">This match is locked for predictions.</p> : null}
+      {result === "checked" && !isSettledPrediction ? <p className="success-banner">Final result checked and room scores refreshed.</p> : null}
 
-      <MatchDetailTabs
-        predictions={(
-          <>
-            {receiptPrediction ? (
-              <PredictionReceipt
-                awayTeam={match.awayTeam}
-                finalScore={receiptPrediction.finalScore ?? `${receiptPrediction.finalHomeScore ?? 2}-${receiptPrediction.finalAwayScore ?? 1}`}
-                firstScoringTeamId={receiptPrediction.firstScoringTeamId}
-                halftimeScore={receiptPrediction.halftimeScore}
-                homeTeam={match.homeTeam}
-                lastScoringTeamId={receiptPrediction.lastScoringTeamId}
-                result={receiptPrediction.matchResult}
-              />
-            ) : null}
+      {isSettledPrediction && receiptPrediction ? (
+        <div className="post-result-stack">
+          <MatchResultBreakdown match={match} pick={receiptPrediction} />
+          <RoomPicksBoard awayTeam={match.awayTeam} eyebrow="Friends" homeTeam={match.homeTeam} picks={roomPicks} title="Room predictions" />
+          <details className="edit-prediction-panel">
+            <summary>
+              <span>Edit prediction</span>
+              <b>Expand</b>
+            </summary>
+            <PredictionForm
+              action={predictionAction}
+              awayTeam={match.awayTeam}
+              homeTeam={match.homeTeam}
+              initialPrediction={receiptPrediction}
+              locked={locked}
+            />
+          </details>
+        </div>
+      ) : (
+        <>
+          <section className="hero-card match-hero" aria-labelledby="match-title">
+            <p className="eyebrow">{match.stage}</p>
+            <h1 aria-label={`${match.homeTeam.name} vs ${match.awayTeam.name}`} id="match-title">
+              <MatchupName awayTeam={match.awayTeam} homeTeam={match.homeTeam} />
+            </h1>
+            <p>{formatKickoffInIst(match.kickoffAt)}. {windowLocked && !kickoffLocked ? "Only the next 4 matches are open for predictions." : "Kickoff locks this match."}</p>
+          </section>
 
-            {receiptPrediction ? <RoomPicksBoard awayTeam={match.awayTeam} homeTeam={match.homeTeam} picks={roomPicks} /> : null}
+          <MatchDetailTabs
+            predictions={(
+              <>
+                {receiptPrediction ? (
+                  <PredictionReceipt
+                    awayTeam={match.awayTeam}
+                    finalScore={receiptPrediction.finalScore ?? `${receiptPrediction.finalHomeScore ?? 2}-${receiptPrediction.finalAwayScore ?? 1}`}
+                    firstScoringTeamId={receiptPrediction.firstScoringTeamId}
+                    halftimeScore={receiptPrediction.halftimeScore}
+                    homeTeam={match.homeTeam}
+                    lastScoringTeamId={receiptPrediction.lastScoringTeamId}
+                    result={receiptPrediction.matchResult}
+                  />
+                ) : null}
 
-            <details className="edit-prediction-panel" open={!receiptPrediction}>
-              <summary>
-                <span>{receiptPrediction ? "Edit prediction" : "Make prediction"}</span>
-                <b>{receiptPrediction ? "Expand" : "Open"}</b>
-              </summary>
-              <PredictionForm
-                action={action}
-                awayTeam={match.awayTeam}
-                homeTeam={match.homeTeam}
-                initialPrediction={receiptPrediction}
-                locked={locked}
-              />
-            </details>
-          </>
-        )}
-        lineups={<LineupPitch lineups={matchDetails.lineups} teams={[match.homeTeam, match.awayTeam]} />}
-        stats={<MatchStatsPanel match={match} statistics={matchDetails.statistics} />}
-      />
+                {receiptPrediction ? <RoomPicksBoard awayTeam={match.awayTeam} homeTeam={match.homeTeam} picks={roomPicks} /> : null}
+
+                {locked && match.status !== "final" ? (
+                  <ResultCheckPanel action={resultCheckAction} resultMessage={resultMessage(result)} state={resultCheckState} />
+                ) : null}
+
+                <details className="edit-prediction-panel" open={!receiptPrediction}>
+                  <summary>
+                    <span>{receiptPrediction ? "Edit prediction" : "Make prediction"}</span>
+                    <b>{receiptPrediction ? "Expand" : "Open"}</b>
+                  </summary>
+                  <PredictionForm
+                    action={predictionAction}
+                    awayTeam={match.awayTeam}
+                    homeTeam={match.homeTeam}
+                    initialPrediction={receiptPrediction}
+                    locked={locked}
+                  />
+                </details>
+              </>
+            )}
+            lineups={<LineupPitch lineups={matchDetails.lineups} teams={[match.homeTeam, match.awayTeam]} />}
+            stats={<MatchStatsPanel match={match} statistics={matchDetails.statistics} />}
+          />
+        </>
+      )}
     </AppShell>
   );
+}
+
+function resultMessage(result: string | undefined): string | undefined {
+  if (result === "pending") {
+    return "Official final result is not available yet. Try again after the cooldown.";
+  }
+
+  if (result === "cooldown") {
+    return "This match was checked recently. Try again after the 5-minute cooldown.";
+  }
+
+  if (result === "early") {
+    return "Result checks open around 115 minutes after kickoff.";
+  }
+
+  if (result === "error") {
+    return "The provider check failed. Try again in a few minutes.";
+  }
+
+  if (result === "checked") {
+    return "Final result checked and room scores refreshed.";
+  }
+
+  return undefined;
 }
 
 function createFallbackReceipt(match: AppMatch) {
@@ -161,6 +227,11 @@ function createFallbackReceipt(match: AppMatch) {
     lastScoringTeamId: match.awayTeam.id,
     result: match.homeTeam.name,
     scorers: `${match.homeTeam.name} first, ${match.awayTeam.name} last`,
+    scoreFinal: 0,
+    scoreResult: 0,
+    scoreHalftime: 0,
+    scoreFirstScorer: 0,
+    scoreLastScorer: 0,
     points: 0,
     saved: true,
     isCurrentPlayer: true

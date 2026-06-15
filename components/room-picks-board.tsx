@@ -4,19 +4,21 @@ import type { RoomMatchPick } from "@/features/predictions/data";
 
 type RoomPicksBoardProps = {
   awayTeam: AppTeam;
+  eyebrow?: string;
   homeTeam: AppTeam;
   picks: RoomMatchPick[];
+  title?: string;
 };
 
-export function RoomPicksBoard({ awayTeam, homeTeam, picks }: RoomPicksBoardProps) {
+export function RoomPicksBoard({ awayTeam, eyebrow = "Room predictions", homeTeam, picks, title = "Friends' predictions" }: RoomPicksBoardProps) {
   const savedCount = picks.filter((pick) => pick.saved).length;
 
   return (
     <section className="section-stack room-picks" aria-labelledby="room-picks-title">
       <div className="section-heading">
         <div>
-          <p className="eyebrow">Room predictions</p>
-          <h2 id="room-picks-title">Friends&apos; predictions</h2>
+          <p className="eyebrow">{eyebrow}</p>
+          <h2 id="room-picks-title">{title}</h2>
         </div>
         <span className="status-chip">{savedCount}/{picks.length} saved</span>
       </div>

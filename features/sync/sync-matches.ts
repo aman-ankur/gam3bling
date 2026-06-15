@@ -5,7 +5,10 @@ import type { FootballProvider, ProviderMatchUpdate } from "./provider";
 
 type LocalMatchRow = {
   id: string;
+  api_provider: string | null;
   api_match_id: string | null;
+  home_team_id: string;
+  away_team_id: string;
   status: MatchStatus;
   home_score: number | null;
   away_score: number | null;
@@ -38,6 +41,9 @@ type MutationResult = {
 type MatchTable = {
   select(columns: string): {
     not(column: string, operator: string, value: null): Promise<DbResult<LocalMatchRow[]>>;
+    eq(column: string, value: string): {
+      single(): Promise<DbResult<LocalMatchRow>>;
+    };
   };
   update(payload: Record<string, unknown>): {
     eq(column: string, value: string): Promise<MutationResult>;
@@ -68,6 +74,14 @@ export type SyncMatchesResult = {
   skippedMatches: number;
 };
 
+export type SyncMatchResultResult = {
+  found: boolean;
+  fetchedMatches: number;
+  updatedMatch: boolean;
+  scoredPredictions: number;
+  status: MatchStatus | null;
+};
+
 export type SyncMatchesOptions = {
   supabase: SyncSupabaseClient;
   provider?: FootballProvider;
@@ -83,7 +97,7 @@ export async function syncMatches({
 
   try {
     const { data: matches, error: matchError } = await matchTable(supabase)
-      .select("id, api_match_id, status, home_score, away_score")
+      .select("id, api_provider, api_match_id, home_team_id, away_team_id, status, home_score, away_score")
       .not("api_match_id", "is", null);
 
     if (matchError) {
@@ -107,11 +121,12 @@ export async function syncMatches({
         continue;
       }
 
-      await updateMatch(supabase, localMatch.id, update, syncedAt);
+      const resolvedUpdate = resolveMatchUpdateTeams(localMatch, update);
+      await updateMatch(supabase, localMatch.id, resolvedUpdate, syncedAt);
       updatedMatches += 1;
 
-      if (update.status === "final" && update.homeScore != null && update.awayScore != null) {
-        scoredPredictions += await scoreFinalMatchPredictions(supabase, localMatch.id, update, syncedAt);
+      if (resolvedUpdate.status === "final" && resolvedUpdate.homeScore != null && resolvedUpdate.awayScore != null) {
+        scoredPredictions += await scoreFinalMatchPredictions(supabase, localMatch.id, resolvedUpdate, syncedAt);
       }
     }
 
@@ -136,6 +151,92 @@ export async function syncMatches({
   }
 }
 
+export async function syncMatchResult({
+  supabase,
+  matchId,
+  provider = createApiFootballProvider(),
+  now = () => new Date()
+}: SyncMatchesOptions & { matchId: string }): Promise<SyncMatchResultResult> {
+  const { data: localMatch, error: matchError } = await matchTable(supabase)
+    .select("id, api_provider, api_match_id, home_team_id, away_team_id, status, home_score, away_score")
+    .eq("id", matchId)
+    .single();
+
+  if (matchError) {
+    throw new Error(matchError.message);
+  }
+
+  if (!localMatch?.api_match_id) {
+    return {
+      found: false,
+      fetchedMatches: 0,
+      updatedMatch: false,
+      scoredPredictions: 0,
+      status: null
+    };
+  }
+
+  const syncedAt = now().toISOString();
+  const updates = localMatch.api_provider === "demo"
+    ? [createDemoMatchUpdate(localMatch)]
+    : await provider.fetchUpdates([localMatch.api_match_id]);
+  const update = updates.find((candidate) => candidate.apiMatchId === localMatch.api_match_id);
+
+  if (!update) {
+    return {
+      found: true,
+      fetchedMatches: updates.length,
+      updatedMatch: false,
+      scoredPredictions: 0,
+      status: localMatch.status
+    };
+  }
+
+  const resolvedUpdate = resolveMatchUpdateTeams(localMatch, update);
+  await updateMatch(supabase, localMatch.id, resolvedUpdate, syncedAt);
+
+  const scoredPredictions =
+    resolvedUpdate.status === "final" && resolvedUpdate.homeScore != null && resolvedUpdate.awayScore != null
+      ? await scoreFinalMatchPredictions(supabase, localMatch.id, resolvedUpdate, syncedAt)
+      : 0;
+
+  return {
+    found: true,
+    fetchedMatches: updates.length,
+    updatedMatch: true,
+    scoredPredictions,
+    status: resolvedUpdate.status
+  };
+}
+
+function resolveMatchUpdateTeams(localMatch: LocalMatchRow, update: ProviderMatchUpdate): ProviderMatchUpdate {
+  return {
+    ...update,
+    firstScoringTeamId: update.firstScoringTeamId ?? resolveExternalTeamId(localMatch, update, update.firstScoringTeamExternalId),
+    lastScoringTeamId: update.lastScoringTeamId ?? resolveExternalTeamId(localMatch, update, update.lastScoringTeamExternalId)
+  };
+}
+
+function resolveExternalTeamId(
+  localMatch: LocalMatchRow,
+  update: ProviderMatchUpdate,
+  externalTeamId: string | null | undefined
+): string | null {
+  if (!externalTeamId) {
+    return null;
+  }
+
+  if (externalTeamId === update.homeTeamExternalId) {
+    return localMatch.home_team_id;
+  }
+
+  if (externalTeamId === update.awayTeamExternalId) {
+    return localMatch.away_team_id;
+  }
+
+  return null;
+}
+
 async function updateMatch(
   supabase: SyncSupabaseClient,
   matchId: string,
@@ -149,8 +250,8 @@ async function updateMatch(
     home_halftime_score: update.homeHalftimeScore ?? null,
     away_halftime_score: update.awayHalftimeScore ?? null,
     winner: update.winner ?? null,
-    first_scoring_team_id: null,
-    last_scoring_team_id: null,
+    first_scoring_team_id: update.firstScoringTeamId ?? null,
+    last_scoring_team_id: update.lastScoringTeamId ?? null,
     last_synced_at: syncedAt,
     updated_at: syncedAt
   };
@@ -199,8 +300,8 @@ async function scoreFinalMatchPredictions(
         halftimeHomeScore: update.homeHalftimeScore,
         halftimeAwayScore: update.awayHalftimeScore,
         winner: update.winner,
-        firstScoringTeamId: null,
-        lastScoringTeamId: null
+        firstScoringTeamId: update.firstScoringTeamId ?? null,
+        lastScoringTeamId: update.lastScoringTeamId ?? null
       }
     );
 
@@ -224,6 +325,20 @@ async function scoreFinalMatchPredictions(
   }
 
   return scoredPredictions;
+}
+
+function createDemoMatchUpdate(match: LocalMatchRow): ProviderMatchUpdate {
+  return {
+    apiMatchId: match.api_match_id as string,
+    status: "final",
+    homeScore: 2,
+    awayScore: 1,
+    homeHalftimeScore: 1,
+    awayHalftimeScore: 0,
+    winner: "home",
+    firstScoringTeamId: match.home_team_id,
+    lastScoringTeamId: match.away_team_id
+  };
 }
 
 async function logSync(

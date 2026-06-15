@@ -1,0 +1,929 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gam3bling Post-Match Results Mockups</title>
+  <style>
+    :root {
+      --bg: #f4f2f7;
+      --ink: #171521;
+      --muted: #6f697c;
+      --line: #e6deef;
+      --purple: #6846bd;
+      --blue: #176bd6;
+      --green: #49a84d;
+      --gold: #f4b63f;
+      --red: #d94f45;
+      --card: #ffffff;
+      --panel: #faf8fd;
+      --shadow: 0 24px 58px rgba(40, 34, 58, 0.14);
+      --soft-shadow: 0 12px 28px rgba(40, 34, 58, 0.08);
+      color-scheme: light;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 16% -4%, rgba(104, 70, 189, 0.12), transparent 34%),
+        radial-gradient(circle at 86% 2%, rgba(23, 107, 214, 0.1), transparent 32%),
+        var(--bg);
+    }
+
+    h1, h2, h3, p { margin: 0; }
+
+    .page {
+      width: min(1240px, 100%);
+      margin: 0 auto;
+      padding: 28px 18px 54px;
+    }
+
+    .intro {
+      max-width: 860px;
+      margin: 0 auto 24px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .intro h1 {
+      font-size: clamp(34px, 6vw, 62px);
+      line-height: 0.95;
+      letter-spacing: 0;
+    }
+
+    .intro p {
+      color: var(--muted);
+      font-size: 16px;
+      font-weight: 760;
+      line-height: 1.5;
+    }
+
+    .eyebrow {
+      color: var(--purple);
+      font-size: 12px;
+      font-weight: 1000;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+
+    .mockup-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 22px;
+      align-items: start;
+    }
+
+    .option {
+      display: grid;
+      gap: 12px;
+    }
+
+    .option-note {
+      min-height: 132px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: var(--soft-shadow);
+    }
+
+    .option-note h2 {
+      margin: 6px 0 8px;
+      font-size: 22px;
+      line-height: 1.04;
+    }
+
+    .option-note p {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 760;
+      line-height: 1.42;
+    }
+
+    .phone {
+      overflow: hidden;
+      width: min(390px, 100%);
+      min-height: 800px;
+      margin: 0 auto;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 34px;
+      background: #f8f6fb;
+      box-shadow: var(--shadow);
+    }
+
+    .phone-inner {
+      display: grid;
+      gap: 16px;
+      padding: 20px 14px 82px;
+    }
+
+    .topbar,
+    .stat-row,
+    .scoreline,
+    .leader-row,
+    .result-row,
+    .breakdown-row,
+    .friend-line,
+    .delta-row,
+    .bottom-nav,
+    .compact-action,
+    .chip-row {
+      display: flex;
+      align-items: center;
+    }
+
+    .topbar,
+    .stat-row,
+    .scoreline,
+    .leader-row,
+    .result-row,
+    .breakdown-row,
+    .friend-line,
+    .delta-row,
+    .compact-action {
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .topbar {
+      padding: 4px 8px 8px;
+    }
+
+    .topbar small {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .topbar strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .avatar {
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--green);
+      font-weight: 1000;
+      font-size: 22px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 18px;
+      border-radius: 8px;
+      color: #fff;
+      background:
+        linear-gradient(135deg, rgba(104, 70, 189, 0.96), rgba(23, 107, 214, 0.96)),
+        #6846bd;
+      box-shadow: var(--soft-shadow);
+    }
+
+    .hero::after {
+      position: absolute;
+      right: -34px;
+      bottom: -44px;
+      width: 154px;
+      height: 154px;
+      border: 18px solid rgba(255, 255, 255, 0.15);
+      border-radius: 50%;
+      content: "";
+    }
+
+    .hero .eyebrow {
+      position: relative;
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    .hero h2 {
+      position: relative;
+      margin-top: 10px;
+      font-size: 32px;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .hero p {
+      position: relative;
+      margin-top: 8px;
+      color: rgba(255, 255, 255, 0.84);
+      font-size: 14px;
+      font-weight: 780;
+      line-height: 1.35;
+    }
+
+    .scoreline {
+      position: relative;
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .team {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+      font-weight: 1000;
+    }
+
+    .team small {
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .score {
+      flex: 0 0 auto;
+      font-size: 34px;
+      font-weight: 1000;
+    }
+
+    .card,
+    .result-card,
+    .leaderboard,
+    .breakdown,
+    .ledger-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--card);
+      box-shadow: var(--soft-shadow);
+    }
+
+    .card {
+      padding: 15px;
+    }
+
+    .section-title {
+      display: grid;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+
+    .section-title h3 {
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .stat {
+      min-width: 0;
+      padding: 10px;
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .stat span,
+    .leader-row span,
+    .result-row span,
+    .breakdown-row span,
+    .delta-row span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      line-height: 1.25;
+    }
+
+    .stat b {
+      display: block;
+      margin-top: 4px;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .leaderboard,
+    .breakdown,
+    .ledger-card {
+      overflow: hidden;
+    }
+
+    .leader-row,
+    .result-row,
+    .breakdown-row,
+    .delta-row {
+      padding: 12px 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    .leader-row:first-child,
+    .result-row:first-child,
+    .breakdown-row:first-child,
+    .delta-row:first-child {
+      border-top: 0;
+    }
+
+    .leader-meta {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      gap: 10px;
+    }
+
+    .rank {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--purple);
+      font-size: 13px;
+      font-weight: 1000;
+    }
+
+    .leader-meta b,
+    .friend-line b {
+      display: block;
+      font-size: 15px;
+      line-height: 1.1;
+    }
+
+    .points,
+    .delta {
+      flex: 0 0 auto;
+      font-weight: 1000;
+    }
+
+    .delta {
+      color: var(--green);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      color: var(--green);
+      background: #edf8ec;
+      font-size: 12px;
+      font-weight: 1000;
+      white-space: nowrap;
+    }
+
+    .pill.neutral {
+      color: var(--muted);
+      background: #f2eef8;
+    }
+
+    .pill.red {
+      color: var(--red);
+      background: #fff0ee;
+    }
+
+    .compact-action {
+      min-height: 44px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--purple);
+      background: #fff;
+      font-size: 14px;
+      font-weight: 1000;
+      text-decoration: none;
+    }
+
+    .result-card {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .result-title {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .result-title h3 {
+      font-size: 21px;
+      line-height: 1;
+    }
+
+    .result-title p {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 780;
+      line-height: 1.35;
+    }
+
+    .chip-row {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .check {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--green);
+      font-weight: 1000;
+    }
+
+    .check.miss {
+      background: #d9d3e5;
+    }
+
+    .breakdown-row strong {
+      font-size: 15px;
+    }
+
+    .friend-list {
+      display: grid;
+      gap: 9px;
+    }
+
+    .friend-line {
+      padding: 11px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .friend-line small {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 780;
+    }
+
+    .ledger-card {
+      display: grid;
+    }
+
+    .ledger-head {
+      padding: 14px;
+      background: #fff;
+    }
+
+    .ledger-head h3 {
+      margin-top: 5px;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .mini-score {
+      font-size: 18px;
+      font-weight: 1000;
+      white-space: nowrap;
+    }
+
+    .market-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+      padding: 12px 14px 14px;
+      border-top: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    .market {
+      display: grid;
+      place-items: center;
+      min-height: 44px;
+      border-radius: 8px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .market.hit {
+      color: var(--green);
+      background: #edf8ec;
+    }
+
+    .market.pending {
+      color: #8a6a11;
+      background: #fff7dc;
+    }
+
+    .bottom-nav {
+      position: sticky;
+      bottom: 10px;
+      z-index: 2;
+      justify-content: space-around;
+      min-height: 58px;
+      margin: 0 8px;
+      border: 1px solid rgba(230, 222, 239, 0.9);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 16px 36px rgba(40, 34, 58, 0.16);
+      backdrop-filter: blur(14px);
+    }
+
+    .bottom-nav span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .bottom-nav span.active {
+      color: var(--purple);
+    }
+
+    @media (max-width: 1040px) {
+      .mockup-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .option-note {
+        min-height: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="intro">
+      <p class="eyebrow">Gam3bling post-match state</p>
+      <h1>Results should feel like the payoff, not a spreadsheet update.</h1>
+      <p>Three mobile-first options for what the player should see after a match ends and scoring has run. These focus on the gaps: final-result visibility, point movement, category-level correctness, and a useful room history.</p>
+    </section>
+
+    <section class="mockup-grid" aria-label="Post-match result mockup options">
+      <article class="option">
+        <div class="option-note">
+          <p class="eyebrow">Option A</p>
+          <h2>Room hub payoff</h2>
+          <p>Best default landing state. The room immediately says what finished, what you earned, and how the top of the room changed.</p>
+        </div>
+        <div class="phone">
+          <div class="phone-inner">
+            <header class="topbar">
+              <div>
+                <small>Gam3bling · Room hub</small>
+                <strong>World Cup Room</strong>
+              </div>
+              <div class="avatar">A</div>
+            </header>
+
+            <section class="hero">
+              <p class="eyebrow">Final just landed</p>
+              <h2>Netherlands beat Japan</h2>
+              <p>You earned 21 points. First and last scorer are waiting on official event data.</p>
+              <div class="scoreline" aria-label="Netherlands 2 Japan 1">
+                <div class="team">
+                  <span>Netherlands</span>
+                  <small>Winner</small>
+                </div>
+                <div class="score">2-1</div>
+                <div class="team" style="text-align: right;">
+                  <span>Japan</span>
+                  <small>Final</small>
+                </div>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="section-title">
+                <p class="eyebrow">Your return</p>
+                <h3>Prediction settled</h3>
+              </div>
+              <div class="stat-grid">
+                <div class="stat">
+                  <span>Your points</span>
+                  <b>+21</b>
+                </div>
+                <div class="stat">
+                  <span>Room rank</span>
+                  <b>1st</b>
+                </div>
+                <div class="stat">
+                  <span>Hits</span>
+                  <b>3/5</b>
+                </div>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="section-title">
+                <p class="eyebrow">Room score</p>
+                <h3>Leaderboard movement</h3>
+              </div>
+              <div class="leaderboard">
+                <div class="leader-row">
+                  <div class="leader-meta">
+                    <span class="rank">1</span>
+                    <div>
+                      <b>Amanwa</b>
+                      <span>Exact, result, half-time</span>
+                    </div>
+                  </div>
+                  <strong><span class="delta">+21</span> 48</strong>
+                </div>
+                <div class="leader-row">
+                  <div class="leader-meta">
+                    <span class="rank">2</span>
+                    <div>
+                      <b>Kamesh</b>
+                      <span>Result hit</span>
+                    </div>
+                  </div>
+                  <strong><span class="delta">+5</span> 36</strong>
+                </div>
+                <div class="leader-row">
+                  <div class="leader-meta">
+                    <span class="rank">3</span>
+                    <div>
+                      <b>Rohan</b>
+                      <span>No hits this match</span>
+                    </div>
+                  </div>
+                  <strong><span class="delta">+0</span> 31</strong>
+                </div>
+              </div>
+            </section>
+
+            <a class="compact-action" href="#breakdown">
+              <span>View full breakdown</span>
+              <span>Open</span>
+            </a>
+
+            <nav class="bottom-nav" aria-label="Primary">
+              <span class="active">Room</span>
+              <span>Matches</span>
+              <span>Board</span>
+            </nav>
+          </div>
+        </div>
+      </article>
+
+      <article class="option">
+        <div class="option-note">
+          <p class="eyebrow">Option B</p>
+          <h2>Match detail receipt</h2>
+          <p>Best for transparency. A player can tap the finished fixture and see each market, points, misses, and pending official data.</p>
+        </div>
+        <div class="phone">
+          <div class="phone-inner">
+            <header class="topbar">
+              <div>
+                <small>Gam3bling · Result saved</small>
+                <strong>World Cup Room</strong>
+              </div>
+              <div class="avatar">A</div>
+            </header>
+
+            <section class="hero">
+              <p class="eyebrow">Group F · Final</p>
+              <h2>Netherlands 2-1 Japan</h2>
+              <p>Your pick: Netherlands 2-1 Japan · HT 1-0</p>
+              <div class="chip-row" style="margin-top: 14px;">
+                <span class="pill">+21 pts</span>
+                <span class="pill neutral">3 hits</span>
+                <span class="pill neutral">2 pending</span>
+              </div>
+            </section>
+
+            <section class="result-card" id="breakdown">
+              <div class="result-title">
+                <div>
+                  <p class="eyebrow">Your breakdown</p>
+                  <h3>What you got right</h3>
+                  <p>Scored from official final score and half-time score.</p>
+                </div>
+                <strong class="mini-score">21/29</strong>
+              </div>
+              <div class="breakdown">
+                <div class="breakdown-row">
+                  <div class="leader-meta">
+                    <span class="check">✓</span>
+                    <div>
+                      <strong>Exact score</strong>
+                      <span>Predicted 2-1, final 2-1</span>
+                    </div>
+                  </div>
+                  <strong>+10</strong>
+                </div>
+                <div class="breakdown-row">
+                  <div class="leader-meta">
+                    <span class="check">✓</span>
+                    <div>
+                      <strong>Result</strong>
+                      <span>Netherlands win</span>
+                    </div>
+                  </div>
+                  <strong>+5</strong>
+                </div>
+                <div class="breakdown-row">
+                  <div class="leader-meta">
+                    <span class="check">✓</span>
+                    <div>
+                      <strong>Half-time</strong>
+                      <span>Predicted 1-0, official 1-0</span>
+                    </div>
+                  </div>
+                  <strong>+6</strong>
+                </div>
+                <div class="breakdown-row">
+                  <div class="leader-meta">
+                    <span class="check miss">–</span>
+                    <div>
+                      <strong>First scorer</strong>
+                      <span>Waiting for event-team mapping</span>
+                    </div>
+                  </div>
+                  <strong>0</strong>
+                </div>
+                <div class="breakdown-row">
+                  <div class="leader-meta">
+                    <span class="check miss">–</span>
+                    <div>
+                      <strong>Last scorer</strong>
+                      <span>Waiting for event-team mapping</span>
+                    </div>
+                  </div>
+                  <strong>0</strong>
+                </div>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="section-title">
+                <p class="eyebrow">Friends</p>
+                <h3>Room predictions</h3>
+              </div>
+              <div class="friend-list">
+                <div class="friend-line">
+                  <div>
+                    <b>Amanwa</b>
+                    <small>2-1 · Exact, result, HT</small>
+                  </div>
+                  <strong>+21</strong>
+                </div>
+                <div class="friend-line">
+                  <div>
+                    <b>Kamesh</b>
+                    <small>3-1 · Result</small>
+                  </div>
+                  <strong>+5</strong>
+                </div>
+                <div class="friend-line">
+                  <div>
+                    <b>Rohan</b>
+                    <small>1-2 · No hits</small>
+                  </div>
+                  <strong>+0</strong>
+                </div>
+              </div>
+            </section>
+
+            <nav class="bottom-nav" aria-label="Primary">
+              <span>Room</span>
+              <span class="active">Match</span>
+              <span>Board</span>
+            </nav>
+          </div>
+        </div>
+      </article>
+
+      <article class="option">
+        <div class="option-note">
+          <p class="eyebrow">Option C</p>
+          <h2>Results ledger</h2>
+          <p>Best long-term room history. Completed fixtures become a feed with winner, exact-score hits, market status, and score deltas.</p>
+        </div>
+        <div class="phone">
+          <div class="phone-inner">
+            <header class="topbar">
+              <div>
+                <small>Gam3bling · History</small>
+                <strong>World Cup Room</strong>
+              </div>
+              <div class="avatar">A</div>
+            </header>
+
+            <section class="card">
+              <div class="section-title">
+                <p class="eyebrow">Results ledger</p>
+                <h3>Completed matches</h3>
+              </div>
+              <div class="stat-grid">
+                <div class="stat">
+                  <span>Settled</span>
+                  <b>1</b>
+                </div>
+                <div class="stat">
+                  <span>Exact hits</span>
+                  <b>1</b>
+                </div>
+                <div class="stat">
+                  <span>Pending</span>
+                  <b>2</b>
+                </div>
+              </div>
+            </section>
+
+            <section class="ledger-card">
+              <div class="ledger-head">
+                <p class="eyebrow">Group F · Final</p>
+                <div class="scoreline" style="margin-top: 10px; color: var(--ink); background: var(--panel);">
+                  <div class="team">
+                    <span>Netherlands</span>
+                    <small style="color: var(--muted);">Winner</small>
+                  </div>
+                  <div class="score">2-1</div>
+                  <div class="team" style="text-align: right;">
+                    <span>Japan</span>
+                    <small style="color: var(--muted);">Final</small>
+                  </div>
+                </div>
+              </div>
+              <div class="delta-row">
+                <div>
+                  <strong>Round winner</strong>
+                  <span>Amanwa got 21 points</span>
+                </div>
+                <span class="pill">Exact hit</span>
+              </div>
+              <div class="delta-row">
+                <div>
+                  <strong>Score movement</strong>
+                  <span>Amanwa +21 · Kamesh +5 · Rohan +0</span>
+                </div>
+                <strong>+26</strong>
+              </div>
+              <div class="market-grid" aria-label="Scoring market status">
+                <div class="market hit">Exact<br>+10</div>
+                <div class="market hit">Result<br>+5</div>
+                <div class="market hit">HT<br>+6</div>
+                <div class="market pending">First<br>Pending</div>
+                <div class="market pending">Last<br>Pending</div>
+              </div>
+            </section>
+
+            <section class="ledger-card">
+              <div class="ledger-head">
+                <p class="eyebrow">Group E · Locked</p>
+                <h3>Germany vs Brazil</h3>
+              </div>
+              <div class="delta-row">
+                <div>
+                  <strong>Kickoff passed</strong>
+                  <span>Predictions are visible, scoring waits for final.</span>
+                </div>
+                <span class="pill neutral">Live soon</span>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="section-title">
+                <p class="eyebrow">System state</p>
+                <h3>Scoring health</h3>
+              </div>
+              <div class="result-row">
+                <div>
+                  <strong>Fixture sync</strong>
+                  <span>Last checked 2 min ago</span>
+                </div>
+                <span class="pill">Healthy</span>
+              </div>
+              <div class="result-row">
+                <div>
+                  <strong>Event markets</strong>
+                  <span>First and last scorer need team mapping</span>
+                </div>
+                <span class="pill red">Partial</span>
+              </div>
+            </section>
+
+            <nav class="bottom-nav" aria-label="Primary">
+              <span>Room</span>
+              <span>Matches</span>
+              <span class="active">History</span>
+            </nav>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

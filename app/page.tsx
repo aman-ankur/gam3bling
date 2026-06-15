@@ -4,6 +4,7 @@ import { CountdownTimer } from "@/components/countdown-timer";
 import { ScoringGuide } from "@/components/scoring-guide";
 import { SubmitButton } from "@/components/submit-button";
 import { MatchupName, TeamName } from "@/components/team-name";
+import { createDemoRoom } from "@/features/demo/actions";
 import { getUpcomingMatches } from "@/features/matches/data";
 import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
 import { joinRoomByCode } from "@/features/rooms/actions";
@@ -14,12 +15,14 @@ export const dynamic = "force-dynamic";
 
 type HomePageProps = {
   searchParams: Promise<{
+    demo?: string;
+    demoError?: string;
     joinError?: string;
   }>;
 };
 
 export default async function HomePage({ searchParams }: HomePageProps) {
-  const { joinError } = await searchParams;
+  const { demo, demoError, joinError } = await searchParams;
   const matches = await getUpcomingMatches();
   const roomShortcuts = await getCurrentPlayerRoomShortcuts();
   const openMatchIds = getOpenPredictionMatchIds(matches);
@@ -41,6 +44,22 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           </Link>
         </div>
       </section>
+
+      {demo === "1" ? (
+        <section className="section-stack demo-launch-panel" aria-labelledby="demo-launch-title">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Demo mode</p>
+              <h2 id="demo-launch-title">Simulate post-match scoring</h2>
+            </div>
+            <span className="status-chip">Hidden</span>
+          </div>
+          {demoError ? <p className="locked-banner">Demo setup is not available in this environment.</p> : null}
+          <form action={createDemoRoom} className="demo-launch-form">
+            <SubmitButton className="secondary-button" pendingLabel="Creating demo...">Create demo room</SubmitButton>
+          </form>
+        </section>
+      ) : null}
 
       {roomShortcuts.length > 0 ? (
         <section className="section-stack room-shortcuts" aria-labelledby="your-rooms-title">

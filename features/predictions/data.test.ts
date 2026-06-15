@@ -114,7 +114,13 @@ test("collapses duplicate display names to the latest saved room prediction", as
                     match_result: "home",
                     first_scoring_team_id: "home-team",
                     last_scoring_team_id: "away-team",
+                    score_final: 10,
+                    score_result: 5,
+                    score_halftime: 6,
+                    score_first_scorer: 0,
+                    score_last_scorer: 0,
                     score_total: 0,
+                    scored_at: "2026-06-14T15:00:00.000Z",
                     submitted_at: "2026-06-14T14:00:00.000Z"
                   }
                 ],
@@ -136,6 +142,12 @@ test("collapses duplicate display names to the latest saved room prediction", as
     finalScore: "2-1",
     halftimeScore: "1-0",
     isCurrentPlayer: true,
-    saved: true
+    saved: true,
+    scoreFinal: 10,
+    scoreResult: 5,
+    scoreHalftime: 6,
+    scoreFirstScorer: 0,
+    scoreLastScorer: 0,
+    scoredAt: "2026-06-14T15:00:00.000Z"
   });
 });

@@ -17,7 +17,13 @@ export type RoomMatchPick = {
   lastScoringTeamId?: string;
   result?: string;
   scorers?: string;
+  scoreFinal: number;
+  scoreResult: number;
+  scoreHalftime: number;
+  scoreFirstScorer: number;
+  scoreLastScorer: number;
   points: number;
+  scoredAt?: string;
   saved: boolean;
   isCurrentPlayer: boolean;
 };
@@ -85,7 +91,13 @@ export async function getRoomMatchPicks(roomSlug: string, match: AppMatch): Prom
         lastScoringTeamId: prediction?.last_scoring_team_id ?? undefined,
         result: prediction ? resultLabel(prediction.match_result, match) : undefined,
         scorers: prediction ? scorersLabel(prediction.first_scoring_team_id, prediction.last_scoring_team_id, match) : undefined,
+        scoreFinal: prediction?.score_final ?? 0,
+        scoreResult: prediction?.score_result ?? 0,
+        scoreHalftime: prediction?.score_halftime ?? 0,
+        scoreFirstScorer: prediction?.score_first_scorer ?? 0,
+        scoreLastScorer: prediction?.score_last_scorer ?? 0,
         points: prediction?.score_total ?? 0,
+        scoredAt: prediction?.scored_at ?? undefined,
         saved: Boolean(prediction),
         isCurrentPlayer: session?.playerId === member.player_id,
         joinedAt: member.joined_at,
@@ -152,7 +164,13 @@ function toPublicPick(pick: InternalRoomMatchPick, isCurrentPlayer: boolean): Ro
     lastScoringTeamId: pick.lastScoringTeamId,
     result: pick.result,
     scorers: pick.scorers,
+    scoreFinal: pick.scoreFinal,
+    scoreResult: pick.scoreResult,
+    scoreHalftime: pick.scoreHalftime,
+    scoreFirstScorer: pick.scoreFirstScorer,
+    scoreLastScorer: pick.scoreLastScorer,
     points: pick.points,
+    scoredAt: pick.scoredAt,
     saved: pick.saved,
     isCurrentPlayer
   };
@@ -230,6 +248,11 @@ function fallbackPicks(match: AppMatch): RoomMatchPick[] {
       lastScoringTeamId: match.awayTeam.id,
       result: match.homeTeam.name,
       scorers: `${match.homeTeam.name} first, ${match.awayTeam.name} last`,
+      scoreFinal: 0,
+      scoreResult: 0,
+      scoreHalftime: 0,
+      scoreFirstScorer: 0,
+      scoreLastScorer: 0,
       points: 0,
       saved: true,
       isCurrentPlayer: false
@@ -238,6 +261,11 @@ function fallbackPicks(match: AppMatch): RoomMatchPick[] {
       playerId: "fallback-jane",
       playerName: "Jane Doe",
       playerInitials: "JD",
+      scoreFinal: 0,
+      scoreResult: 0,
+      scoreHalftime: 0,
+      scoreFirstScorer: 0,
+      scoreLastScorer: 0,
       points: 0,
       saved: false,
       isCurrentPlayer: true

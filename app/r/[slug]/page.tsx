@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { AppShell } from "@/components/app-shell";
+import { LatestResultCard } from "@/components/latest-result-card";
 import { MatchCard } from "@/components/match-card";
 import { MemberList } from "@/components/member-list";
 import { RoomInviteCard } from "@/components/room-invite-card";
@@ -13,7 +14,7 @@ import { getUpcomingMatches } from "@/features/matches/data";
 import type { AppMatch } from "@/features/matches/data";
 import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
 import { getPlayerSessionForRoom } from "@/features/players/session";
-import { getCurrentPlayerPredictedMatchIds } from "@/features/predictions/data";
+import { getCurrentPlayerPredictedMatchIds, getRoomMatchPicks } from "@/features/predictions/data";
 import { claimRoomPlayer, joinRoom, rememberRoomInviteCode } from "@/features/rooms/actions";
 import { getRoomSummary } from "@/features/rooms/data";
 import { formatKickoffInIst } from "@/features/time/match-time";
@@ -45,10 +46,12 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
 
   if (shouldShowHub) {
     const matches = await getUpcomingMatches();
+    const latestCompletedMatch = getLatestCompletedMatch(matches);
     const [leaderboard, predictedMatchIds] = await Promise.all([
       getRoomLeaderboard(slug),
       getCurrentPlayerPredictedMatchIds(slug, matches)
     ]);
+    const latestResultPicks = latestCompletedMatch ? await getRoomMatchPicks(slug, latestCompletedMatch) : [];
     const openMatchIds = getOpenPredictionMatchIds(matches);
     const openMatches = matches.filter((match) => openMatchIds.has(match.id) || openMatchIds.has(match.apiMatchId)).slice(0, 4);
     const featuredMatch = openMatches[0];
@@ -152,10 +155,14 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
               <h2 id="room-history-title">History</h2>
             </div>
           </div>
-          <div className="history-preview">
-            <strong>Completed matches will appear here</strong>
-            <span>Round winners, exact-score hits, and score changes will live in this section.</span>
-          </div>
+          {latestCompletedMatch ? (
+            <LatestResultCard match={latestCompletedMatch} picks={latestResultPicks} slug={slug} />
+          ) : (
+            <div className="history-preview">
+              <strong>Completed matches will appear here</strong>
+              <span>Round winners, exact-score hits, and score changes will live in this section.</span>
+            </div>
+          )}
         </section>
 
         <RoomInviteCard
@@ -222,6 +229,12 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
       </Link>
     </AppShell>
   );
+}
+
+function getLatestCompletedMatch(matches: AppMatch[]): AppMatch | undefined {
+  return matches
+    .filter((match) => match.status === "final" && match.homeScore != null && match.awayScore != null)
+    .sort((left, right) => new Date(right.kickoffAt).getTime() - new Date(left.kickoffAt).getTime())[0];
 }
 
 function OtherOpenMatchLink({ isSaved, match, slug }: { isSaved: boolean; match: AppMatch; slug: string }) {
