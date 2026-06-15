@@ -147,11 +147,34 @@ export function createEpsnProvider(options: EpsnProviderOptions = {}): FootballP
 
       const response = await fetchImpl(`${baseUrl}/summary?event=${encodeURIComponent(eventId)}`);
 
+      console.info("[espn.details] summary_response", {
+        eventId,
+        localMatchId: query?.localMatchId,
+        requestedApiMatchId: query?.apiMatchId ?? (typeof match === "string" ? match : null),
+        ok: response.ok,
+        status: response.status
+      });
+
       if (!response.ok) {
         throw new Error(`ESPN request failed with ${response.status}`);
       }
 
-      return normalizeEpsnSummary(eventId, await response.json() as EpsnSummary);
+      const summary = await response.json() as EpsnSummary;
+      const details = normalizeEpsnSummary(eventId, summary);
+
+      console.info("[espn.details] normalized", {
+        eventId,
+        lineupsStatus: details.lineupsStatus,
+        lineups: details.lineups.length,
+        lineupPlayers: countLineupPlayers(details),
+        statisticsStatus: details.statisticsStatus,
+        statistics: details.statistics.length,
+        rawRosters: summary.rosters?.length ?? 0,
+        rawRosterPlayers: countRawRosterPlayers(summary),
+        rawStatTeams: summary.boxscore?.teams?.length ?? 0
+      });
+
+      return details;
     }
   };
 }
@@ -237,7 +260,7 @@ export function normalizeEpsnSummary(apiMatchId: string, summary: EpsnSummary): 
 
   return {
     apiMatchId,
-    lineupsStatus: lineups.length > 0 ? "available" : "unavailable",
+    lineupsStatus: countLineupPlayers({ lineups }) > 0 ? "available" : "unavailable",
     statisticsStatus: statistics.length > 0 ? "available" : "unavailable",
     lineups,
     statistics,
@@ -274,6 +297,10 @@ function normalizeEpsnLineups(rosters: NonNullable<EpsnSummary["rosters"]>): Pro
       }
     }
 
+    if (starters.length + substitutes.length === 0) {
+      return [];
+    }
+
     return [{
       providerTeamId,
       teamName,
@@ -285,6 +312,14 @@ function normalizeEpsnLineups(rosters: NonNullable<EpsnSummary["rosters"]>): Pro
       ]
     }];
   });
+}
+
+function countLineupPlayers(details: Pick<ProviderMatchDetails, "lineups">): number {
+  return details.lineups.reduce((total, lineup) => total + lineup.players.length, 0);
+}
+
+function countRawRosterPlayers(summary: EpsnSummary): number {
+  return (summary.rosters ?? []).reduce((total, roster) => total + (roster.roster?.length ?? 0), 0);
 }
 
 function normalizeEpsnLineupPlayer(player: EpsnRosterPlayer, sortOrder: number): ProviderLineupPlayer | null {

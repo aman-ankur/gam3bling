@@ -523,6 +523,29 @@ describe("createEpsnProvider", () => {
 });
 
 describe("normalizeEpsnSummary", () => {
+  test("does not mark ESPN team shells without players as available lineups", () => {
+    const details = normalizeEpsnSummary("760426", {
+      rosters: [
+        {
+          homeAway: "home",
+          team: { id: "459", displayName: "Belgium" }
+        },
+        {
+          homeAway: "away",
+          team: { id: "2620", displayName: "Egypt" }
+        }
+      ]
+    });
+
+    expect(details).toMatchObject({
+      apiMatchId: "760426",
+      lineupsStatus: "unavailable",
+      statisticsStatus: "unavailable",
+      lineups: [],
+      statistics: []
+    });
+  });
+
   test("normalizes ESPN rosters, statistics, and scoring events", () => {
     const details = normalizeEpsnSummary("760421", {
       header: {

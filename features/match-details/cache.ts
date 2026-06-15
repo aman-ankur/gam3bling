@@ -45,6 +45,13 @@ export async function ensureMatchDetailsForMatches({
     result.fetched += 1;
 
     try {
+      console.info("[match-details.cache] fetch_start", {
+        apiMatchId: match.apiMatchId,
+        apiProvider: match.apiProvider ?? null,
+        kickoffAt: match.kickoffAt,
+        matchId: match.id,
+        provider: provider.name
+      });
       const details = await provider.fetchMatchDetails({
         localMatchId: match.id,
         apiProvider: match.apiProvider ?? null,
@@ -60,6 +67,17 @@ export async function ensureMatchDetailsForMatches({
           name: match.awayTeam.name,
           shortCode: match.awayTeam.shortCode
         }
+      });
+      console.info("[match-details.cache] fetch_success", {
+        apiMatchId: match.apiMatchId,
+        matchId: match.id,
+        provider: provider.name,
+        resolvedApiMatchId: details.apiMatchId,
+        lineupsStatus: details.lineupsStatus,
+        lineups: details.lineups.length,
+        lineupPlayers: countLineupPlayers(details),
+        statisticsStatus: details.statisticsStatus,
+        statistics: details.statistics.length
       });
       await store.saveDetails({
         matchId: match.id,
@@ -91,6 +109,10 @@ export async function ensureMatchDetailsForMatches({
   }
 
   return result;
+}
+
+function countLineupPlayers(details: { lineups: Array<{ players: unknown[] }> }): number {
+  return details.lineups.reduce((total, lineup) => total + lineup.players.length, 0);
 }
 
 function isFreshEnough(
