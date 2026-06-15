@@ -9,6 +9,9 @@ test("create room page renders UI-only room setup form", async ({ page }) => {
   await expect(page.getByLabel("Your display name")).toHaveAttribute("placeholder", "John");
   await expect(page.getByLabel("4 digit PIN")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Generate room" })).toBeVisible();
+  await expect(page.getByText("gamebling.app/r/world-cup-room")).toHaveCount(0);
+  await expect(page.getByLabel("Invite code")).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Preview room" })).toHaveCount(0);
 });
 
 test("room page renders join form, invite code, and members", async ({ page }) => {

@@ -1,7 +1,5 @@
-import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { Avatar } from "@/components/avatar";
-import { RoomInviteCard } from "@/components/room-invite-card";
 import { SubmitButton } from "@/components/submit-button";
 import { createRoom } from "@/features/rooms/actions";
 
@@ -41,12 +39,6 @@ export default function NewRoomPage() {
 
         <SubmitButton pendingLabel="Creating room...">Generate room</SubmitButton>
       </form>
-
-      <RoomInviteCard inviteCode="TIGER7" shortLink="gamebling.app/r/world-cup-room" />
-
-      <Link className="ghost-link" href="/r/world-cup-room">
-        Preview room
-      </Link>
     </AppShell>
   );
 }
