@@ -38,8 +38,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <AppShell roomName="Gam3bling">
       <section className="hero-card" aria-labelledby="home-title">
-        <p className="eyebrow">World Cup prediction rooms</p>
-        <h1 id="home-title">Gam3bling</h1>
+        <p className="eyebrow">World Cup rooms</p>
+        <h1 id="home-title">Create your room</h1>
         <p>
           Create a room, invite friends, lock predictions before kickoff, and climb the
           leaderboard when the results land.
@@ -79,15 +79,18 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
           {roomShortcuts.map((room) => (
             <Link className="room-shortcut-card" href={room.href} key={room.slug}>
-              <div>
-                <strong>{room.name}</strong>
-                <span>
-                  {room.nextMatch ? (
-                    <MatchupName awayTeam={room.nextMatch.awayTeam} homeTeam={room.nextMatch.homeTeam} />
-                  ) : (
-                    room.nextMatchLabel
-                  )}
-                </span>
+              <div className="room-shortcut-top">
+                <div>
+                  <strong>{room.name}</strong>
+                  <span>
+                    {room.nextMatch ? (
+                      <MatchupName awayTeam={room.nextMatch.awayTeam} homeTeam={room.nextMatch.homeTeam} />
+                    ) : (
+                      room.nextMatchLabel
+                    )}
+                  </span>
+                </div>
+                <span className="room-shortcut-action">Open</span>
               </div>
               <dl>
                 <div>
@@ -138,7 +141,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
         {previewMatches.map((match) => {
           const isActive = activeMatchIds.has(match.id) || activeMatchIds.has(match.apiMatchId);
-          const scoreText = match.homeScore != null && match.awayScore != null ? `${match.homeScore}-${match.awayScore}` : "vs";
+          const scoreText = isActive && match.homeScore != null && match.awayScore != null ? `${match.homeScore}-${match.awayScore}` : "vs";
 
           return (
             <article className="match-ticket home-fixture" key={match.id}>

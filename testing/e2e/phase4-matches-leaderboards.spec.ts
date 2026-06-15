@@ -21,6 +21,7 @@ test("prediction page includes all MVP markets for an open fixture", async ({ pa
   await expect(page.locator(".match-score-refresh").getByRole("button", { name: "Refresh" })).toBeVisible();
   await expect(page.getByLabel("Netherlands flag").first()).toBeVisible();
   await expect(page.getByLabel("Japan flag").first()).toBeVisible();
+  await expect(page.locator(".match-hero-score-card .center-lock b")).toHaveText("vs");
   await expect(page.getByRole("heading", { name: "Final score" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Match result" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Half-time score" })).toBeVisible();
@@ -69,7 +70,7 @@ test("saved prediction page shows compact receipt before editable details", asyn
   await expect(page.getByRole("heading", { name: "Friends' predictions" })).toBeVisible();
   await expect(page.locator(".pick-details")).toHaveCount(0);
   await expect(page.locator(".pick-card").first()).toHaveCSS("border-radius", "8px");
-  await expect(page.getByText(/Netherlands win, HT 1-0/)).toBeVisible();
+  await expect(page.getByText(/Netherlands win .* HT 1-0 .* First Netherlands .* Last Japan/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Save predictions" })).toHaveCount(0);
 
   await page.getByText("Edit prediction").click();

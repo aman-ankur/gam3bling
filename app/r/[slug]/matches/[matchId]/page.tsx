@@ -106,6 +106,9 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
   const currentPrediction = roomPicks.find((pick) => pick.isCurrentPlayer && pick.saved);
   const receiptPrediction = currentPrediction ?? (saved ? createFallbackReceipt(match) : undefined);
   const isFinalMatch = match.status === "final" && match.homeScore != null && match.awayScore != null;
+  const canShowOfficialScore = ["live", "halftime", "final"].includes(match.status)
+    && match.homeScore != null
+    && match.awayScore != null;
   const isRoomCreator = Boolean(session && room.creatorPlayerId && session.playerId === room.creatorPlayerId);
   const refreshDetailsPanel = isRoomCreator ? (
     <MatchDetailsRefreshPanel action={refreshDetailsAction} status={details} />
@@ -173,13 +176,13 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
                 <TeamName team={match.homeTeam} />
               </div>
               <div className="center-lock">
-                <b className={match.homeScore != null && match.awayScore != null ? "score-value" : "versus-value"}>
-                  {match.homeScore != null && match.awayScore != null ? `${match.homeScore}-${match.awayScore}` : "vs"}
+                <b className={canShowOfficialScore ? "score-value" : "versus-value"}>
+                  {canShowOfficialScore ? `${match.homeScore}-${match.awayScore}` : "vs"}
                 </b>
                 <small>
                   {match.status === "live" || match.status === "halftime" ? (
                     <LiveMatchClock initialNow={initialNow} kickoffAt={match.kickoffAt} status={match.status} />
-                  ) : match.homeScore != null && match.awayScore != null ? (
+                  ) : canShowOfficialScore ? (
                     "Latest"
                   ) : (
                     "No score"
@@ -192,7 +195,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
             </div>
             <div className="match-action-row match-score-sync-row">
               <div>
-                <small>{match.homeScore != null && match.awayScore != null ? "Synced from provider" : "No provider score yet"}</small>
+                <small>{canShowOfficialScore ? "Synced from provider" : "No provider score yet"}</small>
               </div>
               <form action={refreshScoreAction} className="match-score-refresh">
                 <SubmitButton className="secondary-button subtle-refresh-button" pendingLabel="Refreshing...">

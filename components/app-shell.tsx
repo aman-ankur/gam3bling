@@ -9,6 +9,7 @@ type AppShellProps = {
 
 export async function AppShell({ children, roomName, roomSlug, subtitle = "Friend prediction rooms" }: AppShellProps) {
   const roomShell = Boolean(roomSlug && !isBrandShell(roomName));
+  const brandShell = isBrandShell(roomName);
 
   return (
     <main className="app-frame">
@@ -20,7 +21,7 @@ export async function AppShell({ children, roomName, roomSlug, subtitle = "Frien
             <>
               <p className="room-label">FIFA World Cup 2026</p>
               <h2>{headerTitle(roomName)}</h2>
-              <p className="header-subtitle">{headerSubtitle(roomName, subtitle)}</p>
+              {brandShell ? null : <p className="header-subtitle">{headerSubtitle(roomName, subtitle)}</p>}
             </>
           )}
         </div>

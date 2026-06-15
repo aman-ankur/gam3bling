@@ -398,7 +398,7 @@ function OtherOpenMatchLink({
 }) {
   const matchTitle = `${match.homeTeam.name} vs ${match.awayTeam.name}`;
   const actionLabel = isSaved ? "Show" : isActive ? "View" : "Predict";
-  const scoreText = match.homeScore != null && match.awayScore != null ? `${match.homeScore}-${match.awayScore}` : "vs";
+  const scoreText = isActive && match.homeScore != null && match.awayScore != null ? `${match.homeScore}-${match.awayScore}` : "vs";
 
   return (
     <Link

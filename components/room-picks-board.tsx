@@ -39,7 +39,7 @@ export function RoomPicksBoard({ awayTeam, eyebrow = "Room predictions", homeTea
                 <b>{pick.playerName}</b>
                 <small>
                   {pick.saved
-                    ? `${pick.isCurrentPlayer ? "You" : "Friend"} - ${pickSummaryText(awayTeam, homeTeam, pick)}`
+                    ? pickSummaryText(awayTeam, homeTeam, pick)
                     : pick.isCurrentPlayer ? "You" : "Friend"}
                 </small>
               </div>
@@ -83,7 +83,12 @@ function ResultMarker({ label, points }: { label: string; points: number }) {
 }
 
 function pickSummaryText(awayTeam: AppTeam, homeTeam: AppTeam, pick: RoomMatchPick) {
-  return `${pickResultText(awayTeam, homeTeam, pick)}, HT ${pick.halftimeScore}`;
+  return [
+    pickResultText(awayTeam, homeTeam, pick),
+    pick.halftimeScore ? `HT ${pick.halftimeScore}` : null,
+    pick.firstScoringTeamId ? `First ${teamNameFromId(pick.firstScoringTeamId, homeTeam, awayTeam)}` : null,
+    pick.lastScoringTeamId ? `Last ${teamNameFromId(pick.lastScoringTeamId, homeTeam, awayTeam)}` : null
+  ].filter(Boolean).join(" · ");
 }
 
 function pickResultText(awayTeam: AppTeam, homeTeam: AppTeam, pick: RoomMatchPick) {
@@ -96,4 +101,16 @@ function pickResultText(awayTeam: AppTeam, homeTeam: AppTeam, pick: RoomMatchPic
   }
 
   return "Draw";
+}
+
+function teamNameFromId(teamId: string, homeTeam: AppTeam, awayTeam: AppTeam): string {
+  if (teamId === homeTeam.id) {
+    return homeTeam.name;
+  }
+
+  if (teamId === awayTeam.id) {
+    return awayTeam.name;
+  }
+
+  return "None";
 }

@@ -41,9 +41,9 @@ export function MatchCard({
   variant = "standard"
 }: MatchCardProps) {
   const matchTitle = `${homeTeam.name} vs ${awayTeam.name}`;
-  const scoreText = homeScore != null && awayScore != null ? `${homeScore}-${awayScore}` : null;
   const isLocked = status === "locked";
   const isLive = status === "live";
+  const scoreText = homeScore != null && awayScore != null && (isLive || isLocked) ? `${homeScore}-${awayScore}` : null;
   const clockInitialNow = initialNow ?? new Date().toISOString();
   const className = [
     "match-ticket",
