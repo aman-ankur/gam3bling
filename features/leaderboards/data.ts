@@ -10,6 +10,27 @@ export type LeaderboardEntry = {
   tone?: string;
 };
 
+type RoomLeaderboardMember = {
+  player_id: string;
+  players:
+    | {
+        display_name: string;
+        avatar_initials: string;
+      }
+    | Array<{
+        display_name: string;
+        avatar_initials: string;
+      }>
+    | null;
+};
+
+type LeaderboardPrediction = {
+  match_id?: string;
+  player_id: string;
+  score_total: number | null;
+  submitted_at?: string;
+};
+
 const fallbackRoomLeaders: LeaderboardEntry[] = [
   { playerId: "fallback-john", rank: 1, name: "John Doe", initials: "JD", score: 48, secondaryStat: "3 exact scores", tone: "gold" },
   { playerId: "fallback-jane", rank: 2, name: "Jane Doe", initials: "JD", score: 44, secondaryStat: "7 result hits", tone: "green" },
@@ -54,23 +75,10 @@ export async function getRoomLeaderboard(roomSlug: string): Promise<LeaderboardE
     const playerIds = members.map((member) => member.player_id);
     const { data: predictions } = await supabase
       .from("predictions")
-      .select("player_id, score_total")
+      .select("match_id, player_id, score_total, submitted_at")
       .in("player_id", playerIds);
 
-    return rankEntries(
-      members.map((member) => {
-        const player = Array.isArray(member.players) ? member.players[0] : member.players;
-        const playerPredictions = predictions?.filter((prediction) => prediction.player_id === member.player_id) ?? [];
-
-        return {
-          playerId: member.player_id,
-          name: player?.display_name ?? "Player",
-          initials: player?.avatar_initials ?? "GB",
-          score: sumScores(playerPredictions),
-          secondaryStat: `${playerPredictions.length} saved predictions`
-        };
-      })
-    );
+    return rankEntries(buildRoomLeaderboardEntries(members, predictions ?? []));
   } catch {
     return [];
   }
@@ -115,6 +123,79 @@ export async function getGlobalLeaderboard(): Promise<LeaderboardEntry[]> {
   }
 }
 
+function buildRoomLeaderboardEntries(
+  members: RoomLeaderboardMember[],
+  predictions: LeaderboardPrediction[]
+): Array<Omit<LeaderboardEntry, "rank" | "tone">> {
+  const predictionsByPlayerId = groupPredictionsByPlayerId(predictions);
+  const membersByName = new Map<string, RoomLeaderboardMember[]>();
+
+  for (const member of members) {
+    const player = Array.isArray(member.players) ? member.players[0] : member.players;
+    const nameKey = playerNameKey(player?.display_name ?? "Player");
+    const nameMembers = membersByName.get(nameKey) ?? [];
+    nameMembers.push(member);
+    membersByName.set(nameKey, nameMembers);
+  }
+
+  return Array.from(membersByName.values()).map((nameMembers) => {
+    const displayMember = chooseDisplayMember(nameMembers, predictionsByPlayerId);
+    const player = Array.isArray(displayMember.players) ? displayMember.players[0] : displayMember.players;
+    const latestPredictions = latestPredictionsByMatch(nameMembers.flatMap((member) => predictionsByPlayerId.get(member.player_id) ?? []));
+
+    return {
+      playerId: displayMember.player_id,
+      name: normalizeDisplayName(player?.display_name ?? "Player"),
+      initials: player?.avatar_initials ?? "GB",
+      score: sumScores(latestPredictions),
+      secondaryStat: `${latestPredictions.length} saved predictions`
+    };
+  });
+}
+
+function groupPredictionsByPlayerId(predictions: LeaderboardPrediction[]): Map<string, LeaderboardPrediction[]> {
+  const predictionsByPlayerId = new Map<string, LeaderboardPrediction[]>();
+
+  for (const prediction of predictions) {
+    const playerPredictions = predictionsByPlayerId.get(prediction.player_id) ?? [];
+    playerPredictions.push(prediction);
+    predictionsByPlayerId.set(prediction.player_id, playerPredictions);
+  }
+
+  return predictionsByPlayerId;
+}
+
+function chooseDisplayMember(
+  members: RoomLeaderboardMember[],
+  predictionsByPlayerId: Map<string, LeaderboardPrediction[]>
+): RoomLeaderboardMember {
+  return members
+    .slice()
+    .sort((left, right) => latestPredictionMs(right, predictionsByPlayerId) - latestPredictionMs(left, predictionsByPlayerId))[0];
+}
+
+function latestPredictionMs(
+  member: RoomLeaderboardMember,
+  predictionsByPlayerId: Map<string, LeaderboardPrediction[]>
+): number {
+  return Math.max(0, ...(predictionsByPlayerId.get(member.player_id) ?? []).map((prediction) => submittedAtMs(prediction.submitted_at)));
+}
+
+function latestPredictionsByMatch(predictions: LeaderboardPrediction[]): LeaderboardPrediction[] {
+  const predictionByMatchId = new Map<string, LeaderboardPrediction>();
+
+  for (const prediction of predictions) {
+    const matchId = prediction.match_id ?? `player:${prediction.player_id}`;
+    const currentPrediction = predictionByMatchId.get(matchId);
+
+    if (!currentPrediction || submittedAtMs(prediction.submitted_at) > submittedAtMs(currentPrediction.submitted_at)) {
+      predictionByMatchId.set(matchId, prediction);
+    }
+  }
+
+  return Array.from(predictionByMatchId.values());
+}
+
 function rankEntries(entries: Array<Omit<LeaderboardEntry, "rank" | "tone">>): LeaderboardEntry[] {
   return entries
     .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
@@ -127,4 +208,16 @@ function rankEntries(entries: Array<Omit<LeaderboardEntry, "rank" | "tone">>): L
 
 function sumScores(predictions: Array<{ score_total: number | null }>): number {
   return predictions.reduce((total, prediction) => total + (prediction.score_total ?? 0), 0);
+}
+
+function playerNameKey(displayName: string): string {
+  return normalizeDisplayName(displayName).toLocaleLowerCase();
+}
+
+function normalizeDisplayName(displayName: string): string {
+  return displayName.trim().replace(/\s+/g, " ");
+}
+
+function submittedAtMs(submittedAt: string | undefined): number {
+  return submittedAt ? new Date(submittedAt).getTime() : 0;
 }

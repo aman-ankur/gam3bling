@@ -13,6 +13,7 @@ import { getUpcomingMatches } from "@/features/matches/data";
 import type { AppMatch } from "@/features/matches/data";
 import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
 import { getPlayerSessionForRoom } from "@/features/players/session";
+import { getCurrentPlayerPredictedMatchIds } from "@/features/predictions/data";
 import { claimRoomPlayer, joinRoom } from "@/features/rooms/actions";
 import { getRoomSummary } from "@/features/rooms/data";
 import { formatKickoffInIst } from "@/features/time/match-time";
@@ -42,7 +43,11 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
   }
 
   if (shouldShowHub) {
-    const [matches, leaderboard] = await Promise.all([getUpcomingMatches(), getRoomLeaderboard(slug)]);
+    const matches = await getUpcomingMatches();
+    const [leaderboard, predictedMatchIds] = await Promise.all([
+      getRoomLeaderboard(slug),
+      getCurrentPlayerPredictedMatchIds(slug, matches)
+    ]);
     const openMatchIds = getOpenPredictionMatchIds(matches);
     const openMatches = matches.filter((match) => openMatchIds.has(match.id) || openMatchIds.has(match.apiMatchId)).slice(0, 4);
     const featuredMatch = openMatches[0];
@@ -81,12 +86,13 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
           <div className="match-list">
             {featuredMatch ? (
               <MatchCard
+                actionLabel={predictedMatchIds.has(featuredMatch.id) || predictedMatchIds.has(featuredMatch.apiMatchId) ? "Show prediction" : "Predict"}
                 awayTeam={featuredMatch.awayTeam}
                 featured
                 homeTeam={featuredMatch.homeTeam}
                 href={`/r/${slug}/matches/${featuredMatch.apiMatchId}`}
                 kickoffAt={featuredMatch.kickoffAt}
-                progress="Room predictions hidden until saved"
+                progress={predictedMatchIds.has(featuredMatch.id) || predictedMatchIds.has(featuredMatch.apiMatchId) ? "Your prediction is saved" : "Room predictions hidden until saved"}
                 stage={featuredMatch.stage}
                 status="open"
                 variant="sport"
@@ -98,7 +104,12 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
             <div className="other-open-matches" aria-label="Other open matches">
               <p className="eyebrow">Other open matches</p>
               {otherOpenMatches.map((match) => (
-                <OtherOpenMatchLink key={match.id} match={match} slug={slug} />
+                <OtherOpenMatchLink
+                  isSaved={predictedMatchIds.has(match.id) || predictedMatchIds.has(match.apiMatchId)}
+                  key={match.id}
+                  match={match}
+                  slug={slug}
+                />
               ))}
             </div>
           ) : null}
@@ -113,7 +124,7 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
           </div>
           <ol className="compact-leader-list">
             {leaderboard.length > 0 ? (
-              leaderboard.slice(0, 3).map((entry) => (
+              leaderboard.slice(0, 4).map((entry) => (
                 <li key={entry.playerId ?? entry.name}>
                   <span>{entry.rank}</span>
                   <strong>{entry.name}</strong>
@@ -202,12 +213,13 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
   );
 }
 
-function OtherOpenMatchLink({ match, slug }: { match: AppMatch; slug: string }) {
+function OtherOpenMatchLink({ isSaved, match, slug }: { isSaved: boolean; match: AppMatch; slug: string }) {
   const matchTitle = `${match.homeTeam.name} vs ${match.awayTeam.name}`;
+  const actionLabel = isSaved ? "Show" : "Predict";
 
   return (
     <Link
-      aria-label={`Predict ${matchTitle}`}
+      aria-label={`${isSaved ? "Show prediction" : "Predict"} ${matchTitle}`}
       className="other-open-match-row"
       href={`/r/${slug}/matches/${match.apiMatchId}`}
     >
@@ -219,7 +231,7 @@ function OtherOpenMatchLink({ match, slug }: { match: AppMatch; slug: string }) 
         </strong>
         <small>{formatKickoffInIst(match.kickoffAt)}</small>
       </div>
-      <span>Predict</span>
+      <span>{actionLabel}</span>
     </Link>
   );
 }
