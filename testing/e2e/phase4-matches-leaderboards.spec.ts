@@ -65,7 +65,7 @@ test("saved prediction page shows compact receipt before editable details", asyn
   await expect(page.locator(".prediction-receipt").getByText("HT 1-0")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Friends' predictions" })).toBeVisible();
   await expect(page.locator(".pick-details")).toHaveCount(0);
-  await expect(page.locator(".pick-card").first()).toHaveCSS("border-radius", "22px");
+  await expect(page.locator(".pick-card").first()).toHaveCSS("border-radius", "8px");
   await expect(page.getByText(/Netherlands win, HT 1-0/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Save predictions" })).toHaveCount(0);
 
@@ -79,23 +79,23 @@ test("prediction segmented choices visibly update when selected", async ({ page 
   const firstScorer = page.locator("section", { has: page.getByRole("heading", { name: "First team to score" }) });
   const japanOption = firstScorer.locator("label", { hasText: "Japan" });
   await japanOption.click();
-  await expect(japanOption).toHaveCSS("background-color", "rgb(255, 255, 255)");
+  await expect(japanOption).toHaveCSS("background-color", "rgb(230, 193, 92)");
 });
 
 test("prediction result and scorer options follow the final score", async ({ page }) => {
   await page.goto("/r/world-cup-room/matches/1489376");
 
   const matchResult = page.locator("section", { has: page.getByRole("heading", { name: "Match result" }) });
-  await expect(matchResult.locator("label", { hasText: "Netherlands" })).toHaveCSS("background-color", "rgb(255, 255, 255)");
+  await expect(matchResult.locator("label", { hasText: "Netherlands" })).toHaveCSS("background-color", "rgb(230, 193, 92)");
   await expect(matchResult.getByText("Auto-selected from final score")).toBeVisible();
 
   await page.getByLabel("Netherlands final score").fill("1");
   await page.getByLabel("Japan final score").fill("1");
-  await expect(matchResult.locator("label", { hasText: "Draw" })).toHaveCSS("background-color", "rgb(255, 255, 255)");
+  await expect(matchResult.locator("label", { hasText: "Draw" })).toHaveCSS("background-color", "rgb(230, 193, 92)");
 
   await page.getByLabel("Netherlands final score").fill("0");
   await page.getByLabel("Japan final score").fill("2");
-  await expect(matchResult.locator("label", { hasText: "Japan" })).toHaveCSS("background-color", "rgb(255, 255, 255)");
+  await expect(matchResult.locator("label", { hasText: "Japan" })).toHaveCSS("background-color", "rgb(230, 193, 92)");
   await expect(page.getByLabel("Netherlands half-time score")).toHaveValue("0");
   await expect(page.locator("section", { has: page.getByRole("heading", { name: "First team to score" }) }).locator("label", { hasText: "Netherlands" })).toHaveCSS("opacity", "0.58");
 });
