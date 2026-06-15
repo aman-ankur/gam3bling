@@ -1,3 +1,4 @@
+import { TeamName } from "@/components/team-name";
 import type { AppMatch } from "@/features/matches/data";
 import type { MatchTeamStatisticView } from "@/features/match-details/types";
 
@@ -22,8 +23,12 @@ export function MatchStatsPanel({ match, statistics }: MatchStatsPanelProps) {
       {groupedStats.length > 0 ? (
         <div className="stats-list">
           <div className="stats-teams">
-            <strong>{match.homeTeam.name}</strong>
-            <strong>{match.awayTeam.name}</strong>
+            <strong>
+              <TeamName team={match.homeTeam} />
+            </strong>
+            <strong>
+              <TeamName team={match.awayTeam} />
+            </strong>
           </div>
           {groupedStats.map((stat) => (
             <div className="stat-comparison" key={stat.name}>

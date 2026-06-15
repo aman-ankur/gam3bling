@@ -1,5 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabase/server";
-import { getUpcomingMatches } from "@/features/matches/data";
+import { getUpcomingMatches, type AppMatch } from "@/features/matches/data";
 import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
 import { getPlayerSession } from "@/features/players/session";
 
@@ -22,6 +22,7 @@ export type PlayerRoomShortcut = {
   href: string;
   nextMatchLabel: string;
   nextMatchHref: string;
+  nextMatch?: Pick<AppMatch, "awayTeam" | "homeTeam">;
   savedCount: number;
   score: number;
 };
@@ -101,6 +102,7 @@ export async function getCurrentPlayerRoomShortcuts(): Promise<PlayerRoomShortcu
         href: "/r/world-cup-room",
         nextMatchLabel: nextMatch ? `${nextMatch.homeTeam.name} vs ${nextMatch.awayTeam.name}` : "Next fixture",
         nextMatchHref: nextMatch ? `/r/world-cup-room/matches/${nextMatch.apiMatchId}` : "/r/world-cup-room/matches",
+        nextMatch: nextMatch ? { awayTeam: nextMatch.awayTeam, homeTeam: nextMatch.homeTeam } : undefined,
         savedCount: 3,
         score: 44
       }
@@ -134,6 +136,7 @@ export async function getCurrentPlayerRoomShortcuts(): Promise<PlayerRoomShortcu
         href: `/r/${room.slug}`,
         nextMatchLabel: nextMatch ? `${nextMatch.homeTeam.name} vs ${nextMatch.awayTeam.name}` : "Next fixture",
         nextMatchHref: nextMatch ? `/r/${room.slug}/matches/${nextMatch.apiMatchId}` : `/r/${room.slug}/matches`,
+        nextMatch: nextMatch ? { awayTeam: nextMatch.awayTeam, homeTeam: nextMatch.homeTeam } : undefined,
         savedCount,
         score
       }

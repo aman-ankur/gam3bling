@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { CountdownTimer } from "@/components/countdown-timer";
+import { MatchupName, TeamName } from "@/components/team-name";
+import type { AppTeam } from "@/features/matches/data";
 import { formatKickoffInIst } from "@/features/time/match-time";
 
 type MatchCardProps = {
@@ -8,8 +10,8 @@ type MatchCardProps = {
   href?: string;
   stage: string;
   kickoffAt: string;
-  homeTeam: string;
-  awayTeam: string;
+  homeTeam: AppTeam;
+  awayTeam: AppTeam;
   progress: string;
   featured?: boolean;
   status?: "open" | "locked" | "live";
@@ -27,7 +29,7 @@ export function MatchCard({
   featured = false,
   status = "open"
 }: MatchCardProps) {
-  const matchTitle = `${homeTeam} vs ${awayTeam}`;
+  const matchTitle = `${homeTeam.name} vs ${awayTeam.name}`;
   const isLocked = status === "locked";
   const className = [
     "match-ticket",
@@ -44,12 +46,18 @@ export function MatchCard({
           <CountdownTimer kickoffAt={kickoffAt} />
         </strong>
       </div>
-      <h3>{matchTitle}</h3>
+      <h3 aria-label={matchTitle}>
+        <MatchupName awayTeam={awayTeam} homeTeam={homeTeam} />
+      </h3>
       <p className="kickoff-line">{formatKickoffInIst(kickoffAt)}</p>
       <div className="fixture-row" aria-hidden="true">
-        <strong>{homeTeam}</strong>
+        <strong>
+          <TeamName team={homeTeam} />
+        </strong>
         <span>vs</span>
-        <strong>{awayTeam}</strong>
+        <strong>
+          <TeamName team={awayTeam} />
+        </strong>
       </div>
       <div className="match-action-row">
         <div>

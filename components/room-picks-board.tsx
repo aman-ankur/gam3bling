@@ -1,11 +1,15 @@
 import { Avatar } from "@/components/avatar";
+import { TeamName } from "@/components/team-name";
+import type { AppTeam } from "@/features/matches/data";
 import type { RoomMatchPick } from "@/features/predictions/data";
 
 type RoomPicksBoardProps = {
+  awayTeam: AppTeam;
+  homeTeam: AppTeam;
   picks: RoomMatchPick[];
 };
 
-export function RoomPicksBoard({ picks }: RoomPicksBoardProps) {
+export function RoomPicksBoard({ awayTeam, homeTeam, picks }: RoomPicksBoardProps) {
   const savedCount = picks.filter((pick) => pick.saved).length;
 
   return (
@@ -42,7 +46,9 @@ export function RoomPicksBoard({ picks }: RoomPicksBoardProps) {
                   <span className="score-pill">{pick.finalScore}</span>
                   <div>
                     <small>Result</small>
-                    <strong>{pick.result}</strong>
+                    <strong>
+                      <PickResult awayTeam={awayTeam} homeTeam={homeTeam} pick={pick} />
+                    </strong>
                   </div>
                   <span className="points-pill">{pick.points} pts</span>
                 </div>
@@ -53,7 +59,9 @@ export function RoomPicksBoard({ picks }: RoomPicksBoardProps) {
                   </div>
                   <div>
                     <dt>Scorers</dt>
-                    <dd>{pick.scorers}</dd>
+                    <dd>
+                      <PickScorers awayTeam={awayTeam} homeTeam={homeTeam} pick={pick} />
+                    </dd>
                   </div>
                 </dl>
               </>
@@ -69,4 +77,46 @@ export function RoomPicksBoard({ picks }: RoomPicksBoardProps) {
       )}
     </section>
   );
+}
+
+function PickResult({ awayTeam, homeTeam, pick }: { awayTeam: AppTeam; homeTeam: AppTeam; pick: RoomMatchPick }) {
+  if (pick.matchResult === "home") {
+    return <TeamName team={homeTeam} />;
+  }
+
+  if (pick.matchResult === "away") {
+    return <TeamName team={awayTeam} />;
+  }
+
+  return <span>Draw</span>;
+}
+
+function PickScorers({ awayTeam, homeTeam, pick }: { awayTeam: AppTeam; homeTeam: AppTeam; pick: RoomMatchPick }) {
+  const firstTeam = teamFromId(pick.firstScoringTeamId, homeTeam, awayTeam);
+  const lastTeam = teamFromId(pick.lastScoringTeamId, homeTeam, awayTeam);
+
+  if (!firstTeam || !lastTeam) {
+    return <span>No goals</span>;
+  }
+
+  return (
+    <span className="inline-team-sequence">
+      <TeamName team={firstTeam} />
+      <span>first,</span>
+      <TeamName team={lastTeam} />
+      <span>last</span>
+    </span>
+  );
+}
+
+function teamFromId(teamId: string | undefined, homeTeam: AppTeam, awayTeam: AppTeam): AppTeam | null {
+  if (teamId === homeTeam.id) {
+    return homeTeam;
+  }
+
+  if (teamId === awayTeam.id) {
+    return awayTeam;
+  }
+
+  return null;
 }

@@ -1,14 +1,17 @@
 "use client";
 
 import { type CSSProperties, useMemo, useState } from "react";
+import { TeamName } from "@/components/team-name";
 import { getPitchPositions } from "@/features/match-details/pitch-layout";
 import type { MatchLineupView } from "@/features/match-details/types";
+import type { AppTeam } from "@/features/matches/data";
 
 type LineupPitchProps = {
   lineups: MatchLineupView[];
+  teams?: AppTeam[];
 };
 
-export function LineupPitch({ lineups }: LineupPitchProps) {
+export function LineupPitch({ lineups, teams = [] }: LineupPitchProps) {
   const [selectedTeamId, setSelectedTeamId] = useState(lineups[0]?.teamId ?? "");
   const selectedLineup = lineups.find((lineup) => lineup.teamId === selectedTeamId) ?? lineups[0];
   const starters = useMemo(
@@ -49,14 +52,16 @@ export function LineupPitch({ lineups }: LineupPitchProps) {
               onClick={() => setSelectedTeamId(lineup.teamId)}
               type="button"
             >
-              {lineup.teamName}
+              <LineupTeamName lineup={lineup} teams={teams} />
             </button>
           ))}
         </div>
       ) : null}
 
       <div className="lineup-summary">
-        <strong>{selectedLineup.teamName}</strong>
+        <strong>
+          <LineupTeamName lineup={selectedLineup} teams={teams} />
+        </strong>
         <span>{selectedLineup.coachName ? `Coach: ${selectedLineup.coachName}` : "Starting XI"}</span>
       </div>
 
@@ -99,6 +104,12 @@ export function LineupPitch({ lineups }: LineupPitchProps) {
       ) : null}
     </article>
   );
+}
+
+function LineupTeamName({ lineup, teams }: { lineup: MatchLineupView; teams: AppTeam[] }) {
+  const team = teams.find((candidate) => candidate.id === lineup.teamId);
+
+  return team ? <TeamName team={team} /> : <span>{lineup.teamName}</span>;
 }
 
 function PlayerRow({ player }: { player: MatchLineupView["players"][number] }) {

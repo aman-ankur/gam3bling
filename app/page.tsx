@@ -3,6 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { CountdownTimer } from "@/components/countdown-timer";
 import { ScoringGuide } from "@/components/scoring-guide";
 import { SubmitButton } from "@/components/submit-button";
+import { MatchupName, TeamName } from "@/components/team-name";
 import { getUpcomingMatches } from "@/features/matches/data";
 import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
 import { joinRoomByCode } from "@/features/rooms/actions";
@@ -55,7 +56,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             <Link className="room-shortcut-card" href={room.href} key={room.slug}>
               <div>
                 <strong>{room.name}</strong>
-                <span>{room.nextMatchLabel}</span>
+                <span>
+                  {room.nextMatch ? (
+                    <MatchupName awayTeam={room.nextMatch.awayTeam} homeTeam={room.nextMatch.homeTeam} />
+                  ) : (
+                    room.nextMatchLabel
+                  )}
+                </span>
               </div>
               <dl>
                 <div>
@@ -114,9 +121,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </div>
             <p className="kickoff-line">{formatKickoffInIst(match.kickoffAt)}</p>
             <div className="team-row">
-              <b>{match.homeTeam.name}</b>
+              <b>
+                <TeamName team={match.homeTeam} />
+              </b>
               <span>vs</span>
-              <b>{match.awayTeam.name}</b>
+              <b>
+                <TeamName team={match.awayTeam} />
+              </b>
             </div>
             <div className="ticket-footer">
               <span>Open for predictions</span>

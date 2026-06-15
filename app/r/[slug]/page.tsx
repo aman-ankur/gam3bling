@@ -74,9 +74,9 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
           <div className="match-list">
             {openMatches.map((match, index) => (
               <MatchCard
-                awayTeam={match.awayTeam.name}
+                awayTeam={match.awayTeam}
                 featured={index === 0}
-                homeTeam={match.homeTeam.name}
+                homeTeam={match.homeTeam}
                 href={`/r/${slug}/matches/${match.apiMatchId}`}
                 key={match.id}
                 kickoffAt={match.kickoffAt}

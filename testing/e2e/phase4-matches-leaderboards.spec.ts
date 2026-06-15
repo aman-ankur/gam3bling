@@ -16,6 +16,8 @@ test("prediction page includes all MVP markets for an open fixture", async ({ pa
   await page.goto("/r/world-cup-room/matches/1489376");
 
   await expect(page.getByRole("heading", { name: "Netherlands vs Japan" })).toBeVisible();
+  await expect(page.getByLabel("Netherlands flag").first()).toBeVisible();
+  await expect(page.getByLabel("Japan flag").first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Final score" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Match result" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Half-time score" })).toBeVisible();
@@ -27,16 +29,27 @@ test("prediction page includes all MVP markets for an open fixture", async ({ pa
   await expect(page.getByRole("button", { name: "Stats" })).toBeVisible();
 });
 
+test("first-time prediction entry shows the form without friends predictions", async ({ page }) => {
+  await page.goto("/r/world-cup-room/matches/1489376");
+
+  const saveButton = page.getByRole("button", { name: "Save predictions" });
+
+  await expect(saveButton).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Friends' predictions" })).toHaveCount(0);
+});
+
 test("match page tabs show lineups and stats without exposing cache internals", async ({ page }) => {
   await page.goto("/r/world-cup-room/matches/1489376");
 
   await page.getByRole("button", { name: "Lineups" }).click();
   await expect(page.getByRole("heading", { name: "Lineups" })).toBeVisible();
+  await expect(page.getByLabel("Netherlands flag").first()).toBeVisible();
   await expect(page.getByText("4-2-3-1")).toBeVisible();
   await expect(page.getByText("Memphis Depay")).toBeVisible();
 
   await page.getByRole("button", { name: "Stats" }).click();
   await expect(page.getByRole("heading", { name: "Stats" })).toBeVisible();
+  await expect(page.getByLabel("Japan flag").first()).toBeVisible();
   await expect(page.getByText("Ball Possession")).toBeVisible();
   await expect(page.getByText("Details cached")).toHaveCount(0);
   await expect(page.getByText("Fetch queued")).toHaveCount(0);

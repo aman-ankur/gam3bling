@@ -66,9 +66,9 @@ export default async function MatchesPage({ params }: MatchesPageProps) {
               <MatchCard
                 actionLabel={actionLabel}
                 ariaActionLabel={`${actionLabel} ${matchTitle}`}
-                awayTeam={match.awayTeam.name}
+                awayTeam={match.awayTeam}
                 featured={index === 0}
-                homeTeam={match.homeTeam.name}
+                homeTeam={match.homeTeam}
                 href={`/r/${slug}/matches/${match.apiMatchId}`}
                 key={match.id}
                 kickoffAt={match.kickoffAt}

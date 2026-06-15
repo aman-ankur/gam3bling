@@ -3,16 +3,21 @@
 import { useMemo, useState } from "react";
 import { ScoringGuide } from "@/components/scoring-guide";
 import { SubmitButton } from "@/components/submit-button";
+import { TeamName } from "@/components/team-name";
 
 type PredictionFormProps = {
   action?: (formData: FormData) => void | Promise<void>;
   homeTeam: {
+    flagCode?: string | null;
     id: string;
     name: string;
+    shortCode?: string;
   };
   awayTeam: {
+    flagCode?: string | null;
     id: string;
     name: string;
+    shortCode?: string;
   };
   initialPrediction?: {
     finalHomeScore?: number;
@@ -67,7 +72,7 @@ export function PredictionForm({ action, awayTeam, homeTeam, initialPrediction, 
         <h2 id="final-score-title">Final score</h2>
         <div className="score-grid">
           <label>
-            {homeTeam.name}
+            <TeamName team={homeTeam} />
             <input
               aria-label={`${homeTeam.name} final score`}
               disabled={locked}
@@ -80,7 +85,7 @@ export function PredictionForm({ action, awayTeam, homeTeam, initialPrediction, 
             />
           </label>
           <label>
-            {awayTeam.name}
+            <TeamName team={awayTeam} />
             <input
               aria-label={`${awayTeam.name} final score`}
               disabled={locked}
@@ -100,13 +105,13 @@ export function PredictionForm({ action, awayTeam, homeTeam, initialPrediction, 
         <input name="matchResult" type="hidden" value={derived.matchResult} />
         <div className="segmented-control">
           <label className={derived.matchResult === "home" ? "segment-option selected" : "segment-option"}>
-            {homeTeam.name}
+            <TeamName team={homeTeam} />
           </label>
           <label className={derived.matchResult === "draw" ? "segment-option selected" : "segment-option"}>
             Draw
           </label>
           <label className={derived.matchResult === "away" ? "segment-option selected" : "segment-option"}>
-            {awayTeam.name}
+            <TeamName team={awayTeam} />
           </label>
         </div>
         <p className="helper-line">Auto-selected from final score</p>
@@ -116,7 +121,7 @@ export function PredictionForm({ action, awayTeam, homeTeam, initialPrediction, 
         <h2 id="halftime-title">Half-time score</h2>
         <div className="score-grid">
           <label>
-            {homeTeam.name}
+            <TeamName team={homeTeam} />
             <input
               aria-label={`${homeTeam.name} half-time score`}
               disabled={locked}
@@ -130,7 +135,7 @@ export function PredictionForm({ action, awayTeam, homeTeam, initialPrediction, 
             />
           </label>
           <label>
-            {awayTeam.name}
+            <TeamName team={awayTeam} />
             <input
               aria-label={`${awayTeam.name} half-time score`}
               disabled={locked}
@@ -185,11 +190,11 @@ function TeamMarket({
   onChange,
   selected
 }: {
-  awayTeam: { id: string; name: string };
+  awayTeam: { flagCode?: string | null; id: string; name: string; shortCode?: string };
   awayCanScore: boolean;
   fieldName: string;
   homeCanScore: boolean;
-  homeTeam: { id: string; name: string };
+  homeTeam: { flagCode?: string | null; id: string; name: string; shortCode?: string };
   title: string;
   locked: boolean;
   onChange: (teamId: string) => void;
@@ -215,7 +220,7 @@ function TeamMarket({
               type="radio"
               value={team.id}
             />
-            {team.name}
+            <TeamName team={team} />
           </label>
         ))}
         {noGoals ? (

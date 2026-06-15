@@ -6,6 +6,7 @@ import { PredictionForm } from "@/components/prediction-form";
 import { PredictionReceipt } from "@/components/prediction-receipt";
 import { RoomMissing } from "@/components/room-missing";
 import { RoomPicksBoard } from "@/components/room-picks-board";
+import { MatchupName } from "@/components/team-name";
 import { savePrediction } from "@/features/predictions/actions";
 import { getMatchByRouteId, getUpcomingMatches } from "@/features/matches/data";
 import type { AppMatch } from "@/features/matches/data";
@@ -89,8 +90,8 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
     <AppShell roomName={room.name} roomSlug={slug} subtitle={receiptPrediction ? "Prediction saved" : "Make predictions"}>
       <section className="hero-card match-hero" aria-labelledby="match-title">
         <p className="eyebrow">{match.stage}</p>
-        <h1 id="match-title">
-          {match.homeTeam.name} vs {match.awayTeam.name}
+        <h1 aria-label={`${match.homeTeam.name} vs ${match.awayTeam.name}`} id="match-title">
+          <MatchupName awayTeam={match.awayTeam} homeTeam={match.homeTeam} />
         </h1>
         <p>{formatKickoffInIst(match.kickoffAt)}. {windowLocked && !kickoffLocked ? "Only the next 4 matches are open for predictions." : "Kickoff locks this match."}</p>
       </section>
@@ -103,15 +104,17 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
           <>
             {receiptPrediction ? (
               <PredictionReceipt
+                awayTeam={match.awayTeam}
                 finalScore={receiptPrediction.finalScore ?? `${receiptPrediction.finalHomeScore ?? 2}-${receiptPrediction.finalAwayScore ?? 1}`}
+                firstScoringTeamId={receiptPrediction.firstScoringTeamId}
                 halftimeScore={receiptPrediction.halftimeScore}
-                matchLabel={`${match.homeTeam.name} ${receiptPrediction.finalScore ?? `${receiptPrediction.finalHomeScore ?? 2}-${receiptPrediction.finalAwayScore ?? 1}`} ${match.awayTeam.name}`}
-                result={receiptPrediction.result}
-                scorers={receiptPrediction.scorers}
+                homeTeam={match.homeTeam}
+                lastScoringTeamId={receiptPrediction.lastScoringTeamId}
+                result={receiptPrediction.matchResult}
               />
             ) : null}
 
-            <RoomPicksBoard picks={roomPicks} />
+            {receiptPrediction ? <RoomPicksBoard awayTeam={match.awayTeam} homeTeam={match.homeTeam} picks={roomPicks} /> : null}
 
             <details className="edit-prediction-panel" open={!receiptPrediction}>
               <summary>
@@ -128,7 +131,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
             </details>
           </>
         )}
-        lineups={<LineupPitch lineups={matchDetails.lineups} />}
+        lineups={<LineupPitch lineups={matchDetails.lineups} teams={[match.homeTeam, match.awayTeam]} />}
         stats={<MatchStatsPanel match={match} statistics={matchDetails.statistics} />}
       />
     </AppShell>
