@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CountdownTimer } from "@/components/countdown-timer";
+import { LiveMatchClock } from "@/components/live-match-clock";
 import { MatchupName, TeamName } from "@/components/team-name";
 import type { AppTeam } from "@/features/matches/data";
 import { formatKickoffInIst } from "@/features/time/match-time";
@@ -14,6 +15,7 @@ type MatchCardProps = {
   awayTeam: AppTeam;
   homeScore?: number | null;
   awayScore?: number | null;
+  initialNow?: string;
   progress: string;
   metaLabel?: string;
   featured?: boolean;
@@ -31,6 +33,7 @@ export function MatchCard({
   awayTeam,
   homeScore,
   awayScore,
+  initialNow,
   progress,
   metaLabel,
   featured = false,
@@ -41,6 +44,7 @@ export function MatchCard({
   const scoreText = homeScore != null && awayScore != null ? `${homeScore}-${awayScore}` : null;
   const isLocked = status === "locked";
   const isLive = status === "live";
+  const clockInitialNow = initialNow ?? new Date().toISOString();
   const className = [
     "match-ticket",
     "match-card",
@@ -67,7 +71,9 @@ export function MatchCard({
           </div>
           <div className="center-lock">
             <b>{scoreText ?? "vs"}</b>
-            <small>{formatKickoffInIst(kickoffAt)}</small>
+            <small>
+              {isLive ? <LiveMatchClock initialNow={clockInitialNow} kickoffAt={kickoffAt} status="live" /> : formatKickoffInIst(kickoffAt)}
+            </small>
           </div>
           <div className="sport-team">
             <TeamName team={awayTeam} />
@@ -100,7 +106,7 @@ export function MatchCard({
       <div className="ticket-meta">
         <span>{stage}</span>
         <strong>
-          <CountdownTimer kickoffAt={kickoffAt} />
+          {isLive ? <LiveMatchClock initialNow={clockInitialNow} kickoffAt={kickoffAt} status="live" /> : <CountdownTimer kickoffAt={kickoffAt} />}
         </strong>
       </div>
       <h3 aria-label={matchTitle}>

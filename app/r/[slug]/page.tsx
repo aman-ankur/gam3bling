@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/app-shell";
 import { LatestResultCard } from "@/components/latest-result-card";
+import { LiveMatchClock } from "@/components/live-match-clock";
 import { MatchCard } from "@/components/match-card";
 import { MemberList } from "@/components/member-list";
 import { RoomInviteCard } from "@/components/room-invite-card";
@@ -21,6 +22,7 @@ import { refreshRoomScores } from "@/features/results/actions";
 import { claimRoomPlayer, deleteRoom, joinRoom, rememberRoomInviteCode, removeRoomMember } from "@/features/rooms/actions";
 import { getRoomSummary, type RoomSummary } from "@/features/rooms/data";
 import { formatKickoffInIst } from "@/features/time/match-time";
+import { getCurrentDate } from "@/features/time/now";
 
 type RoomPageProps = {
   params: Promise<{
@@ -58,8 +60,10 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
       getCurrentPlayerPredictedMatchIds(slug, matches)
     ]);
     const latestResultPicks = latestCompletedMatch ? await getRoomMatchPicks(slug, latestCompletedMatch) : [];
-    const activeMatchIds = getActiveMatchIds(matches);
-    const openMatchIds = getOpenPredictionMatchIds(matches);
+    const now = getCurrentDate();
+    const initialNow = now.toISOString();
+    const activeMatchIds = getActiveMatchIds(matches, now);
+    const openMatchIds = getOpenPredictionMatchIds(matches, now);
     const activeMatches = matches.filter((match) => hasMatchId(activeMatchIds, match));
     const openMatches = matches.filter((match) => hasMatchId(openMatchIds, match));
     const currentMatches = [...activeMatches, ...openMatches.filter((match) => !hasMatchId(activeMatchIds, match))].slice(0, 4);
@@ -102,13 +106,15 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
               <p className="eyebrow">Current round</p>
               <h2 id="room-current-title">{featuredMatchIsActive ? "Live now" : "Predict next"}</h2>
             </div>
-            <form action={refreshScoresAction}>
-              <SubmitButton className="secondary-button" pendingLabel="Refreshing...">
-                Refresh scores
-              </SubmitButton>
-            </form>
+            <div className="section-heading-actions">
+              <span className="status-chip">{activeMatches.length > 0 ? `${activeMatches.length} live` : `${openMatches.length} open`}</span>
+              <form action={refreshScoresAction}>
+                <SubmitButton className="secondary-button compact-link" pendingLabel="Refreshing...">
+                  Refresh scores
+                </SubmitButton>
+              </form>
+            </div>
           </div>
-          <span className="status-chip">{activeMatches.length > 0 ? `${activeMatches.length} live` : `${openMatches.length} open`}</span>
           <div className="match-list">
             {featuredMatch ? (
               <MatchCard
@@ -125,6 +131,7 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
                 awayScore={featuredMatch.awayScore}
                 homeTeam={featuredMatch.homeTeam}
                 href={`/r/${slug}/matches/${featuredMatch.apiMatchId}`}
+                initialNow={initialNow}
                 kickoffAt={featuredMatch.kickoffAt}
                 metaLabel={featuredMatchIsActive ? "Match live" : "Predictions open"}
                 progress={
@@ -150,6 +157,7 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
                 <OtherOpenMatchLink
                   isSaved={predictedMatchIds.has(match.id) || predictedMatchIds.has(match.apiMatchId)}
                   isActive={hasMatchId(activeMatchIds, match)}
+                  initialNow={initialNow}
                   key={match.id}
                   match={match}
                   slug={slug}
@@ -372,7 +380,19 @@ function hasMatchId(matchIds: Set<string>, match: AppMatch): boolean {
   return matchIds.has(match.id) || matchIds.has(match.apiMatchId);
 }
 
-function OtherOpenMatchLink({ isActive, isSaved, match, slug }: { isActive: boolean; isSaved: boolean; match: AppMatch; slug: string }) {
+function OtherOpenMatchLink({
+  initialNow,
+  isActive,
+  isSaved,
+  match,
+  slug
+}: {
+  initialNow: string;
+  isActive: boolean;
+  isSaved: boolean;
+  match: AppMatch;
+  slug: string;
+}) {
   const matchTitle = `${match.homeTeam.name} vs ${match.awayTeam.name}`;
   const actionLabel = isSaved ? "Show" : isActive ? "View" : "Predict";
   const scoreText = match.homeScore != null && match.awayScore != null ? `${match.homeScore}-${match.awayScore}` : "vs";
@@ -389,7 +409,15 @@ function OtherOpenMatchLink({ isActive, isSaved, match, slug }: { isActive: bool
           <span>{scoreText}</span>
           <TeamName team={match.awayTeam} />
         </strong>
-        <small>{formatKickoffInIst(match.kickoffAt)}</small>
+        <small>
+          {isActive ? (
+            <>
+              Live <LiveMatchClock initialNow={initialNow} kickoffAt={match.kickoffAt} status="live" />
+            </>
+          ) : (
+            formatKickoffInIst(match.kickoffAt)
+          )}
+        </small>
       </div>
       <span>{actionLabel}</span>
     </Link>

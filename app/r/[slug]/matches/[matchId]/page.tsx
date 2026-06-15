@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
+import { LiveMatchClock } from "@/components/live-match-clock";
 import { LineupPitch } from "@/components/lineup-pitch";
 import { MatchDetailTabs } from "@/components/match-detail-tabs";
 import { MatchResultBreakdown, ResultCheckPanel } from "@/components/match-result-breakdown";
@@ -9,7 +10,7 @@ import { PredictionReceipt } from "@/components/prediction-receipt";
 import { RoomMissing } from "@/components/room-missing";
 import { RoomPicksBoard } from "@/components/room-picks-board";
 import { SubmitButton } from "@/components/submit-button";
-import { MatchupName } from "@/components/team-name";
+import { MatchupName, TeamName } from "@/components/team-name";
 import { savePrediction } from "@/features/predictions/actions";
 import { getMatchByRouteId, getUpcomingMatches } from "@/features/matches/data";
 import type { AppMatch } from "@/features/matches/data";
@@ -72,6 +73,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
   }
 
   const now = getCurrentDate();
+  const initialNow = now.toISOString();
   const kickoffLocked = isPredictionLocked({ now, kickoffAt: new Date(match.kickoffAt) });
   const windowLocked = !isMatchInOpenPredictionWindow(match, matches, now);
   const locked = kickoffLocked || windowLocked;
@@ -154,10 +156,28 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
               <MatchupName awayTeam={match.awayTeam} homeTeam={match.homeTeam} />
             </h1>
             <p>{formatKickoffInIst(match.kickoffAt)}. {windowLocked && !kickoffLocked ? "Only the next 4 matches are open for predictions." : "Kickoff locks this match."}</p>
+            {match.homeScore != null && match.awayScore != null ? (
+              <div className="match-scoreboard" aria-label={`${match.homeTeam.name} ${match.homeScore}-${match.awayScore} ${match.awayTeam.name}`}>
+                <div className="scoreboard-team">
+                  <TeamName team={match.homeTeam} />
+                </div>
+                <div className="scoreboard-core">
+                  <strong>{match.homeScore}-{match.awayScore}</strong>
+                  {match.status === "live" || match.status === "halftime" ? (
+                    <LiveMatchClock initialNow={initialNow} kickoffAt={match.kickoffAt} status={match.status} />
+                  ) : (
+                    <span>{match.status === "final" ? "FT" : "Latest score"}</span>
+                  )}
+                </div>
+                <div className="scoreboard-team away">
+                  <TeamName team={match.awayTeam} />
+                </div>
+              </div>
+            ) : null}
             <div className="match-action-row">
               <div>
                 <span className={`state-dot ${match.status === "halftime" ? "live" : match.status}`}>{match.status}</span>
-                <small>{match.homeScore != null && match.awayScore != null ? `${match.homeTeam.name} ${match.homeScore}-${match.awayScore} ${match.awayTeam.name}` : "Provider score not fetched yet"}</small>
+                <small>{match.homeScore != null && match.awayScore != null ? "Latest provider score is shown above" : "Provider score not fetched yet"}</small>
               </div>
               <form action={refreshScoreAction}>
                 <SubmitButton className="secondary-button" pendingLabel="Refreshing...">

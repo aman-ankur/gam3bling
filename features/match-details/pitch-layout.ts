@@ -9,12 +9,18 @@ export type PitchPosition = {
 const MIN_EDGE_PERCENT = 10;
 const MAX_EDGE_PERCENT = 90;
 
-export function getPitchPositions(players: MatchLineupPlayerView[]): PitchPosition[] {
+export function getPitchPositions(players: MatchLineupPlayerView[], formation?: string | null): PitchPosition[] {
   const parsed = players.map((player, index) => ({
     player,
     index,
     grid: parseGrid(player.grid)
   }));
+  const hasProviderGrid = parsed.some((entry) => entry.grid);
+
+  if (!hasProviderGrid) {
+    return formationPositions(players, formation);
+  }
+
   const rows = parsed
     .map((entry) => entry.grid?.row)
     .filter((row): row is number => typeof row === "number");
@@ -64,6 +70,72 @@ function fallbackPosition(player: MatchLineupPlayerView, index: number): PitchPo
     left: 20 + (index % 4) * 20,
     top: 14 + Math.floor(index / 4) * 24
   };
+}
+
+function formationPositions(players: MatchLineupPlayerView[], formation?: string | null): PitchPosition[] {
+  const rowCounts = formationRows(players, formation);
+  const rows: MatchLineupPlayerView[][] = [];
+  let playerIndex = 0;
+
+  for (const count of rowCounts) {
+    rows.push(players.slice(playerIndex, playerIndex + count));
+    playerIndex += count;
+  }
+
+  if (playerIndex < players.length) {
+    rows[rows.length - 1]?.push(...players.slice(playerIndex));
+  }
+
+  return rows.flatMap((row, rowIndex) => {
+    const top = rowTop(rowIndex, rows.length);
+
+    return row.map((player, columnIndex) => ({
+      player,
+      left: rowLeft(columnIndex, row.length),
+      top
+    }));
+  });
+}
+
+function formationRows(players: MatchLineupPlayerView[], formation?: string | null): number[] {
+  const parsed = (formation ?? "")
+    .split("-")
+    .map((part) => Number(part))
+    .filter((part) => Number.isFinite(part) && part > 0);
+
+  if (parsed.length > 0) {
+    return [1, ...parsed];
+  }
+
+  const keeperCount = Math.max(players.filter((player) => normalizePosition(player.position).includes("G")).length, 1);
+  const defenderCount = players.filter((player) => /D|B/.test(normalizePosition(player.position))).length;
+  const forwardCount = players.filter((player) => /F|W|ST|CF/.test(normalizePosition(player.position))).length;
+  const midfielderCount = Math.max(players.length - keeperCount - defenderCount - forwardCount, 0);
+
+  return [keeperCount, defenderCount, midfielderCount, forwardCount].filter((count) => count > 0);
+}
+
+function rowTop(rowIndex: number, rowCount: number): number {
+  if (rowCount <= 1) {
+    return 50;
+  }
+
+  return 88 - (rowIndex / (rowCount - 1)) * 66;
+}
+
+function rowLeft(columnIndex: number, columnCount: number): number {
+  if (columnCount <= 1) {
+    return 50;
+  }
+
+  const min = columnCount >= 4 ? 16 : 22;
+  const max = 100 - min;
+
+  return min + (columnIndex / (columnCount - 1)) * (max - min);
+}
+
+function normalizePosition(position: string | null): string {
+  return (position ?? "").toUpperCase();
 }
 
 function clampPercent(value: number): number {

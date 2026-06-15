@@ -1,15 +1,17 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { CountdownTimer } from "@/components/countdown-timer";
+import { LiveMatchClock } from "@/components/live-match-clock";
 import { ScoringGuide } from "@/components/scoring-guide";
 import { SubmitButton } from "@/components/submit-button";
 import { MatchupName, TeamName } from "@/components/team-name";
 import { createDemoRoom } from "@/features/demo/actions";
 import { getUpcomingMatches } from "@/features/matches/data";
-import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
+import { getActiveMatchIds, getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
 import { joinRoomByCode } from "@/features/rooms/actions";
 import { getCurrentPlayerRoomShortcuts } from "@/features/rooms/data";
 import { formatKickoffInIst } from "@/features/time/match-time";
+import { getCurrentDate } from "@/features/time/now";
 
 export const dynamic = "force-dynamic";
 
@@ -25,9 +27,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const { demo, demoError, joinError } = await searchParams;
   const matches = await getUpcomingMatches();
   const roomShortcuts = await getCurrentPlayerRoomShortcuts();
-  const openMatchIds = getOpenPredictionMatchIds(matches);
+  const now = getCurrentDate();
+  const initialNow = now.toISOString();
+  const activeMatchIds = getActiveMatchIds(matches, now);
+  const openMatchIds = getOpenPredictionMatchIds(matches, now);
+  const activeMatches = matches.filter((match) => activeMatchIds.has(match.id) || activeMatchIds.has(match.apiMatchId));
   const openMatches = matches.filter((match) => openMatchIds.has(match.id) || openMatchIds.has(match.apiMatchId));
-  const previewMatches = openMatches.slice(0, 3);
+  const previewMatches = [...activeMatches, ...openMatches.filter((match) => !activeMatchIds.has(match.id) && !activeMatchIds.has(match.apiMatchId))].slice(0, 3);
 
   return (
     <AppShell roomName="Gam3bling">
@@ -125,35 +131,44 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <div className="section-heading">
           <div>
             <p className="eyebrow">Predict next</p>
-            <h2 id="next-fixtures-title">Next fixtures</h2>
+            <h2 id="next-fixtures-title">{activeMatches.length > 0 ? "Live fixtures" : "Next fixtures"}</h2>
           </div>
-          <span className="status-chip">{openMatches.length} open</span>
+          <span className="status-chip">{activeMatches.length > 0 ? `${activeMatches.length} live` : `${openMatches.length} open`}</span>
         </div>
 
-        {previewMatches.map((match) => (
-          <article className="match-ticket home-fixture" key={match.id}>
-            <div className="ticket-meta">
-              <span>{match.stage}</span>
-              <strong>
-                <CountdownTimer kickoffAt={match.kickoffAt} />
-              </strong>
-            </div>
-            <p className="kickoff-line">{formatKickoffInIst(match.kickoffAt)}</p>
-            <div className="team-row">
-              <b>
-                <TeamName team={match.homeTeam} />
-              </b>
-              <span>vs</span>
-              <b>
-                <TeamName team={match.awayTeam} />
-              </b>
-            </div>
-            <div className="ticket-footer">
-              <span>Open for predictions</span>
-              <span>Next 4 window</span>
-            </div>
-          </article>
-        ))}
+        {previewMatches.map((match) => {
+          const isActive = activeMatchIds.has(match.id) || activeMatchIds.has(match.apiMatchId);
+          const scoreText = match.homeScore != null && match.awayScore != null ? `${match.homeScore}-${match.awayScore}` : "vs";
+
+          return (
+            <article className="match-ticket home-fixture" key={match.id}>
+              <div className="ticket-meta">
+                <span>{match.stage}</span>
+                <strong>
+                  {isActive ? (
+                    <LiveMatchClock initialNow={initialNow} kickoffAt={match.kickoffAt} status="live" />
+                  ) : (
+                    <CountdownTimer kickoffAt={match.kickoffAt} />
+                  )}
+                </strong>
+              </div>
+              <p className="kickoff-line">{isActive ? "Live score" : formatKickoffInIst(match.kickoffAt)}</p>
+              <div className="team-row">
+                <b>
+                  <TeamName team={match.homeTeam} />
+                </b>
+                <span className={isActive && scoreText !== "vs" ? "home-live-score" : undefined}>{scoreText}</span>
+                <b>
+                  <TeamName team={match.awayTeam} />
+                </b>
+              </div>
+              <div className="ticket-footer">
+                <span>{isActive ? "Live now" : "Open for predictions"}</span>
+                <span>{scoreText !== "vs" ? "Score synced" : "Next 4 window"}</span>
+              </div>
+            </article>
+          );
+        })}
 
         <Link className="secondary-button compact-link" href="/new">
           Create a room to predict

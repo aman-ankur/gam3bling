@@ -23,7 +23,7 @@ export function LineupPitch({ emptyAction, lineups, teams = [] }: LineupPitchPro
     () => (selectedLineup?.players ?? []).filter((player) => player.role === "substitute").sort((a, b) => a.sortOrder - b.sortOrder),
     [selectedLineup]
   );
-  const pitchPositions = useMemo(() => getPitchPositions(starters), [starters]);
+  const pitchPositions = useMemo(() => getPitchPositions(starters, selectedLineup?.formation), [selectedLineup?.formation, starters]);
 
   if (!selectedLineup) {
     return (
@@ -81,6 +81,8 @@ export function LineupPitch({ emptyAction, lineups, teams = [] }: LineupPitchPro
               } as CSSProperties}
             >
               <span className="pitch-shirt">{position.player.shirtNumber ?? index + 1}</span>
+              <span className="pitch-player-name">{shortPlayerName(position.player.playerName)}</span>
+              {position.player.position ? <span className="pitch-player-position">{position.player.position}</span> : null}
             </span>
           ))}
         </div>
@@ -125,4 +127,18 @@ function PlayerRow({ player }: { player: MatchLineupView["players"][number] }) {
       <small>{player.position ?? player.role}</small>
     </div>
   );
+}
+
+function shortPlayerName(name: string): string {
+  const parts = name.trim().split(/\s+/);
+
+  if (parts.length <= 1) {
+    return name;
+  }
+
+  const lastName = parts.at(-1) ?? name;
+  const firstInitial = parts[0]?.[0];
+  const initialAndLast = firstInitial ? `${firstInitial}. ${lastName}` : lastName;
+
+  return initialAndLast.length > 10 ? lastName : initialAndLast;
 }
