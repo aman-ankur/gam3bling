@@ -20,6 +20,14 @@ export function PredictionReceipt({
   lastScoringTeamId,
   result
 }: PredictionReceiptProps) {
+  const detailParts = [
+    halftimeScore ? `HT ${halftimeScore}` : "Half-time pending",
+    result ? resultText(awayTeam, homeTeam, result) : null,
+    firstScoringTeamId || lastScoringTeamId
+      ? scorersText(awayTeam, firstScoringTeamId, homeTeam, lastScoringTeamId)
+      : null
+  ].filter(Boolean);
+
   return (
     <section className="prediction-receipt" aria-labelledby="receipt-title">
       <div>
@@ -31,78 +39,34 @@ export function PredictionReceipt({
           {" "}
           <TeamName team={awayTeam} />
         </h2>
-        <p>
-          {halftimeScore ? `HT ${halftimeScore}` : "Half-time pending"}
-          {result ? (
-            <>
-              {" · "}
-              <ResultLabel awayTeam={awayTeam} homeTeam={homeTeam} result={result} />
-            </>
-          ) : null}
-          {firstScoringTeamId || lastScoringTeamId ? (
-            <>
-              {" · "}
-              <ScorersLabel
-                awayTeam={awayTeam}
-                firstScoringTeamId={firstScoringTeamId}
-                homeTeam={homeTeam}
-                lastScoringTeamId={lastScoringTeamId}
-              />
-            </>
-          ) : null}
-        </p>
+        <p>{detailParts.join(" · ")}</p>
       </div>
       <span>{finalScore}</span>
     </section>
   );
 }
 
-function ResultLabel({
-  awayTeam,
-  homeTeam,
-  result
-}: {
-  awayTeam: AppTeam;
-  homeTeam: AppTeam;
-  result: "home" | "away" | "draw";
-}) {
+function resultText(awayTeam: AppTeam, homeTeam: AppTeam, result: "home" | "away" | "draw") {
   if (result === "home") {
-    return <TeamName team={homeTeam} />;
+    return `${homeTeam.name} win`;
   }
 
   if (result === "away") {
-    return <TeamName team={awayTeam} />;
+    return `${awayTeam.name} win`;
   }
 
-  return <span>Draw</span>;
+  return "Draw";
 }
 
-function ScorersLabel({
-  awayTeam,
-  firstScoringTeamId,
-  homeTeam,
-  lastScoringTeamId
-}: {
-  awayTeam: AppTeam;
-  firstScoringTeamId?: string;
-  homeTeam: AppTeam;
-  lastScoringTeamId?: string;
-}) {
+function scorersText(awayTeam: AppTeam, firstScoringTeamId: string | undefined, homeTeam: AppTeam, lastScoringTeamId: string | undefined) {
   const firstTeam = teamFromId(firstScoringTeamId, homeTeam, awayTeam);
   const lastTeam = teamFromId(lastScoringTeamId, homeTeam, awayTeam);
 
   if (!firstTeam || !lastTeam) {
-    return <span>No goals</span>;
+    return "No goals";
   }
 
-  return (
-    <span className="inline-team-sequence">
-      <TeamName team={firstTeam} />
-      <span>first,</span>
-      <TeamName team={lastTeam} />
-      <span>last</span>
-    </span>
-  );
+  return `${firstTeam.name} first, ${lastTeam.name} last`;
 }
 
 function teamFromId(teamId: string | undefined, homeTeam: AppTeam, awayTeam: AppTeam): AppTeam | null {

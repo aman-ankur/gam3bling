@@ -1,0 +1,918 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gam3bling Saved Prediction Mockups</title>
+  <style>
+    :root {
+      --bg: #f3f1f6;
+      --ink: #171521;
+      --muted: #746f7f;
+      --line: #e8e2ef;
+      --purple: #6846bd;
+      --blue: #1565d8;
+      --green: #65bf5b;
+      --green-soft: #e9f7e7;
+      --gold: #ffc247;
+      --card: rgba(255, 255, 255, 0.92);
+      --panel: #f7f4fb;
+      --shadow: 0 22px 55px rgba(44, 35, 64, 0.14);
+      --soft-shadow: 0 10px 24px rgba(44, 35, 64, 0.08);
+      color-scheme: light;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 18% 0%, rgba(104, 70, 189, 0.13), transparent 34%),
+        radial-gradient(circle at 90% 12%, rgba(21, 101, 216, 0.12), transparent 36%),
+        var(--bg);
+    }
+
+    .page {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 28px 18px 54px;
+    }
+
+    .intro {
+      display: grid;
+      gap: 10px;
+      max-width: 780px;
+      margin: 0 auto 24px;
+    }
+
+    .intro p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      font-weight: 760;
+      line-height: 1.5;
+    }
+
+    h1, h2, h3, p { margin: 0; }
+
+    h1 {
+      font-size: clamp(32px, 5vw, 56px);
+      line-height: 0.95;
+      letter-spacing: 0;
+    }
+
+    .eyebrow {
+      color: var(--purple);
+      font-size: 12px;
+      font-weight: 1000;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .mockup-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 22px;
+      align-items: start;
+    }
+
+    .option { display: grid; gap: 12px; }
+
+    .option-note {
+      min-height: 122px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.76);
+      box-shadow: var(--soft-shadow);
+    }
+
+    .option-note h2 {
+      margin: 6px 0 8px;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .option-note p {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 750;
+      line-height: 1.4;
+    }
+
+    .phone {
+      overflow: hidden;
+      width: min(390px, 100%);
+      min-height: 760px;
+      margin: 0 auto;
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      border-radius: 36px;
+      background: #f7f4fb;
+      box-shadow: var(--shadow);
+    }
+
+    .phone-inner {
+      display: grid;
+      gap: 18px;
+      padding: 22px 14px 92px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 4px 8px 10px;
+    }
+
+    .topbar small {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .topbar strong {
+      display: block;
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .avatar,
+    .mini-avatar {
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--green);
+      font-weight: 1000;
+    }
+
+    .avatar {
+      width: 54px;
+      height: 54px;
+      font-size: 24px;
+    }
+
+    .mini-avatar {
+      flex: 0 0 auto;
+      width: 42px;
+      height: 42px;
+      font-size: 18px;
+    }
+
+    .mine .mini-avatar { background: var(--gold); }
+
+    .match-hero,
+    .hero-receipt {
+      padding: 17px;
+      border-radius: 26px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+      box-shadow: var(--soft-shadow);
+    }
+
+    .hero-row,
+    .teams-row,
+    .friend-row,
+    .chip-row,
+    .receipt-bar,
+    .summary-row,
+    .tabs,
+    .friend-top,
+    .bottom-nav {
+      display: flex;
+      align-items: center;
+    }
+
+    .hero-row,
+    .receipt-bar,
+    .friend-top,
+    .summary-row {
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .match-hero h2 {
+      margin-top: 14px;
+      font-size: 30px;
+      line-height: 1.02;
+    }
+
+    .match-hero p {
+      margin-top: 8px;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .countdown {
+      flex: 0 0 auto;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+      font-size: 13px;
+      font-weight: 1000;
+    }
+
+    .tabs {
+      gap: 6px;
+      padding: 6px;
+      border-radius: 999px;
+      background: #e9e4ee;
+    }
+
+    .tabs span {
+      flex: 1;
+      min-height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 950;
+    }
+
+    .tabs .active {
+      color: var(--ink);
+      background: #fff;
+      box-shadow: inset 0 0 0 3px #1168d8, var(--soft-shadow);
+    }
+
+    .card {
+      padding: 17px;
+      border: 1px solid rgba(232, 226, 239, 0.95);
+      border-radius: 26px;
+      background: var(--card);
+      box-shadow: var(--soft-shadow);
+    }
+
+    .saved-card {
+      border-color: rgba(101, 191, 91, 0.45);
+      background: linear-gradient(145deg, rgba(236, 250, 233, 0.92), rgba(255, 255, 255, 0.95));
+    }
+
+    .scoreline {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    .team-score {
+      display: grid;
+      gap: 8px;
+      font-size: 31px;
+      font-weight: 1000;
+      line-height: 1.05;
+    }
+
+    .team-score div,
+    .teams-row {
+      min-width: 0;
+    }
+
+    .flag {
+      display: inline-grid;
+      flex: 0 0 auto;
+      width: 38px;
+      height: 34px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: #fff;
+      box-shadow: 0 8px 18px rgba(42, 35, 64, 0.08);
+      font-size: 20px;
+    }
+
+    .teams-row { gap: 10px; }
+
+    .score-pill {
+      display: grid;
+      min-width: 88px;
+      min-height: 78px;
+      place-items: center;
+      border-radius: 24px;
+      color: #fff;
+      background: var(--purple);
+      font-size: 35px;
+      font-weight: 1000;
+    }
+
+    .micro-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 15px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .micro-line span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 28px;
+      padding: 0 9px;
+      border-radius: 999px;
+      background: #fff;
+    }
+
+    .section-title {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: end;
+      margin: 2px 0 12px;
+    }
+
+    .section-title h2 {
+      font-size: 28px;
+      line-height: 0.98;
+    }
+
+    .section-title .pill {
+      padding: 9px 12px;
+      border-radius: 999px;
+      color: #fff;
+      background: var(--purple);
+      font-size: 13px;
+      font-weight: 1000;
+      white-space: nowrap;
+    }
+
+    .friend-list { display: grid; gap: 10px; }
+
+    .friend-row {
+      gap: 12px;
+      min-height: 72px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: #fff;
+    }
+
+    .friend-row.mine {
+      border-color: rgba(255, 194, 71, 0.52);
+      background: #fffaf0;
+    }
+
+    .friend-main {
+      display: grid;
+      gap: 3px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .friend-main strong {
+      overflow: hidden;
+      font-size: 16px;
+      font-weight: 1000;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .friend-main small {
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .friend-score {
+      display: grid;
+      gap: 2px;
+      justify-items: end;
+      flex: 0 0 auto;
+      color: var(--ink);
+      font-size: 22px;
+      font-weight: 1000;
+    }
+
+    .friend-score small {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .locked-note {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 13px 14px;
+      border-radius: 22px;
+      color: #2b5f27;
+      background: var(--green-soft);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .edit-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 17px;
+      border-radius: 26px;
+      background: #fff;
+      box-shadow: var(--soft-shadow);
+    }
+
+    .edit-row strong { font-size: 22px; }
+
+    .button {
+      display: inline-grid;
+      min-height: 46px;
+      min-width: 112px;
+      place-items: center;
+      border-radius: 18px;
+      color: #fff;
+      background: var(--purple);
+      font-size: 15px;
+      font-weight: 1000;
+    }
+
+    .bottom-nav {
+      position: sticky;
+      bottom: 12px;
+      z-index: 4;
+      gap: 4px;
+      margin: 6px 8px 0;
+      padding: 7px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: var(--shadow);
+    }
+
+    .bottom-nav span {
+      flex: 1;
+      min-height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 1000;
+    }
+
+    .bottom-nav .active {
+      color: #fff;
+      background: var(--purple);
+    }
+
+    .hero-receipt {
+      display: grid;
+      gap: 15px;
+      padding: 18px;
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-receipt .scoreline { margin: 0; }
+    .hero-receipt .score-pill { color: var(--ink); background: #fff; }
+    .hero-receipt .team-score,
+    .hero-receipt .micro-line,
+    .hero-receipt .eyebrow { color: #fff; }
+    .hero-receipt .micro-line span { color: #1f1b2a; background: rgba(255, 255, 255, 0.92); }
+
+    .friend-condensed {
+      display: grid;
+      gap: 8px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: #fff;
+    }
+
+    .chip-row {
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 30px;
+      padding: 0 10px;
+      border-radius: 999px;
+      color: var(--muted);
+      background: var(--panel);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .chip.dark {
+      color: #fff;
+      background: var(--purple);
+    }
+
+    .scoreboard {
+      overflow: hidden;
+      border-radius: 28px;
+      background: #fff;
+      box-shadow: var(--soft-shadow);
+    }
+
+    .scoreboard-head {
+      padding: 16px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+    }
+
+    .scoreboard-head h2 {
+      margin-top: 6px;
+      font-size: 28px;
+    }
+
+    .table-list {
+      display: grid;
+      padding: 8px;
+    }
+
+    .table-row {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) auto auto;
+      gap: 10px;
+      align-items: center;
+      min-height: 56px;
+      padding: 8px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .table-row:last-child { border-bottom: 0; }
+
+    .table-row b {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .table-row small {
+      color: var(--muted);
+      font-weight: 850;
+    }
+
+    .details-drawer {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid rgba(104, 70, 189, 0.22);
+      border-radius: 24px;
+      background: #fff;
+    }
+
+    .details-drawer summary {
+      cursor: default;
+      font-size: 18px;
+      font-weight: 1000;
+      list-style: none;
+    }
+
+    .details-drawer summary::-webkit-details-marker { display: none; }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .detail-grid div {
+      display: grid;
+      gap: 4px;
+      min-height: 76px;
+      padding: 10px;
+      border-radius: 18px;
+      background: var(--panel);
+    }
+
+    .detail-grid small {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 1000;
+      text-transform: uppercase;
+    }
+
+    .detail-grid b { font-size: 17px; }
+
+    @media (max-width: 980px) {
+      .mockup-grid { grid-template-columns: 1fr; }
+      .option-note { min-height: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="intro">
+      <p class="eyebrow">Saved prediction cleanup</p>
+      <h1>Three cleaner saved-state directions</h1>
+      <p>The current screen repeats the same prediction three times: receipt, friend card, then detail tiles. These options keep the useful bits, but make the saved state feel like a calm confirmation plus a scannable room view.</p>
+    </section>
+
+    <section class="mockup-grid" aria-label="Saved prediction mockup options">
+      <article class="option">
+        <div class="option-note">
+          <p class="eyebrow">Recommended</p>
+          <h2>Option A: Receipt plus compact room list</h2>
+          <p>Your saved pick gets one clear receipt. Friends become one-line rows. Details move into chips, so the screen is useful without becoming a spreadsheet.</p>
+        </div>
+
+        <div class="phone">
+          <div class="phone-inner">
+            <div class="topbar">
+              <div>
+                <small>World Cup Room</small>
+                <strong>Prediction saved</strong>
+              </div>
+              <div class="avatar">A</div>
+            </div>
+
+            <div class="match-hero">
+              <div class="hero-row">
+                <span class="eyebrow">Group H</span>
+                <span class="countdown">8h 5m to go</span>
+              </div>
+              <h2><span class="flag">🇪🇸</span> Spain vs <span class="flag">🇨🇻</span> Cape Verde</h2>
+              <p>15 Jun, 9:30 PM IST</p>
+            </div>
+
+            <div class="tabs">
+              <span class="active">Predictions</span>
+              <span>Lineups</span>
+              <span>Stats</span>
+            </div>
+
+            <section class="card saved-card">
+              <p class="eyebrow">Your prediction</p>
+              <div class="scoreline">
+                <div class="team-score">
+                  <div class="teams-row"><span class="flag">🇪🇸</span> Spain</div>
+                  <div class="teams-row"><span class="flag">🇨🇻</span> Cape Verde</div>
+                </div>
+                <div class="score-pill">4-1</div>
+              </div>
+              <div class="micro-line">
+                <span>HT 2-0</span>
+                <span><span class="flag">🇪🇸</span> Spain win</span>
+                <span><span class="flag">🇪🇸</span> First</span>
+                <span><span class="flag">🇪🇸</span> Last</span>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="section-title">
+                <div>
+                  <p class="eyebrow">Room predictions</p>
+                  <h2>Friends</h2>
+                </div>
+                <span class="pill">1/1 saved</span>
+              </div>
+
+              <div class="friend-list">
+                <div class="friend-row mine">
+                  <span class="mini-avatar">A</span>
+                  <div class="friend-main">
+                    <strong>Amanwa</strong>
+                    <small>You - Spain win, HT 2-0, first and last Spain</small>
+                  </div>
+                  <div class="friend-score">
+                    4-1
+                    <small>0 pts</small>
+                  </div>
+                </div>
+                <div class="friend-row">
+                  <span class="mini-avatar">J</span>
+                  <div class="friend-main">
+                    <strong>John</strong>
+                    <small>Waiting for prediction</small>
+                  </div>
+                  <div class="friend-score">
+                    -
+                    <small>wait</small>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div class="locked-note">
+              <span>Saved in room</span>
+              <span>Editable until kickoff</span>
+            </div>
+
+            <div class="edit-row">
+              <strong>Edit prediction</strong>
+              <span class="button">Open</span>
+            </div>
+
+            <nav class="bottom-nav" aria-label="Primary">
+              <span>Home</span>
+              <span class="active">Match</span>
+              <span>Board</span>
+              <span>Room</span>
+            </nav>
+          </div>
+        </div>
+      </article>
+
+      <article class="option">
+        <div class="option-note">
+          <p class="eyebrow">Most compact</p>
+          <h2>Option B: One hero receipt, tiny friends summary</h2>
+          <p>Best when most rooms have only a few people. The receipt becomes the star, and room predictions stay glanceable until the user taps into details.</p>
+        </div>
+
+        <div class="phone">
+          <div class="phone-inner">
+            <div class="topbar">
+              <div>
+                <small>World Cup Room</small>
+                <strong>Spain pick saved</strong>
+              </div>
+              <div class="avatar">A</div>
+            </div>
+
+            <div class="tabs">
+              <span class="active">Predictions</span>
+              <span>Lineups</span>
+              <span>Stats</span>
+            </div>
+
+            <section class="hero-receipt">
+              <div class="hero-row">
+                <span class="eyebrow">Your prediction</span>
+                <span class="countdown">Saved</span>
+              </div>
+              <div class="scoreline">
+                <div class="team-score">
+                  <div class="teams-row"><span class="flag">🇪🇸</span> Spain</div>
+                  <div class="teams-row"><span class="flag">🇨🇻</span> Cape Verde</div>
+                </div>
+                <div class="score-pill">4-1</div>
+              </div>
+              <div class="micro-line">
+                <span>HT 2-0</span>
+                <span>Spain win</span>
+                <span>Spain first</span>
+                <span>Spain last</span>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="section-title">
+                <div>
+                  <p class="eyebrow">Room pulse</p>
+                  <h2>1 saved</h2>
+                </div>
+                <span class="pill">0 pts</span>
+              </div>
+              <div class="friend-condensed">
+                <div class="friend-top">
+                  <div class="friend-row mine" style="padding: 0; border: 0; background: transparent;">
+                    <span class="mini-avatar">A</span>
+                    <div class="friend-main">
+                      <strong>Amanwa</strong>
+                      <small>Your pick is visible to the room</small>
+                    </div>
+                  </div>
+                  <strong>4-1</strong>
+                </div>
+                <div class="chip-row">
+                  <span class="chip dark">Spain win</span>
+                  <span class="chip">HT 2-0</span>
+                  <span class="chip">First Spain</span>
+                  <span class="chip">Last Spain</span>
+                </div>
+              </div>
+            </section>
+
+            <details class="details-drawer">
+              <summary>Show full prediction details</summary>
+              <div class="detail-grid">
+                <div>
+                  <small>Result</small>
+                  <b>Spain</b>
+                </div>
+                <div>
+                  <small>Half-time</small>
+                  <b>2-0</b>
+                </div>
+                <div>
+                  <small>Scorers</small>
+                  <b>ESP / ESP</b>
+                </div>
+              </div>
+            </details>
+
+            <div class="edit-row">
+              <strong>Edit</strong>
+              <span class="button">Change pick</span>
+            </div>
+
+            <nav class="bottom-nav" aria-label="Primary">
+              <span>Home</span>
+              <span class="active">Match</span>
+              <span>Board</span>
+              <span>Room</span>
+            </nav>
+          </div>
+        </div>
+      </article>
+
+      <article class="option">
+        <div class="option-note">
+          <p class="eyebrow">Best for bigger rooms</p>
+          <h2>Option C: Room scoreboard first</h2>
+          <p>Good once several friends join. The saved receipt is a slim bar, then the room list becomes a scoreboard-style view with details tucked into a drawer.</p>
+        </div>
+
+        <div class="phone">
+          <div class="phone-inner">
+            <div class="topbar">
+              <div>
+                <small>World Cup Room</small>
+                <strong>Room predictions</strong>
+              </div>
+              <div class="avatar">A</div>
+            </div>
+
+            <div class="match-hero">
+              <div class="hero-row">
+                <span class="eyebrow">Group H</span>
+                <span class="countdown">8h 5m</span>
+              </div>
+              <h2>Spain vs Cape Verde</h2>
+              <p>Your prediction: Spain 4-1 Cape Verde</p>
+            </div>
+
+            <div class="receipt-bar card saved-card">
+              <div>
+                <p class="eyebrow">Saved</p>
+                <strong><span class="flag">🇪🇸</span> Spain 4-1</strong>
+              </div>
+              <span class="button">Edit</span>
+            </div>
+
+            <section class="scoreboard">
+              <div class="scoreboard-head">
+                <p class="eyebrow" style="color: white;">Friends</p>
+                <h2>Predictions board</h2>
+              </div>
+              <div class="table-list">
+                <div class="table-row">
+                  <span class="mini-avatar">A</span>
+                  <b>Amanwa</b>
+                  <small>Spain</small>
+                  <strong>4-1</strong>
+                </div>
+                <div class="table-row">
+                  <span class="mini-avatar">M</span>
+                  <b>Maya</b>
+                  <small>Spain</small>
+                  <strong>3-1</strong>
+                </div>
+                <div class="table-row">
+                  <span class="mini-avatar">R</span>
+                  <b>Rahul</b>
+                  <small>Waiting</small>
+                  <strong>-</strong>
+                </div>
+              </div>
+            </section>
+
+            <details class="details-drawer" open>
+              <summary>Amanwa details</summary>
+              <div class="detail-grid">
+                <div>
+                  <small>HT</small>
+                  <b>2-0</b>
+                </div>
+                <div>
+                  <small>First</small>
+                  <b>Spain</b>
+                </div>
+                <div>
+                  <small>Last</small>
+                  <b>Spain</b>
+                </div>
+              </div>
+            </details>
+
+            <nav class="bottom-nav" aria-label="Primary">
+              <span>Home</span>
+              <span class="active">Match</span>
+              <span>Board</span>
+              <span>Room</span>
+            </nav>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

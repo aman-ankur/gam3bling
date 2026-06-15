@@ -59,8 +59,11 @@ test("saved prediction page shows compact receipt before editable details", asyn
   await page.goto("/r/world-cup-room/matches/1489376?saved=1");
 
   await expect(page.getByText("Netherlands 2-1 Japan")).toBeVisible();
-  await expect(page.getByText("HT 1-0")).toBeVisible();
+  await expect(page.locator(".prediction-receipt").getByText("HT 1-0")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Friends' predictions" })).toBeVisible();
+  await expect(page.locator(".pick-details")).toHaveCount(0);
+  await expect(page.locator(".pick-card").first()).toHaveCSS("border-radius", "22px");
+  await expect(page.getByText(/Netherlands win, HT 1-0/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Save predictions" })).toHaveCount(0);
 
   await page.getByText("Edit prediction").click();
