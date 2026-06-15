@@ -165,16 +165,17 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
                 {match.status === "live" || match.status === "halftime" ? "Live now" : <CountdownTimer kickoffAt={match.kickoffAt} />}
               </strong>
             </div>
-            <h1 aria-label={`${match.homeTeam.name} vs ${match.awayTeam.name}`} id="match-title">
+            <h1 aria-label={`${match.homeTeam.name} vs ${match.awayTeam.name}`} className="sr-only" id="match-title">
               <MatchupName awayTeam={match.awayTeam} homeTeam={match.homeTeam} />
             </h1>
-            <p>{formatKickoffInIst(match.kickoffAt)}. {windowLocked && !kickoffLocked ? "Only the next 4 matches are open for predictions." : "Kickoff locks this match."}</p>
             <div className="sport-matchup" aria-label={`${match.homeTeam.name} vs ${match.awayTeam.name}`}>
               <div className="sport-team">
                 <TeamName team={match.homeTeam} />
               </div>
               <div className="center-lock">
-                <b>{match.homeScore != null && match.awayScore != null ? `${match.homeScore}-${match.awayScore}` : "vs"}</b>
+                <b className={match.homeScore != null && match.awayScore != null ? "score-value" : "versus-value"}>
+                  {match.homeScore != null && match.awayScore != null ? `${match.homeScore}-${match.awayScore}` : "vs"}
+                </b>
                 <small>
                   {match.status === "live" || match.status === "halftime" ? (
                     <LiveMatchClock initialNow={initialNow} kickoffAt={match.kickoffAt} status={match.status} />
@@ -191,8 +192,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
             </div>
             <div className="match-action-row match-score-sync-row">
               <div>
-                <strong className="score-sync-label">{match.homeScore != null && match.awayScore != null ? "Latest score synced" : "Score not fetched yet"}</strong>
-                <small>{match.homeScore != null && match.awayScore != null ? "Latest provider score is shown above" : "Provider score not fetched yet"}</small>
+                <small>{match.homeScore != null && match.awayScore != null ? "Synced from provider" : "No provider score yet"}</small>
               </div>
               <form action={refreshScoreAction} className="match-score-refresh">
                 <SubmitButton className="secondary-button subtle-refresh-button" pendingLabel="Refreshing...">

@@ -60,7 +60,7 @@ export default async function MatchesPage({ params }: MatchesPageProps) {
           {openMatches.map((match, index) => {
             const matchTitle = `${match.homeTeam.name} vs ${match.awayTeam.name}`;
             const isSaved = savedMatchIds.has(match.id) || savedMatchIds.has(match.apiMatchId);
-            const actionLabel = isSaved ? "Show prediction" : "Predict";
+            const actionLabel = isSaved ? "View pick" : "Predict";
 
             return (
               <MatchCard
@@ -72,7 +72,7 @@ export default async function MatchesPage({ params }: MatchesPageProps) {
                 href={`/r/${slug}/matches/${match.apiMatchId}`}
                 key={match.id}
                 kickoffAt={match.kickoffAt}
-                progress={isSaved ? "Prediction saved · edits open until kickoff" : "Prediction needed · closes at kickoff"}
+                progress={isSaved ? "Saved" : "Pick needed"}
                 stage={match.stage}
                 status="open"
               />

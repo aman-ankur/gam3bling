@@ -4760,6 +4760,12 @@ body {
   color: var(--text);
 }
 
+.room-top-bar h2 {
+  font-size: 18px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
 .room-label {
   color: var(--gold);
   letter-spacing: 0.04em;
@@ -4791,6 +4797,16 @@ body {
   line-height: 1.05;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .match-hero-score-card > p {
   margin: 8px 12px 0;
   color: var(--muted);
@@ -4803,14 +4819,21 @@ body {
   padding-top: 14px;
 }
 
-.match-score-sync-row {
-  padding-bottom: 12px;
+.sport-card .center-lock .score-value {
+  font-size: 42px;
+  letter-spacing: 0;
 }
 
-.score-sync-label {
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 850;
+.match-hero-score-card .center-lock .score-value {
+  font-size: 50px;
+}
+
+.sport-card .match-energy-bars {
+  display: none;
+}
+
+.match-score-sync-row {
+  padding-bottom: 12px;
 }
 
 .match-score-refresh {
@@ -4874,6 +4897,63 @@ body {
   border-color: rgba(40, 208, 125, 0.28);
   color: #c7ffd7;
   background: rgba(40, 208, 125, 0.11);
+}
+
+.prediction-receipt {
+  display: block;
+  padding: 13px 14px;
+}
+
+.prediction-scoreline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 18px;
+  line-height: 1.05;
+}
+
+.prediction-scoreline span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prediction-scoreline span:last-child {
+  text-align: right;
+}
+
+.prediction-scoreline b {
+  display: grid;
+  min-width: 58px;
+  min-height: 42px;
+  place-items: center;
+  border-radius: 8px;
+  color: #07100b;
+  background: var(--gold);
+  font-size: 24px;
+  font-weight: 1000;
+  font-variant-numeric: tabular-nums;
+}
+
+.prediction-receipt-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.prediction-receipt-meta span {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .pitch-player {

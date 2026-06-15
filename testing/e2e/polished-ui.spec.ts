@@ -30,8 +30,8 @@ test("core pages use the polished dark match-room shell", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Generate room" })).toHaveCSS("background-color", "rgb(216, 185, 93)");
 
   await page.goto("/r/world-cup-room?hub=1");
-  await expect(page.locator("header").getByRole("heading", { name: "World Cup Room" })).toBeVisible();
-  await expect(page.locator("header").getByText("Gam3bling · Room hub")).toBeVisible();
+  await expect(page.locator("header").getByRole("heading", { name: "FIFA World Cup 2026" })).toBeVisible();
+  await expect(page.locator("header").getByText("World Cup Room")).toHaveCount(0);
   await expect(page.locator(".room-hub-hero").getByRole("heading", { name: "World Cup Room" })).toBeVisible();
   await expect(page.locator(".match-card").first()).toHaveCSS("background-color", "rgb(20, 26, 28)");
   await expect(page.locator(".match-card").first()).toHaveCSS("border-radius", "8px");

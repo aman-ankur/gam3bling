@@ -1,4 +1,3 @@
-import { TeamName } from "@/components/team-name";
 import type { AppTeam } from "@/features/matches/data";
 
 type PredictionReceiptProps = {
@@ -32,16 +31,19 @@ export function PredictionReceipt({
     <section className="prediction-receipt" aria-labelledby="receipt-title">
       <div>
         <p className="eyebrow">Your prediction</p>
-        <h2 aria-label={`${homeTeam.name} ${finalScore} ${awayTeam.name}`} id="receipt-title">
-          <TeamName team={homeTeam} />
+        <h2 className="prediction-scoreline" aria-label={`${homeTeam.name} ${finalScore} ${awayTeam.name}`} id="receipt-title">
+          <span>{homeTeam.name}</span>
           {" "}
-          <span>{finalScore}</span>
+          <b>{finalScore}</b>
           {" "}
-          <TeamName team={awayTeam} />
+          <span>{awayTeam.name}</span>
         </h2>
-        <p>{detailParts.join(" · ")}</p>
+        <div className="prediction-receipt-meta">
+          {detailParts.map((part) => (
+            <span key={part}>{part}</span>
+          ))}
+        </div>
       </div>
-      <span>{finalScore}</span>
     </section>
   );
 }

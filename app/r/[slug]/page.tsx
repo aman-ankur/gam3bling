@@ -120,9 +120,9 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
               <MatchCard
                 actionLabel={
                   predictedMatchIds.has(featuredMatch.id) || predictedMatchIds.has(featuredMatch.apiMatchId)
-                    ? "Show prediction"
+                    ? "View pick"
                     : featuredMatchIsActive
-                      ? "View match"
+                      ? "View"
                       : "Predict"
                 }
                 awayTeam={featuredMatch.awayTeam}
@@ -136,12 +136,10 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
                 metaLabel={featuredMatchIsActive ? "Match live" : "Predictions open"}
                 progress={
                   predictedMatchIds.has(featuredMatch.id) || predictedMatchIds.has(featuredMatch.apiMatchId)
-                    ? featuredMatchIsActive
-                      ? "Predictions locked · your pick is saved"
-                      : "Your prediction is saved"
+                    ? "Saved"
                     : featuredMatchIsActive
-                      ? "Predictions locked"
-                      : "Room predictions hidden until saved"
+                      ? "Locked"
+                      : "Save to reveal"
                 }
                 stage={featuredMatch.stage}
                 status={featuredMatchIsActive ? "live" : "open"}

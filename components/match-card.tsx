@@ -70,7 +70,7 @@ export function MatchCard({
             <TeamName team={homeTeam} />
           </div>
           <div className="center-lock">
-            <b>{scoreText ?? "vs"}</b>
+            <b className={scoreText ? "score-value" : "versus-value"}>{scoreText ?? "vs"}</b>
             <small>
               {isLive ? <LiveMatchClock initialNow={clockInitialNow} kickoffAt={kickoffAt} status="live" /> : formatKickoffInIst(kickoffAt)}
             </small>

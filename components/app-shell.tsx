@@ -8,13 +8,21 @@ type AppShellProps = {
 };
 
 export async function AppShell({ children, roomName, roomSlug, subtitle = "Friend prediction rooms" }: AppShellProps) {
+  const roomShell = Boolean(roomSlug && !isBrandShell(roomName));
+
   return (
     <main className="app-frame">
-      <header className="top-bar">
+      <header className={roomShell ? "top-bar room-top-bar" : "top-bar"}>
         <div>
-          <p className="room-label">FIFA World Cup 2026</p>
-          <h2>{headerTitle(roomName)}</h2>
-          <p className="header-subtitle">{headerSubtitle(roomName, subtitle)}</p>
+          {roomShell ? (
+            <h2>FIFA World Cup 2026</h2>
+          ) : (
+            <>
+              <p className="room-label">FIFA World Cup 2026</p>
+              <h2>{headerTitle(roomName)}</h2>
+              <p className="header-subtitle">{headerSubtitle(roomName, subtitle)}</p>
+            </>
+          )}
         </div>
         <div className="tournament-badge" aria-label="World Cup 2026">
           <strong>WC</strong>

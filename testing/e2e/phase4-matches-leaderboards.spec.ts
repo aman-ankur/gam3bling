@@ -6,7 +6,7 @@ test("matches page prioritizes upcoming prediction locks", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Predictions lock soon" })).toBeVisible();
   await expect(page.getByText("Netherlands vs Japan")).toBeVisible();
   await expect(page.getByText("15 Jun, 1:30 AM IST")).toBeVisible();
-  await expect(page.getByRole("link", { name: /Show prediction Netherlands vs Japan/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: /View pick Netherlands vs Japan/i })).toBeVisible();
   await expect(page.getByRole("link", { name: /Predict Ivory Coast vs Ecuador/i })).toBeVisible();
   await expect(page.getByText("Details cached")).toHaveCount(0);
   await expect(page.getByText("Fetch queued")).toHaveCount(0);
@@ -61,8 +61,8 @@ test("match page tabs show lineups and stats without exposing cache internals", 
 test("saved prediction page shows compact receipt before editable details", async ({ page }) => {
   await page.goto("/r/world-cup-room/matches/1489376?saved=1");
 
-  await expect(page.locator("header").getByRole("heading", { name: "World Cup Room" })).toBeVisible();
-  await expect(page.locator("header").getByText("Gam3bling · Prediction saved")).toBeVisible();
+  await expect(page.locator("header").getByRole("heading", { name: "FIFA World Cup 2026" })).toBeVisible();
+  await expect(page.locator("header").getByText("World Cup Room")).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Back to room" })).toHaveAttribute("href", "/r/world-cup-room?hub=1");
   await expect(page.getByText("Netherlands 2-1 Japan")).toBeVisible();
   await expect(page.locator(".prediction-receipt").getByText("HT 1-0")).toBeVisible();
@@ -114,7 +114,7 @@ test("prediction page has a locked read-only state after kickoff", async ({ page
 test("room leaderboard shows ranked players", async ({ page }) => {
   await page.goto("/r/world-cup-room/leaderboard");
 
-  await expect(page.locator("header").getByRole("heading", { name: "World Cup Room" })).toBeVisible();
+  await expect(page.locator("header").getByRole("heading", { name: "FIFA World Cup 2026" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Room leaderboard" })).toBeVisible();
   await expect(page.getByRole("list", { name: "Room leaderboard rankings" })).toBeVisible();
   await expect(page.getByText("John Doe")).toBeVisible();
