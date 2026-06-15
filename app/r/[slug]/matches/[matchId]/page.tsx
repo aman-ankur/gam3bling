@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { LineupPitch } from "@/components/lineup-pitch";
 import { MatchDetailTabs } from "@/components/match-detail-tabs";
@@ -49,6 +50,9 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
 
     return (
       <AppShell roomName={room.name} roomSlug={slug} subtitle="Make predictions">
+        <Link className="match-back-link" href={`/r/${slug}?hub=1`}>
+          Back to room
+        </Link>
         <section className="hero-card match-hero">
           <p className="eyebrow">Missing fixture</p>
           <h1>Match not found</h1>
@@ -88,6 +92,9 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
 
   return (
     <AppShell roomName={room.name} roomSlug={slug} subtitle={receiptPrediction ? "Prediction saved" : "Make predictions"}>
+      <Link className="match-back-link" href={`/r/${slug}?hub=1`}>
+        Back to room
+      </Link>
       <section className="hero-card match-hero" aria-labelledby="match-title">
         <p className="eyebrow">{match.stage}</p>
         <h1 aria-label={`${match.homeTeam.name} vs ${match.awayTeam.name}`} id="match-title">

@@ -58,6 +58,7 @@ test("match page tabs show lineups and stats without exposing cache internals", 
 test("saved prediction page shows compact receipt before editable details", async ({ page }) => {
   await page.goto("/r/world-cup-room/matches/1489376?saved=1");
 
+  await expect(page.getByRole("link", { name: "Back to room" })).toHaveAttribute("href", "/r/world-cup-room?hub=1");
   await expect(page.getByText("Netherlands 2-1 Japan")).toBeVisible();
   await expect(page.locator(".prediction-receipt").getByText("HT 1-0")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Friends' predictions" })).toBeVisible();
