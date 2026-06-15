@@ -1,8 +1,12 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { ensureMatchDetailsForMatches } from "@/features/match-details/cache";
+import { createSupabaseMatchDetailsStore } from "@/features/match-details/data";
+import { getMatchByRouteId } from "@/features/matches/data";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { withSupabaseRetry } from "@/lib/supabase/retry";
+import { createDefaultFootballProvider } from "@/features/sync/default-provider";
 import { syncMatches, syncMatchResult } from "@/features/sync/sync-matches";
 import { getResultCheckState } from "./check-window";
 
@@ -95,11 +99,12 @@ export async function refreshMatchScore(roomSlug: string, matchRouteId: string):
     redirect(`/r/${roomSlug}/matches?error=match`);
   }
 
-  let scoreStatus: "updated" | "pending";
+  let scoreStatus: "refreshed" | "pending";
 
   try {
     const result = await syncMatchResult({ supabase, matchId: match.id });
-    scoreStatus = result.updatedMatch ? "updated" : "pending";
+    scoreStatus = result.updatedMatch ? "refreshed" : "pending";
+    await refreshDetailsForMatchIfAvailable({ matchRouteId, supabase });
   } catch (error) {
     console.error("[scores.refresh.match] sync_failed", {
       matchRouteId,
@@ -119,11 +124,11 @@ export async function refreshRoomScores(roomSlug: string): Promise<void> {
     redirect(`/r/${roomSlug}?hub=1&scores=error`);
   }
 
-  let scoreStatus: "updated" | "pending";
+  let scoreStatus: "refreshed" | "pending";
 
   try {
     const result = await syncMatches({ supabase });
-    scoreStatus = result.updatedMatches > 0 ? "updated" : "pending";
+    scoreStatus = result.updatedMatches > 0 ? "refreshed" : "pending";
   } catch (error) {
     console.error("[scores.refresh.room] sync_failed", {
       roomSlug,
@@ -133,6 +138,41 @@ export async function refreshRoomScores(roomSlug: string): Promise<void> {
   }
 
   redirect(`/r/${roomSlug}?hub=1&scores=${scoreStatus}`);
+}
+
+async function refreshDetailsForMatchIfAvailable({
+  matchRouteId,
+  supabase
+}: {
+  matchRouteId: string;
+  supabase: NonNullable<ReturnType<typeof getSupabaseAdmin>>;
+}): Promise<void> {
+  try {
+    const match = await getMatchByRouteId(matchRouteId);
+
+    if (!match) {
+      return;
+    }
+
+    const result = await ensureMatchDetailsForMatches({
+      force: true,
+      matches: [match],
+      provider: createDefaultFootballProvider(),
+      store: createSupabaseMatchDetailsStore(supabase)
+    });
+
+    if (result.failed > 0) {
+      console.warn("[scores.refresh.match_details] details_refresh_failed", {
+        matchRouteId,
+        messages: result.failureMessages
+      });
+    }
+  } catch (error) {
+    console.warn("[scores.refresh.match_details] details_refresh_failed", {
+      matchRouteId,
+      message: error instanceof Error ? error.message : "Unknown details refresh error"
+    });
+  }
 }
 
 async function findMatch(supabase: NonNullable<ReturnType<typeof getSupabaseAdmin>>, routeId: string): Promise<ResultMatchRow | null> {

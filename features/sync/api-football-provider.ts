@@ -22,6 +22,7 @@ type ApiFootballFixture = {
     id?: number | string;
     date?: string;
     status?: {
+      elapsed?: number | null;
       short?: string | null;
     };
   };
@@ -230,6 +231,7 @@ export function normalizeApiFootballFixture(fixture: ApiFootballFixture): Provid
   const awayScore = numberOrNull(fixture.goals?.away);
   const homeTeamExternalId = valueToString(fixture.teams?.home?.id);
   const awayTeamExternalId = valueToString(fixture.teams?.away?.id);
+  const elapsed = fixture.fixture?.status?.elapsed;
   const goalTeamIds = (fixture.events ?? [])
     .filter(isScoringGoalEvent)
     .map((event) => String(event.team?.id));
@@ -246,6 +248,7 @@ export function normalizeApiFootballFixture(fixture: ApiFootballFixture): Provid
     awayHalftimeScore: numberOrNull(fixture.score?.halftime?.away),
     firstScoringTeamExternalId: goalTeamIds[0] ?? null,
     lastScoringTeamExternalId: goalTeamIds.at(-1) ?? null,
+    ...(elapsed == null ? {} : { matchClock: `${elapsed}:00` }),
     kickoffAt: normalizeDate(fixture.fixture?.date)
   };
 }

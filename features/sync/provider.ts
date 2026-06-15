@@ -15,6 +15,7 @@ export type ProviderMatchUpdate = {
   lastScoringTeamId?: string | null;
   firstScoringTeamExternalId?: string | null;
   lastScoringTeamExternalId?: string | null;
+  matchClock?: string | null;
   kickoffAt?: string;
 };
 

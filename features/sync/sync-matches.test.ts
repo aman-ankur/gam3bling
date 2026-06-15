@@ -402,6 +402,47 @@ describe("syncMatchResult", () => {
     expect(db.predictionUpdates).toEqual([]);
   });
 
+  test("anchors live match kickoff from provider clock when available", async () => {
+    const db = createFakeSyncDb({
+      matches: [
+        {
+          id: "match-1",
+          api_match_id: "123",
+          kickoff_at: "2026-06-14T04:00:00.000Z",
+          status: "live",
+          home_score: 0,
+          away_score: 0
+        }
+      ],
+      predictions: []
+    });
+    const provider: FootballProvider = {
+      name: "espn",
+      fetchUpdates: vi.fn().mockResolvedValue([
+        {
+          apiMatchId: "123",
+          status: "live",
+          homeScore: 1,
+          awayScore: 1,
+          matchClock: "36:29",
+          winner: "draw"
+        }
+      ])
+    };
+
+    await expect(syncMatchResult({ supabase: db.client, matchId: "match-1", provider, now: fixedNow })).resolves.toMatchObject({
+      updatedMatch: true,
+      status: "live"
+    });
+
+    expect(db.matchUpdates[0].payload).toMatchObject({
+      status: "live",
+      home_score: 1,
+      away_score: 1,
+      kickoff_at: "2026-06-14T11:23:31.000Z"
+    });
+  });
+
   test("settles a demo match without calling the external provider", async () => {
     const db = createFakeSyncDb({
       matches: [

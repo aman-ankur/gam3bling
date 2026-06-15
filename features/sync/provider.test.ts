@@ -401,6 +401,7 @@ describe("normalizeEpsnScoreboardEvent", () => {
         id: "760421",
         date: "2026-06-14T04:00Z",
         status: {
+          displayClock: "36:29",
           type: {
             state: "in",
             completed: false,
@@ -456,6 +457,7 @@ describe("normalizeEpsnScoreboardEvent", () => {
       awayHalftimeScore: null,
       firstScoringTeamExternalId: null,
       lastScoringTeamExternalId: null,
+      matchClock: "36:29",
       kickoffAt: "2026-06-14T04:00:00.000Z"
     });
   });

@@ -17,6 +17,16 @@ export function formatKickoffInIst(kickoffAt: string | Date): string {
   return `${day} ${month}, ${time} ${period} IST`;
 }
 
+export function formatRefreshTimeInIst(refreshedAt: string | Date): string {
+  const date = typeof refreshedAt === "string" ? new Date(refreshedAt) : refreshedAt;
+
+  if (Number.isNaN(date.getTime())) {
+    return "Last refreshed recently";
+  }
+
+  return `Last refreshed ${formatKickoffInIst(date)}`;
+}
+
 export function formatTimeToKickoff({
   now,
   kickoffAt

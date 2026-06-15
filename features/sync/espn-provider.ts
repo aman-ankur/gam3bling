@@ -42,6 +42,7 @@ type EpsnScoreboardEvent = {
   id?: string | number | null;
   date?: string | null;
   status?: {
+    displayClock?: string | null;
     type?: EpsnStatusType | null;
   } | null;
   competitions?: Array<{
@@ -237,6 +238,8 @@ export function normalizeEpsnScoreboardEvent(
   const homeScore = numberOrNull(home?.score);
   const awayScore = numberOrNull(away?.score);
 
+  const matchClock = normalizeClockLabel(event.status?.displayClock);
+
   return {
     localMatchId: query.localMatchId,
     apiMatchId,
@@ -250,6 +253,7 @@ export function normalizeEpsnScoreboardEvent(
     awayHalftimeScore: null,
     firstScoringTeamExternalId: null,
     lastScoringTeamExternalId: null,
+    ...(matchClock ? { matchClock } : {}),
     kickoffAt: normalizeDate(event.date) ?? query.kickoffAt
   };
 }
@@ -387,6 +391,12 @@ function normalizeEpsnStatus(status: EpsnStatusType | null | undefined): MatchSt
   }
 
   return "scheduled";
+}
+
+function normalizeClockLabel(clock: string | null | undefined): string | null {
+  const trimmed = clock?.trim();
+
+  return trimmed ? trimmed : null;
 }
 
 async function fetchScoreboardEvents(fetchImpl: FetchImpl, baseUrl: string, queries: ProviderMatchQuery[]): Promise<EpsnScoreboardEvent[]> {

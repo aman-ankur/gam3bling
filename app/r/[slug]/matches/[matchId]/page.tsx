@@ -27,7 +27,7 @@ import { getResultCheckState } from "@/features/results/check-window";
 import { getRoomSummary } from "@/features/rooms/data";
 import { createDefaultFootballProvider } from "@/features/sync/default-provider";
 import { getCurrentDate } from "@/features/time/now";
-import { formatKickoffInIst } from "@/features/time/match-time";
+import { formatKickoffInIst, formatRefreshTimeInIst } from "@/features/time/match-time";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 type MatchPredictionPageProps = {
@@ -109,6 +109,9 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
   const canShowOfficialScore = ["live", "halftime", "final"].includes(match.status)
     && match.homeScore != null
     && match.awayScore != null;
+  const scoreRefreshLabel = match.lastSyncedAt
+    ? formatRefreshTimeInIst(match.lastSyncedAt)
+    : canShowOfficialScore ? "Synced from provider" : "No provider score yet";
   const isRoomCreator = Boolean(session && room.creatorPlayerId && session.playerId === room.creatorPlayerId);
   const refreshDetailsPanel = isRoomCreator ? (
     <MatchDetailsRefreshPanel action={refreshDetailsAction} status={details} />
@@ -131,7 +134,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
       {error === "invalid" ? <p className="locked-banner">That prediction combination did not make sense. Adjust the score and try again.</p> : null}
       {error === "locked" ? <p className="locked-banner">This match is locked for predictions.</p> : null}
       {result === "checked" && !isFinalMatch ? <p className="success-banner">Final result checked and room scores refreshed.</p> : null}
-      {scoreMessage(score) ? <p className={score === "updated" ? "success-banner" : "locked-banner"}>{scoreMessage(score)}</p> : null}
+      {scoreMessage(score) ? <p className="locked-banner">{scoreMessage(score)}</p> : null}
       {detailsMessage(details) ? <p className={details === "checked" ? "success-banner" : "locked-banner"}>{detailsMessage(details)}</p> : null}
 
       {isFinalMatch ? (
@@ -195,7 +198,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
             </div>
             <div className="match-action-row match-score-sync-row">
               <div>
-                <small>{canShowOfficialScore ? "Synced from provider" : "No provider score yet"}</small>
+                <small>{scoreRefreshLabel}</small>
               </div>
               <form action={refreshScoreAction} className="match-score-refresh">
                 <SubmitButton className="secondary-button subtle-refresh-button" pendingLabel="Refreshing...">
@@ -327,10 +330,6 @@ function resultMessage(result: string | undefined): string | undefined {
 }
 
 function scoreMessage(score: string | undefined): string | undefined {
-  if (score === "updated") {
-    return "Latest match score refreshed.";
-  }
-
   if (score === "pending") {
     return "Score checked. No provider update yet.";
   }

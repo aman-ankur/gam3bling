@@ -314,6 +314,12 @@ async function updateMatch(
     payload.kickoff_at = update.kickoffAt;
   }
 
+  const clockAnchoredKickoffAt = kickoffFromProviderClock(update, syncedAt);
+
+  if (clockAnchoredKickoffAt) {
+    payload.kickoff_at = clockAnchoredKickoffAt;
+  }
+
   const { error } = await matchTable(supabase).update(payload).eq("id", matchId);
 
   if (error) {
@@ -393,6 +399,48 @@ function createDemoMatchUpdate(match: LocalMatchRow): ProviderMatchUpdate {
     firstScoringTeamId: match.home_team_id,
     lastScoringTeamId: match.away_team_id
   };
+}
+
+function kickoffFromProviderClock(update: ProviderMatchUpdate, syncedAt: string): string | null {
+  if (update.status !== "live" || !update.matchClock) {
+    return null;
+  }
+
+  const elapsedSeconds = elapsedSecondsFromClock(update.matchClock);
+
+  if (elapsedSeconds == null) {
+    return null;
+  }
+
+  const syncedMs = new Date(syncedAt).getTime();
+
+  if (Number.isNaN(syncedMs)) {
+    return null;
+  }
+
+  return new Date(syncedMs - elapsedSeconds * 1000).toISOString();
+}
+
+function elapsedSecondsFromClock(clock: string): number | null {
+  const normalized = clock.trim();
+  const clockMatch = normalized.match(/^(\d{1,3})(?::(\d{1,2}))?$/);
+
+  if (clockMatch) {
+    const minutes = Number(clockMatch[1]);
+    const seconds = Number(clockMatch[2] ?? 0);
+
+    if (Number.isFinite(minutes) && Number.isFinite(seconds)) {
+      return minutes * 60 + Math.min(seconds, 59);
+    }
+  }
+
+  const stoppageMatch = normalized.match(/^(\d{1,3})\s*\+\s*(\d{1,2})/);
+
+  if (stoppageMatch) {
+    return (Number(stoppageMatch[1]) + Number(stoppageMatch[2])) * 60;
+  }
+
+  return null;
 }
 
 async function logSync(

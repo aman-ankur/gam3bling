@@ -4856,6 +4856,15 @@ body {
   display: flex;
 }
 
+.refresh-timestamp {
+  flex-basis: 100%;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.2;
+  text-align: right;
+}
+
 .subtle-refresh-button {
   min-height: 32px;
   padding: 0 10px;
@@ -4917,15 +4926,16 @@ body {
 
 .prediction-receipt {
   display: block;
-  padding: 13px 14px;
+  padding: 15px 16px;
   width: 100%;
+  text-align: center;
 }
 
 .prediction-scoreline {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(72px, auto) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(82px, auto) minmax(0, 1fr);
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin-top: 6px;
   width: 100%;
   font-size: 20px;
@@ -4933,19 +4943,24 @@ body {
 }
 
 .prediction-scoreline span {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.prediction-scoreline span:last-child {
+.prediction-scoreline span:first-child {
   text-align: right;
+}
+
+.prediction-scoreline span:last-child {
+  text-align: left;
 }
 
 .prediction-scoreline b {
   display: grid;
-  min-width: 72px;
-  min-height: 48px;
+  min-width: 82px;
+  min-height: 54px;
   place-items: center;
   border-radius: 8px;
   color: #07100b;
@@ -4958,8 +4973,9 @@ body {
 .prediction-receipt-meta {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 6px;
-  margin-top: 9px;
+  margin-top: 12px;
 }
 
 .prediction-receipt-meta span {

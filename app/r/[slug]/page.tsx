@@ -21,7 +21,7 @@ import { getCurrentPlayerPredictedMatchIds, getRoomMatchPicks } from "@/features
 import { refreshRoomScores } from "@/features/results/actions";
 import { claimRoomPlayer, deleteRoom, joinRoom, rememberRoomInviteCode, removeRoomMember } from "@/features/rooms/actions";
 import { getRoomSummary, type RoomSummary } from "@/features/rooms/data";
-import { formatKickoffInIst } from "@/features/time/match-time";
+import { formatKickoffInIst, formatRefreshTimeInIst } from "@/features/time/match-time";
 import { getCurrentDate } from "@/features/time/now";
 
 type RoomPageProps = {
@@ -70,6 +70,7 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
     const featuredMatch = currentMatches[0];
     const featuredMatchIsActive = featuredMatch ? hasMatchId(activeMatchIds, featuredMatch) : false;
     const otherCurrentMatches = currentMatches.slice(1);
+    const currentMatchesRefreshLabel = latestRefreshLabel(currentMatches);
     const roomScoreRows = getRoomScoreRows(leaderboard);
     const currentPlayerScore = session ? leaderboard.find((entry) => entry.playerId === session.playerId)?.score : undefined;
     const visibleInvite = room.inviteCode ?? invite ?? (room.id === "fallback-room" ? "TIGER7" : undefined);
@@ -100,7 +101,7 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
         </section>
 
         <section className="section-stack" aria-labelledby="room-current-title">
-          {scoreRefreshMessage(scores) ? <p className={scores === "updated" ? "success-banner" : "locked-banner"}>{scoreRefreshMessage(scores)}</p> : null}
+          {scoreRefreshMessage(scores) ? <p className="locked-banner">{scoreRefreshMessage(scores)}</p> : null}
           <div className="section-heading">
             <div>
               <p className="eyebrow">Current round</p>
@@ -113,6 +114,7 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
                   Refresh scores
                 </SubmitButton>
               </form>
+              {currentMatchesRefreshLabel ? <small className="refresh-timestamp">{currentMatchesRefreshLabel}</small> : null}
             </div>
           </div>
           <div className="match-list">
@@ -428,10 +430,6 @@ function OtherOpenMatchLink({
 }
 
 function scoreRefreshMessage(scores: string | undefined): string | undefined {
-  if (scores === "updated") {
-    return "Latest scores refreshed.";
-  }
-
   if (scores === "pending") {
     return "Scores checked. No provider update yet.";
   }
@@ -441,6 +439,15 @@ function scoreRefreshMessage(scores: string | undefined): string | undefined {
   }
 
   return undefined;
+}
+
+function latestRefreshLabel(matches: AppMatch[]): string | null {
+  const latestSyncedAt = matches
+    .map((match) => match.lastSyncedAt)
+    .filter((syncedAt): syncedAt is string => Boolean(syncedAt))
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0];
+
+  return latestSyncedAt ? formatRefreshTimeInIst(latestSyncedAt) : null;
 }
 
 async function buildShareLink(slug: string, inviteCode?: string): Promise<string> {
