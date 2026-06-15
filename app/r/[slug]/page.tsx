@@ -13,7 +13,7 @@ import { getUpcomingMatches } from "@/features/matches/data";
 import type { AppMatch } from "@/features/matches/data";
 import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
 import { getPlayerSessionForRoom } from "@/features/players/session";
-import { joinRoom } from "@/features/rooms/actions";
+import { claimRoomPlayer, joinRoom } from "@/features/rooms/actions";
 import { getRoomSummary } from "@/features/rooms/data";
 import { formatKickoffInIst } from "@/features/time/match-time";
 
@@ -22,6 +22,8 @@ type RoomPageProps = {
     slug: string;
   }>;
   searchParams: Promise<{
+    claimName?: string;
+    claimPlayerId?: string;
     error?: string;
     hub?: string;
     invite?: string;
@@ -30,7 +32,7 @@ type RoomPageProps = {
 
 export default async function RoomPage({ params, searchParams }: RoomPageProps) {
   const { slug } = await params;
-  const { error, hub, invite } = await searchParams;
+  const { claimName, claimPlayerId, error, hub, invite } = await searchParams;
   const room = await getRoomSummary(slug);
   const session = await getPlayerSessionForRoom(slug);
   const shouldShowHub = hub === "1" || Boolean(session);
@@ -145,8 +147,10 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
   }
 
   const joinAction = joinRoom.bind(null, slug);
+  const claimAction = claimRoomPlayer.bind(null, slug);
   const visibleInvite = invite ?? (room.id === "fallback-room" ? "TIGER7" : undefined);
   const shareLink = await buildShareLink(slug, visibleInvite);
+  const hasClaimPrompt = Boolean(claimPlayerId && claimName && visibleInvite);
 
   return (
     <AppShell roomName={room.name} roomSlug={slug} subtitle="Invite friends">
@@ -158,6 +162,23 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
       </section>
 
       {error ? <p className="locked-banner">Check the room code and try again.</p> : null}
+      {hasClaimPrompt ? (
+        <section className="claim-card" aria-label="Existing player found">
+          <div>
+            <p className="eyebrow">Player already here</p>
+            <h2>{claimName} is already in this room</h2>
+            <p>Claim this player to keep their saved predictions, score, and room history on this browser.</p>
+          </div>
+          <form action={claimAction}>
+            <input name="inviteCode" type="hidden" defaultValue={visibleInvite} />
+            <input name="playerId" type="hidden" defaultValue={claimPlayerId} />
+            <SubmitButton pendingLabel="Restoring player...">Yes, this is me</SubmitButton>
+          </form>
+          <Link className="secondary-button" href={`/r/${slug}${visibleInvite ? `?invite=${encodeURIComponent(visibleInvite)}` : ""}`}>
+            Use another name
+          </Link>
+        </section>
+      ) : null}
 
       <form action={joinAction} className="form-card" aria-label="Join room form">
         <label>

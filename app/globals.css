@@ -2137,6 +2137,34 @@ body {
   font-weight: 1000;
 }
 
+.claim-card {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid rgba(104, 70, 189, 0.2);
+  border-radius: 24px;
+  background: linear-gradient(145deg, #ffffff 0%, #f8f5fb 100%);
+  box-shadow: var(--shadow-soft);
+}
+
+.claim-card h2 {
+  margin-top: 4px;
+  font-size: 24px;
+  line-height: 1.08;
+}
+
+.claim-card p:not(.eyebrow) {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 760;
+  line-height: 1.35;
+}
+
+.claim-card form {
+  display: grid;
+}
+
 .team-row {
   min-width: 0;
   padding: 18px 0;

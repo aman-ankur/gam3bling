@@ -24,6 +24,16 @@ test("room page renders join form, invite code, and members", async ({ page }) =
   await expect(page.getByRole("list", { name: "Room members" })).toBeVisible();
 });
 
+test("room join warns before claiming an existing player name", async ({ page }) => {
+  await page.goto("/r/world-cup-room?invite=TIGER7&claimPlayerId=fallback-john&claimName=John%20Doe");
+
+  await expect(page.getByLabel("Existing player found")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "John Doe is already in this room" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Yes, this is me" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Use another name" })).toHaveAttribute("href", "/r/world-cup-room?invite=TIGER7");
+  await expect(page.getByLabel("Display name")).toBeVisible();
+});
+
 test("room page can render a room hub for returning players", async ({ page }) => {
   await page.goto("/r/world-cup-room?hub=1");
 

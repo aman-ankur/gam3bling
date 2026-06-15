@@ -18,6 +18,19 @@ type RoomInviteRow = {
   invite_code_hash: string;
 };
 
+type RoomMemberIdentityRow = {
+  joined_at: string;
+  player_id: string;
+  players:
+    | {
+        display_name: string;
+      }
+    | Array<{
+        display_name: string;
+      }>
+    | null;
+};
+
 export async function createRoom(formData: FormData): Promise<void> {
   const supabase = requireSupabase();
   const roomName = stringField(formData, "roomName", "World Cup Room");
@@ -109,11 +122,49 @@ export async function joinRoom(slug: string, formData: FormData): Promise<void> 
 
   await completeRoomJoin({
     displayName,
+    inviteCode,
     roomId: room.id,
     roomSlug: room.slug,
     supabase,
     logLabel: "rooms.join"
   });
+  redirect(`/r/${room.slug}/matches`);
+}
+
+export async function claimRoomPlayer(slug: string, formData: FormData): Promise<void> {
+  const supabase = requireSupabase();
+  const inviteCode = normalizeInviteCode(stringField(formData, "inviteCode", ""));
+  const playerId = stringField(formData, "playerId", "");
+
+  console.info("[rooms.claim] start", { slug });
+
+  const { data: room, error: roomError } = await withSupabaseRetry<RoomInviteRow>(() =>
+    supabase.from("rooms").select("id, slug, invite_code_hash").eq("slug", slug).single()
+  , { label: "rooms.claim.rooms.select" }
+  );
+
+  if (roomError || !room) {
+    console.warn("[rooms.claim] room_missing", { slug, message: roomError?.message ?? "No room returned" });
+    redirect(`/r/${slug}?error=room`);
+  }
+
+  if (room.invite_code_hash !== hashSecret(inviteCode)) {
+    console.warn("[rooms.claim] invalid_invite", { slug, roomId: room.id });
+    redirect(`/r/${slug}?error=code`);
+  }
+
+  const { data: membership } = await withSupabaseRetry<{ player_id: string }>(() =>
+    supabase.from("room_members").select("player_id").eq("room_id", room.id).eq("player_id", playerId).maybeSingle()
+  , { label: "rooms.claim.room_members.select" }
+  );
+
+  if (!membership) {
+    console.warn("[rooms.claim] missing_member", { slug, roomId: room.id, playerId });
+    redirect(`/r/${slug}?error=claim`);
+  }
+
+  await setPlayerSession({ playerId: membership.player_id, roomId: room.id, roomSlug: room.slug });
+  console.info("[rooms.claim] success", { roomSlug: room.slug, roomId: room.id, playerId: membership.player_id });
   redirect(`/r/${room.slug}/matches`);
 }
 
@@ -141,6 +192,7 @@ export async function joinRoomByCode(formData: FormData): Promise<void> {
 
   await completeRoomJoin({
     displayName,
+    inviteCode,
     roomId: room.id,
     roomSlug: room.slug,
     supabase,
@@ -151,17 +203,29 @@ export async function joinRoomByCode(formData: FormData): Promise<void> {
 
 async function completeRoomJoin({
   displayName,
+  inviteCode,
   roomId,
   roomSlug,
   supabase,
   logLabel
 }: {
   displayName: string;
+  inviteCode: string;
   roomId: string;
   roomSlug: string;
   supabase: ReturnType<typeof requireSupabase>;
   logLabel: string;
 }): Promise<void> {
+  const existingMember = await findExistingRoomMemberByName({ displayName, roomId, supabase, logLabel });
+
+  if (existingMember) {
+    const player = Array.isArray(existingMember.players) ? existingMember.players[0] : existingMember.players;
+    const claimName = normalizeDisplayName(player?.display_name ?? displayName);
+
+    console.info(`[${logLabel}] duplicate_name`, { roomSlug, roomId, playerId: existingMember.player_id });
+    redirect(buildClaimUrl({ inviteCode, playerId: existingMember.player_id, playerName: claimName, roomSlug }));
+  }
+
   const { data: player, error: playerError } = await withSupabaseRetry<IdRow>(() =>
     supabase
       .from("players")
@@ -198,6 +262,58 @@ async function completeRoomJoin({
 
   console.info(`[${logLabel}] success`, { roomSlug, roomId, playerId: player.id });
   await setPlayerSession({ playerId: player.id, roomId, roomSlug });
+}
+
+async function findExistingRoomMemberByName({
+  displayName,
+  roomId,
+  supabase,
+  logLabel
+}: {
+  displayName: string;
+  roomId: string;
+  supabase: ReturnType<typeof requireSupabase>;
+  logLabel: string;
+}): Promise<RoomMemberIdentityRow | null> {
+  const normalizedName = playerNameKey(displayName);
+  const { data: members } = await withSupabaseRetry<RoomMemberIdentityRow[]>(() =>
+    supabase
+      .from("room_members")
+      .select("player_id, joined_at, players(display_name)")
+      .eq("room_id", roomId)
+      .order("joined_at", { ascending: true })
+  , { label: `${logLabel}.room_members.identity_select` }
+  );
+
+  return (members ?? []).find((member) => {
+    const player = Array.isArray(member.players) ? member.players[0] : member.players;
+
+    return playerNameKey(player?.display_name ?? "") === normalizedName;
+  }) ?? null;
+}
+
+function buildClaimUrl({
+  inviteCode,
+  playerId,
+  playerName,
+  roomSlug
+}: {
+  inviteCode: string;
+  playerId: string;
+  playerName: string;
+  roomSlug: string;
+}): string {
+  const params = new URLSearchParams({
+    invite: inviteCode,
+    claimPlayerId: playerId,
+    claimName: playerName
+  });
+
+  return `/r/${roomSlug}?${params.toString()}`;
+}
+
+function playerNameKey(displayName: string): string {
+  return normalizeDisplayName(displayName).toLocaleLowerCase();
 }
 
 function requireSupabase() {
