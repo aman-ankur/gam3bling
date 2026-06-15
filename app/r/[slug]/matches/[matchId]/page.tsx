@@ -20,7 +20,7 @@ import { createSupabaseMatchDetailsStore, getCachedMatchDetails } from "@/featur
 import { getPlayerSessionForRoom } from "@/features/players/session";
 import { isPredictionLocked } from "@/features/predictions/locking";
 import { getRoomMatchPicks } from "@/features/predictions/data";
-import { checkMatchResult } from "@/features/results/actions";
+import { checkMatchResult, refreshMatchScore } from "@/features/results/actions";
 import { getResultCheckState } from "@/features/results/check-window";
 import { getRoomSummary } from "@/features/rooms/data";
 import { createDefaultFootballProvider } from "@/features/sync/default-provider";
@@ -38,12 +38,13 @@ type MatchPredictionPageProps = {
     error?: string;
     result?: string;
     saved?: string;
+    score?: string;
   }>;
 };
 
 export default async function MatchPredictionPage({ params, searchParams }: MatchPredictionPageProps) {
   const { matchId, slug } = await params;
-  const { details, error, result, saved } = await searchParams;
+  const { details, error, result, saved, score } = await searchParams;
   const matches = await getUpcomingMatches({ includeDemo: isDemoRoomSlug(slug) });
   const room = await getRoomSummary(slug);
 
@@ -76,6 +77,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
   const locked = kickoffLocked || windowLocked;
   const predictionAction = savePrediction.bind(null, slug, match.apiMatchId);
   const resultCheckAction = checkMatchResult.bind(null, slug, match.apiMatchId);
+  const refreshScoreAction = refreshMatchScore.bind(null, slug, match.apiMatchId);
   const refreshDetailsAction = refreshMatchDetails.bind(null, slug, match.apiMatchId);
   const resultCheckState = getResultCheckState(
     {
@@ -123,6 +125,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
       {error === "invalid" ? <p className="locked-banner">That prediction combination did not make sense. Adjust the score and try again.</p> : null}
       {error === "locked" ? <p className="locked-banner">This match is locked for predictions.</p> : null}
       {result === "checked" && !isSettledPrediction ? <p className="success-banner">Final result checked and room scores refreshed.</p> : null}
+      {scoreMessage(score) ? <p className={score === "updated" ? "success-banner" : "locked-banner"}>{scoreMessage(score)}</p> : null}
       {detailsMessage(details) ? <p className={details === "checked" ? "success-banner" : "locked-banner"}>{detailsMessage(details)}</p> : null}
 
       {isSettledPrediction && receiptPrediction ? (
@@ -151,6 +154,17 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
               <MatchupName awayTeam={match.awayTeam} homeTeam={match.homeTeam} />
             </h1>
             <p>{formatKickoffInIst(match.kickoffAt)}. {windowLocked && !kickoffLocked ? "Only the next 4 matches are open for predictions." : "Kickoff locks this match."}</p>
+            <div className="match-action-row">
+              <div>
+                <span className={`state-dot ${match.status === "halftime" ? "live" : match.status}`}>{match.status}</span>
+                <small>{match.homeScore != null && match.awayScore != null ? `${match.homeTeam.name} ${match.homeScore}-${match.awayScore} ${match.awayTeam.name}` : "Provider score not fetched yet"}</small>
+              </div>
+              <form action={refreshScoreAction}>
+                <SubmitButton className="secondary-button" pendingLabel="Refreshing...">
+                  Refresh score
+                </SubmitButton>
+              </form>
+            </div>
           </section>
 
           <MatchDetailTabs
@@ -256,6 +270,22 @@ function resultMessage(result: string | undefined): string | undefined {
 
   if (result === "checked") {
     return "Final result checked and room scores refreshed.";
+  }
+
+  return undefined;
+}
+
+function scoreMessage(score: string | undefined): string | undefined {
+  if (score === "updated") {
+    return "Latest match score refreshed.";
+  }
+
+  if (score === "pending") {
+    return "Score checked. No provider update yet.";
+  }
+
+  if (score === "error") {
+    return "The score refresh failed. Try again in a few minutes.";
   }
 
   return undefined;

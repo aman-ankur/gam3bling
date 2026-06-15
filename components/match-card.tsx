@@ -12,6 +12,8 @@ type MatchCardProps = {
   kickoffAt: string;
   homeTeam: AppTeam;
   awayTeam: AppTeam;
+  homeScore?: number | null;
+  awayScore?: number | null;
   progress: string;
   metaLabel?: string;
   featured?: boolean;
@@ -27,6 +29,8 @@ export function MatchCard({
   kickoffAt,
   homeTeam,
   awayTeam,
+  homeScore,
+  awayScore,
   progress,
   metaLabel,
   featured = false,
@@ -34,6 +38,7 @@ export function MatchCard({
   variant = "standard"
 }: MatchCardProps) {
   const matchTitle = `${homeTeam.name} vs ${awayTeam.name}`;
+  const scoreText = homeScore != null && awayScore != null ? `${homeScore}-${awayScore}` : null;
   const isLocked = status === "locked";
   const isLive = status === "live";
   const className = [
@@ -61,7 +66,7 @@ export function MatchCard({
             <TeamName team={homeTeam} />
           </div>
           <div className="center-lock">
-            <b>vs</b>
+            <b>{scoreText ?? "vs"}</b>
             <small>{formatKickoffInIst(kickoffAt)}</small>
           </div>
           <div className="sport-team">
@@ -106,7 +111,7 @@ export function MatchCard({
         <strong>
           <TeamName team={homeTeam} />
         </strong>
-        <span>vs</span>
+        <span>{scoreText ?? "vs"}</span>
         <strong>
           <TeamName team={awayTeam} />
         </strong>

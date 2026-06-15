@@ -16,6 +16,7 @@ import type { AppMatch } from "@/features/matches/data";
 import { getActiveMatchIds, getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
 import { getPlayerSessionForRoom } from "@/features/players/session";
 import { getCurrentPlayerPredictedMatchIds, getRoomMatchPicks } from "@/features/predictions/data";
+import { refreshRoomScores } from "@/features/results/actions";
 import { claimRoomPlayer, deleteRoom, joinRoom, rememberRoomInviteCode, removeRoomMember } from "@/features/rooms/actions";
 import { getRoomSummary, type RoomSummary } from "@/features/rooms/data";
 import { formatKickoffInIst } from "@/features/time/match-time";
@@ -33,12 +34,13 @@ type RoomPageProps = {
     hub?: string;
     invite?: string;
     inviteError?: string;
+    scores?: string;
   }>;
 };
 
 export default async function RoomPage({ params, searchParams }: RoomPageProps) {
   const { slug } = await params;
-  const { admin, adminError, claimName, claimPlayerId, error, hub, invite, inviteError } = await searchParams;
+  const { admin, adminError, claimName, claimPlayerId, error, hub, invite, inviteError, scores } = await searchParams;
   const room = await getRoomSummary(slug);
   const session = await getPlayerSessionForRoom(slug);
   const shouldShowHub = hub === "1" || Boolean(session);
@@ -69,6 +71,7 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
     const shareLink = await buildShareLink(slug, visibleInvite);
     const recoverInviteAction = rememberRoomInviteCode.bind(null, slug);
     const isRoomCreator = Boolean(session && room.creatorPlayerId && session.playerId === room.creatorPlayerId);
+    const refreshScoresAction = refreshRoomScores.bind(null, slug);
 
     return (
       <AppShell roomName={room.name} roomSlug={slug} subtitle="Room hub">
@@ -92,13 +95,19 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
         </section>
 
         <section className="section-stack" aria-labelledby="room-current-title">
+          {scoreRefreshMessage(scores) ? <p className={scores === "updated" ? "success-banner" : "locked-banner"}>{scoreRefreshMessage(scores)}</p> : null}
           <div className="section-heading">
             <div>
               <p className="eyebrow">Current round</p>
               <h2 id="room-current-title">{featuredMatchIsActive ? "Live now" : "Predict next"}</h2>
             </div>
-            <span className="status-chip">{activeMatches.length > 0 ? `${activeMatches.length} live` : `${openMatches.length} open`}</span>
+            <form action={refreshScoresAction}>
+              <SubmitButton className="secondary-button" pendingLabel="Refreshing...">
+                Refresh scores
+              </SubmitButton>
+            </form>
           </div>
+          <span className="status-chip">{activeMatches.length > 0 ? `${activeMatches.length} live` : `${openMatches.length} open`}</span>
           <div className="match-list">
             {featuredMatch ? (
               <MatchCard
@@ -111,6 +120,8 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
                 }
                 awayTeam={featuredMatch.awayTeam}
                 featured
+                homeScore={featuredMatch.homeScore}
+                awayScore={featuredMatch.awayScore}
                 homeTeam={featuredMatch.homeTeam}
                 href={`/r/${slug}/matches/${featuredMatch.apiMatchId}`}
                 kickoffAt={featuredMatch.kickoffAt}
@@ -355,6 +366,7 @@ function hasMatchId(matchIds: Set<string>, match: AppMatch): boolean {
 function OtherOpenMatchLink({ isActive, isSaved, match, slug }: { isActive: boolean; isSaved: boolean; match: AppMatch; slug: string }) {
   const matchTitle = `${match.homeTeam.name} vs ${match.awayTeam.name}`;
   const actionLabel = isSaved ? "Show" : isActive ? "View" : "Predict";
+  const scoreText = match.homeScore != null && match.awayScore != null ? `${match.homeScore}-${match.awayScore}` : "vs";
 
   return (
     <Link
@@ -365,7 +377,7 @@ function OtherOpenMatchLink({ isActive, isSaved, match, slug }: { isActive: bool
       <div>
         <strong>
           <TeamName team={match.homeTeam} />
-          <span>vs</span>
+          <span>{scoreText}</span>
           <TeamName team={match.awayTeam} />
         </strong>
         <small>{formatKickoffInIst(match.kickoffAt)}</small>
@@ -373,6 +385,22 @@ function OtherOpenMatchLink({ isActive, isSaved, match, slug }: { isActive: bool
       <span>{actionLabel}</span>
     </Link>
   );
+}
+
+function scoreRefreshMessage(scores: string | undefined): string | undefined {
+  if (scores === "updated") {
+    return "Latest scores refreshed.";
+  }
+
+  if (scores === "pending") {
+    return "Scores checked. No provider update yet.";
+  }
+
+  if (scores === "error") {
+    return "Could not refresh scores right now.";
+  }
+
+  return undefined;
 }
 
 async function buildShareLink(slug: string, inviteCode?: string): Promise<string> {

@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { redirect } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
-import { syncMatchResult } from "@/features/sync/sync-matches";
-import { checkMatchResult } from "./actions";
+import { syncMatches, syncMatchResult } from "@/features/sync/sync-matches";
+import { checkMatchResult, refreshMatchScore, refreshRoomScores } from "./actions";
 
 vi.mock("next/navigation", () => ({
   redirect: vi.fn((target: string) => {
@@ -15,6 +15,7 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 vi.mock("@/features/sync/sync-matches", () => ({
+  syncMatches: vi.fn(),
   syncMatchResult: vi.fn()
 }));
 
@@ -136,6 +137,53 @@ describe("checkMatchResult", () => {
     await expect(checkMatchResult("world-cup-room", "123")).rejects.toThrow(
       "NEXT_REDIRECT:/r/world-cup-room/matches/123?result=pending"
     );
+  });
+
+  test("refreshes one live match on demand before the final result window", async () => {
+    const supabase = createSupabaseWithMatch({
+      id: "match-1",
+      api_match_id: "123",
+      kickoff_at: "2026-06-15T16:10:00.000Z",
+      last_synced_at: null,
+      status: "live"
+    });
+    vi.mocked(getSupabaseAdmin).mockReturnValue(supabase as never);
+    vi.mocked(syncMatchResult).mockResolvedValue({
+      found: true,
+      fetchedMatches: 1,
+      updatedMatch: true,
+      scoredPredictions: 0,
+      status: "live"
+    });
+
+    await expect(refreshMatchScore("world-cup-room", "123")).rejects.toThrow(
+      "NEXT_REDIRECT:/r/world-cup-room/matches/123?score=updated"
+    );
+
+    expect(syncMatchResult).toHaveBeenCalledWith({ supabase, matchId: "match-1" });
+  });
+
+  test("refreshes room scores on demand", async () => {
+    const supabase = createSupabaseWithMatch({
+      id: "match-1",
+      api_match_id: "123",
+      kickoff_at: "2026-06-15T16:10:00.000Z",
+      last_synced_at: null,
+      status: "live"
+    });
+    vi.mocked(getSupabaseAdmin).mockReturnValue(supabase as never);
+    vi.mocked(syncMatches).mockResolvedValue({
+      fetchedMatches: 2,
+      updatedMatches: 2,
+      scoredPredictions: 0,
+      skippedMatches: 0
+    });
+
+    await expect(refreshRoomScores("world-cup-room")).rejects.toThrow(
+      "NEXT_REDIRECT:/r/world-cup-room?hub=1&scores=updated"
+    );
+
+    expect(syncMatches).toHaveBeenCalledWith({ supabase });
   });
 });
 

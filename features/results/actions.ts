@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { withSupabaseRetry } from "@/lib/supabase/retry";
-import { syncMatchResult } from "@/features/sync/sync-matches";
+import { syncMatches, syncMatchResult } from "@/features/sync/sync-matches";
 import { getResultCheckState } from "./check-window";
 
 type ResultMatchRow = {
@@ -69,6 +69,70 @@ export async function checkMatchResult(roomSlug: string, matchRouteId: string): 
   }
 
   redirect(`/r/${roomSlug}/matches/${matchRouteId}?result=pending`);
+}
+
+export async function refreshMatchScore(roomSlug: string, matchRouteId: string): Promise<void> {
+  const supabase = getSupabaseAdmin();
+
+  if (!supabase) {
+    redirect(`/r/${roomSlug}/matches/${matchRouteId}?score=error`);
+  }
+
+  let match;
+
+  try {
+    match = await findMatch(supabase, matchRouteId);
+  } catch (error) {
+    console.error("[scores.refresh.match] match_lookup_failed", {
+      matchRouteId,
+      roomSlug,
+      message: error instanceof Error ? error.message : "Unknown match lookup error"
+    });
+    redirect(`/r/${roomSlug}/matches/${matchRouteId}?score=error`);
+  }
+
+  if (!match) {
+    redirect(`/r/${roomSlug}/matches?error=match`);
+  }
+
+  let scoreStatus: "updated" | "pending";
+
+  try {
+    const result = await syncMatchResult({ supabase, matchId: match.id });
+    scoreStatus = result.updatedMatch ? "updated" : "pending";
+  } catch (error) {
+    console.error("[scores.refresh.match] sync_failed", {
+      matchRouteId,
+      roomSlug,
+      message: error instanceof Error ? error.message : "Unknown score refresh error"
+    });
+    redirect(`/r/${roomSlug}/matches/${matchRouteId}?score=error`);
+  }
+
+  redirect(`/r/${roomSlug}/matches/${matchRouteId}?score=${scoreStatus}`);
+}
+
+export async function refreshRoomScores(roomSlug: string): Promise<void> {
+  const supabase = getSupabaseAdmin();
+
+  if (!supabase) {
+    redirect(`/r/${roomSlug}?hub=1&scores=error`);
+  }
+
+  let scoreStatus: "updated" | "pending";
+
+  try {
+    const result = await syncMatches({ supabase });
+    scoreStatus = result.updatedMatches > 0 ? "updated" : "pending";
+  } catch (error) {
+    console.error("[scores.refresh.room] sync_failed", {
+      roomSlug,
+      message: error instanceof Error ? error.message : "Unknown room score refresh error"
+    });
+    redirect(`/r/${roomSlug}?hub=1&scores=error`);
+  }
+
+  redirect(`/r/${roomSlug}?hub=1&scores=${scoreStatus}`);
 }
 
 async function findMatch(supabase: NonNullable<ReturnType<typeof getSupabaseAdmin>>, routeId: string): Promise<ResultMatchRow | null> {
