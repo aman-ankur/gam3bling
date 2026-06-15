@@ -52,6 +52,9 @@ ESPN is the default football sync provider and does not require a key. `ESPN_SOC
 
 `API_FOOTBALL_KEY` is optional while ESPN sync is active. Keep it configured when API-Football access is restored so it can remain available as a fallback provider.
 
+API-Football account access is currently suspended/unavailable. ESPN is the
+working no-key provider for the app right now.
+
 Keep `SUPABASE_SERVICE_ROLE_KEY`, `APP_SESSION_SECRET`, and `SYNC_JOB_SECRET` server-only.
 
 Production env can be copied from local `.env.local`, but never commit real values.
@@ -119,6 +122,38 @@ The route:
 
 Provider adapters receive local match context, so ESPN can resolve matches by kickoff date plus team names/codes even when the row still stores an API-Football fixture id or an app-owned id like `wc2026-...`.
 
+On Vercel free tier, Cron is not available. Use the in-app manual refresh buttons
+instead:
+
+- Room hub: `Refresh scores` refreshes current/open room fixtures on demand.
+- Match detail: `Refresh score` refreshes the current match score on demand.
+- Room creator match detail: `Fetch latest lineups & stats` refreshes lineups
+  and stats on demand.
+
+Manual detail refresh logs useful provider boundary information:
+
+```text
+[match-details.cache] fetch_start
+[espn.details] summary_response
+[espn.details] normalized
+[match-details.cache] fetch_success
+```
+
+These lines include the requested local provider id, resolved ESPN event id,
+HTTP status, lineup count, player count, statistics count, raw roster count, and
+raw roster player count.
+
+ESPN details note:
+
+- Local rows may store API-Football fixture ids such as `1489377`.
+- ESPN resolves these by date and team context. Belgium vs Egypt `1489377`
+  resolved to ESPN event `760426`.
+- ESPN may return roster team shells before player arrays exist. Current code
+  treats those as `lineupsStatus: "unavailable"` and does not cache empty
+  available lineups.
+- Belgium vs Egypt final lineups were manually refreshed in production after
+  they appeared: 2 lineups, 51 players, 22 starters.
+
 ## 6. Manual Scoring Recovery
 
 If the provider is unavailable, enter final match result fields directly in Supabase:
@@ -144,6 +179,13 @@ The bundled seed currently includes the June 14-17, 2026 World Cup fixtures from
 ## 8. Current Live Score Limits
 
 API-FOOTBALL goal events expose provider team IDs, but the current MVP schema does not store external team IDs for local teams. Sync therefore leaves `first_scoring_team_id` and `last_scoring_team_id` empty until a team mapping field is added.
+
+ESPN is unofficial and can change response shape. Keep provider parsing
+defensive, and keep logs around the ESPN summary and match-details cache
+boundaries.
+
+ESPN summary statistics may be unavailable even when lineup players are
+available.
 
 ## 9. Troubleshooting
 
@@ -171,6 +213,25 @@ Current code falls back to the legacy schema so create/join should not crash, bu
 Make sure `.npmrc` points to `https://registry.npmjs.org/` and the lockfile
 does not contain private registry URLs. The project previously had lockfile
 URLs pointing at a company registry, which made Vercel cloud installs unreliable.
+
+### Lineups say checked but the tab is empty
+
+Check the server logs for:
+
+```text
+[espn.details] normalized
+```
+
+If `lineupsStatus` is `available` but `lineupPlayers` is `0`, that is a bug.
+As of commit `1e304a7`, ESPN team shells without player arrays are marked
+`unavailable` instead. Force-refresh the match details after final lineups are
+published.
+
+For Belgium vs Egypt on June 15, 2026:
+
+- Local row id: API-Football fixture `1489377`
+- ESPN event id: `760426`
+- Expected refreshed data: 2 lineups, 51 players, 22 starters
 
 ## 10. Pre-Share Checklist
 

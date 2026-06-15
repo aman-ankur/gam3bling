@@ -9,9 +9,12 @@ post-launch polish pass.
 - GitHub repo: `aman-ankur/gam3bling`
 - Branch: `main`
 - Commit style: small focused commits on `main`.
-- Latest functional pushed commit before this docs refresh: `0571c98`
+- Latest functional pushed/deployed commit before this docs refresh: `1e304a7`
 - Vercel project: `aman-ankurs-projects/game-bling`
 - Production deploy path: normal Vercel cloud build, not prebuilt.
+- Latest inspected production deployment: `dpl_5ukbrgCvpUFWZC94nUQ4wArLe3RB`
+  - Deployment URL: `https://game-bling-n6qnsnd4x-aman-ankurs-projects.vercel.app`
+  - Aliased to `https://game-bling.vercel.app`
 
 Use:
 
@@ -40,7 +43,8 @@ actions.
 - Home shows `Your rooms` for the current browser session before the generic
   join/create sections.
 - `/r/[slug]` is a room hub for returning/session users:
-  - Current open fixtures first.
+  - Live/current fixtures first, then open upcoming fixtures.
+  - Manual `Refresh scores` button for free-tier Vercel environments without Cron.
   - Room score/leaderboard preview next.
   - History/results preview after that.
   - Invite link + room code panel below the Results ledger.
@@ -64,6 +68,11 @@ actions.
 - Bottom navigation is fixed/sticky, route-aware, and uses `Matches` instead of
   `Picks`.
 - Visible copy uses `predictions`, not `slips` or `picks`.
+- Live/current match cards show synced scores and a ticking match clock when
+  score data is available.
+- Match detail pages show a compact live scoreboard above the prediction tabs.
+- Lineups render on a football pitch with shirt numbers, short player names,
+  positions, and formation-aware rows.
 - Buttons that trigger server actions show immediate pending states:
   - `Creating room...`
   - `Joining room...`
@@ -97,6 +106,14 @@ actions.
   - Creation/join code is backward-compatible while `rooms.invite_code` is pending in production.
 - Saved match flow:
   - `app/r/[slug]/matches/[matchId]/page.tsx`
+- Shared live clock:
+  - `components/live-match-clock.tsx`
+  - `features/matches/live-clock.ts`
+- Match details provider/cache flow:
+  - `features/sync/default-provider.ts`
+  - `features/sync/espn-provider.ts`
+  - `features/match-details/cache.ts`
+  - `features/match-details/data.ts`
 - Approved HTML planning artifact:
   - `mockuup/post-save-room-hub-flow.html`
 
@@ -111,15 +128,15 @@ npm run build
 npm run test:e2e
 ```
 
-Latest verified results after invite-code recovery work:
+Latest verified results after ESPN lineup-cache fix (`1e304a7`):
 
-- Unit tests: 78/78 passed.
+- Unit tests: 126/126 passed.
 - Browser tests: 22/22 passed.
 - Production Vercel cloud build passed.
-- Live smoke confirmed:
-  - Room creation works.
-  - Prediction saving works.
-  - Deployed saved-prediction page includes compact receipt markup.
+- Production Vercel inspect confirmed deployment `dpl_5ukbrgCvpUFWZC94nUQ4wArLe3RB`
+  is `Ready` and aliased to `https://game-bling.vercel.app`.
+- Live smoke confirmed Belgium vs Egypt (`1489377`) lineup page HTML includes
+  current ESPN lineup names such as `Thibaut Courtois` and `Kevin De Bruyne`.
 
 ## Deployment Requirements
 
@@ -144,6 +161,25 @@ Server-only secrets must not be committed:
 - `API_FOOTBALL_KEY`
 
 Football sync now uses the provider abstraction. ESPN is the active no-key provider for live/final scores, lineups, stats, and scorer events; API-Football remains wired as a fallback for when account access is restored.
+
+Important ESPN details behavior:
+
+- Local match rows can still store API-Football IDs such as `1489377`.
+- ESPN resolves those rows by kickoff date plus team names/codes. For Belgium vs
+  Egypt on June 15, 2026, local API-Football id `1489377` resolves to ESPN event
+  `760426`.
+- ESPN sometimes returns `rosters` team shells before player arrays are present.
+  As of `1e304a7`, those shells are treated as `lineupsStatus:
+  "unavailable"` instead of caching an "available" empty lineup.
+- Match-detail fetch logs now include:
+  - `[match-details.cache] fetch_start`
+  - `[espn.details] summary_response`
+  - `[espn.details] normalized`
+  - `[match-details.cache] fetch_success`
+  These logs include response status, resolved event id, lineup count, player
+  count, statistics count, and raw roster counts.
+- Belgium vs Egypt cache was manually refreshed after final lineups appeared:
+  2 lineups, 51 players, 22 starters saved in Supabase.
 
 The project must use the public npm registry. Keep `.npmrc` and
 `package-lock.json` free of private/company registry URLs.
@@ -181,6 +217,10 @@ notify pgrst, 'reload schema';
   and real-data states.
 - API-FOOTBALL scorer event team IDs are not mapped to local `teams`, so
   first/last scorer official scoring needs a provider team mapping field.
+- ESPN is unofficial and can change response shapes. Keep defensive parsing and
+  source-specific logs around provider boundaries.
+- ESPN summary statistics may be unavailable even when lineup players are
+  available.
 - Smoke tests and manual production checks can create real test rooms; add cleanup later.
 
 ## Next Useful Improvements
@@ -190,5 +230,8 @@ notify pgrst, 'reload schema';
   migrations without exposing values.
 - Add cleanup for smoke-test rooms.
 - Add provider team ID mapping for scorer markets.
+- Improve `/r/[slug]/matches` UX. The current generic match-card list repeats
+  the matchup and should become a compact match-center page with one live/up-next
+  hero and scannable remaining fixtures.
 - Add a simple recovery/linking flow only if users actually need cross-device
   continuity.

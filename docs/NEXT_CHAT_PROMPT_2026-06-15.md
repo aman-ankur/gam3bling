@@ -12,7 +12,10 @@ Product:
 - Production URL: https://game-bling.vercel.app
 - GitHub repo: aman-ankur/gam3bling
 - Work is now in small focused commits on main.
-- Latest functional commit before docs refresh: 0571c98.
+- Latest functional pushed/deployed commit before docs refresh: 1e304a7.
+- Latest inspected production deployment: dpl_5ukbrgCvpUFWZC94nUQ4wArLe3RB.
+- Deployment URL: https://game-bling-n6qnsnd4x-aman-ankurs-projects.vercel.app
+- Production alias: https://game-bling.vercel.app
 
 Stack:
 - Next.js 15 App Router
@@ -45,7 +48,8 @@ Current product decisions:
 - New rooms persist the visible room code in rooms.invite_code after db/migrations/0003_room_invite_code.sql is applied.
 - Legacy rooms with invite_code = null cannot recover the original room code from invite_code_hash. They can backfill invite_code only when a user enters the original code again through the room hub recovery form or by joining with that code.
 - /r/[slug] is a room hub for returning/session users:
-  - current open fixtures
+  - live/current fixtures first, then open upcoming fixtures
+  - manual Refresh scores button for free-tier Vercel environments without Cron
   - room score preview
   - history preview
   - invite link + room code panel
@@ -63,6 +67,9 @@ Current product decisions:
   - expandable Edit prediction panel for changes before kickoff
 - Bottom nav is sticky/fixed, route-aware, and uses Matches instead of Picks.
 - Visible copy should say predictions, not slips or picks.
+- Live/current match cards show synced scores and a ticking match clock when available.
+- Match detail pages show a compact live scoreboard above the prediction tabs.
+- Lineups render on a football pitch with shirt numbers, short player names, positions, and formation-aware rows.
 - Server-action submit buttons must use components/submit-button.tsx so users see pending states:
   - Creating room...
   - Joining room...
@@ -80,9 +87,14 @@ Important files:
 - components/prediction-receipt.tsx: compact saved prediction receipt.
 - components/prediction-form.tsx: prediction form with initialPrediction support.
 - components/room-picks-board.tsx: friends' predictions board; internal names still include pick, visible copy says prediction.
+- components/live-match-clock.tsx and features/matches/live-clock.ts: ticking live match clock.
 - features/rooms/actions.ts: createRoom, joinRoom, joinRoomByCode, rememberRoomInviteCode. Room create/join is backward-compatible if the rooms.invite_code migration is pending.
 - features/rooms/data.ts: getRoomSummary, getCurrentPlayerRoomShortcuts.
 - features/predictions/data.ts: room prediction data, including raw saved values for edit.
+- features/sync/default-provider.ts: ESPN first, API-Football fallback.
+- features/sync/espn-provider.ts: ESPN scoreboard/summary adapter.
+- features/match-details/cache.ts: detail fetch/cache boundary and provider-count logs.
+- features/match-details/data.ts: Supabase match detail storage/read model.
 - mockuup/post-save-room-hub-flow.html: approved flow mockup for home, room hub, saved prediction, and history.
 - docs/SESSION_HANDOFF_2026-06-15.md: latest handoff.
 - docs/DEPLOYMENT.md: current deployment checklist.
@@ -102,8 +114,22 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 APP_SESSION_SECRET=
 SYNC_JOB_SECRET=
+ESPN_SOCCER_BASE_URL=https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world
 API_FOOTBALL_KEY=
 API_FOOTBALL_BASE_URL=https://v3.football.api-sports.io
+
+Football provider state:
+- API-Football account is suspended/unavailable.
+- ESPN is the active no-key provider and resolves local API-Football fixture ids by kickoff date plus team names/codes.
+- Example: Belgium vs Egypt local id 1489377 resolves to ESPN event 760426.
+- ESPN sometimes returns roster team shells before player arrays are present. As of 1e304a7, team shells without players are treated as lineupsStatus "unavailable", not cached as available empty lineups.
+- Detail fetch logs now include:
+  [match-details.cache] fetch_start
+  [espn.details] summary_response
+  [espn.details] normalized
+  [match-details.cache] fetch_success
+  with resolved event id, response status, lineup count, player count, statistics count, raw roster count, and raw roster player count.
+- Belgium vs Egypt cache was manually refreshed after final lineups appeared: 2 lineups, 51 players, 22 starters saved in Supabase.
 
 Required verification before shipping:
 - npm run lint
@@ -112,18 +138,22 @@ Required verification before shipping:
 - npm run test:e2e
 
 Latest verified counts:
-- Unit tests: 78/78
+- Unit tests: 126/126
 - Browser tests: 22/22
+- Production page check confirmed /r/bon-jor-wc26-63e7/matches/1489377 HTML includes Thibaut Courtois and Kevin De Bruyne after cache refresh.
 
 Known limits:
 - Current session model remembers up to 12 room/player sessions in the browser, not a full account across devices.
 - History section is currently a preview until scored final results exist.
 - API-FOOTBALL scorer team IDs are not mapped to local team IDs yet, so first/last scorer official scoring needs provider team mapping.
+- ESPN is unofficial and may change response shape; keep provider parsing defensive and logs at source/cache boundaries.
+- ESPN summary statistics may be unavailable even when lineups are available.
 - Smoke tests create real test rooms; cleanup should be added later.
 
 Likely next useful work:
-1. Improve real room history once final match scoring lands.
-2. Add production health endpoint for missing env var names and unapplied DB migrations.
-3. Add cleanup for smoke-test rooms.
-4. Add provider team ID mapping for first/last scorer markets.
+1. Improve /r/[slug]/matches UX. Current generic match-card list repeats the matchup; make it a compact match-center page with one live/up-next hero and scannable remaining fixtures.
+2. Improve real room history once final match scoring lands.
+3. Add production health endpoint for missing env var names and unapplied DB migrations.
+4. Add cleanup for smoke-test rooms.
+5. Add provider team ID mapping for first/last scorer markets.
 ```
