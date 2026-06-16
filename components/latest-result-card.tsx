@@ -13,126 +13,49 @@ export function LatestResultCard({ match, picks, slug }: LatestResultCardProps) 
   const isSettled = match.status === "final" && match.homeScore != null && match.awayScore != null;
   const savedPicks = picks.filter((pick) => pick.saved);
   const currentPick = savedPicks.find((pick) => pick.isCurrentPlayer);
-  const exactHits = savedPicks.filter((pick) => pick.scoreFinal > 0).length;
-  const rankedPicks = savedPicks
-    .slice()
-    .sort((left, right) => right.points - left.points || left.playerName.localeCompare(right.playerName));
   const matchHref = `/r/${slug}/matches/${match.apiMatchId}`;
-  const scoreText = match.homeScore != null && match.awayScore != null ? `${match.homeScore}-${match.awayScore}` : "vs";
+  const hasScore = match.homeScore != null && match.awayScore != null;
+  const scoreText = hasScore ? `${match.homeScore}-${match.awayScore}` : "Pending";
+  const pickText = currentPick?.finalScore ?? (
+    currentPick?.finalHomeScore != null && currentPick.finalAwayScore != null
+      ? `${currentPick.finalHomeScore}-${currentPick.finalAwayScore}`
+      : "-"
+  );
+  const pointsText = isSettled && currentPick ? signedPoints(currentPick.points) : "Pending";
 
   return (
-    <section className="latest-result-card" aria-labelledby="latest-result-title">
-      <Link className="latest-result-hero latest-result-hero-link" href={matchHref} aria-label={`Open full breakdown for ${match.homeTeam.name} vs ${match.awayTeam.name}`}>
-        <p className="eyebrow">{isSettled ? "Final just landed" : "Result pending"}</p>
-        <h2 id="latest-result-title">{resultHeadline(match)}</h2>
-        <p>
-          {isSettled
-            ? `${currentPick ? `You earned ${currentPick.points} points.` : "Room scores are ready."} First and last scorer may stay pending until official event data is mapped.`
-            : "Open this match or refresh room scores to fetch the latest provider result and settle saved picks."}
-        </p>
-        <div className="latest-scoreline" aria-label={`${match.homeTeam.name} ${scoreText} ${match.awayTeam.name}`}>
-          <strong><TeamName team={match.homeTeam} /></strong>
-          <b>{scoreText}</b>
-          <strong><TeamName team={match.awayTeam} /></strong>
+    <Link
+      aria-label={`Open ${match.homeTeam.name} vs ${match.awayTeam.name} history`}
+      className="latest-result-card latest-result-compact-card"
+      href={matchHref}
+    >
+      <div className="history-card-main">
+        <div>
+          <span className="history-status-chip">{isSettled ? "Final" : "Pending"}</span>
+          <strong className="history-matchup">
+            <TeamName team={match.homeTeam} />
+            <span className="history-vs">vs</span>
+            <TeamName team={match.awayTeam} />
+          </strong>
         </div>
-      </Link>
-
-      <div className="latest-return-card">
-        <p className="eyebrow">Your return</p>
-        <h3>{isSettled ? "Prediction settled" : "Awaiting result"}</h3>
-        <div className="latest-result-summary">
-          <div>
-            <span>Your points</span>
-            <b>{isSettled && currentPick ? `+${currentPick.points}` : "-"}</b>
-          </div>
-          <div>
-            <span>Room rank</span>
-            <b>{isSettled && currentPick ? ordinalRank(rankedPicks.findIndex((pick) => pick.playerId === currentPick.playerId) + 1) : "-"}</b>
-          </div>
-          <div>
-            <span>Hits</span>
-            <b>{isSettled ? (currentPick ? `${hitCount(currentPick)}/5` : `${exactHits}`) : "Pending"}</b>
-          </div>
-        </div>
+        <b className="history-card-score">{scoreText}</b>
       </div>
 
-      {isSettled && savedPicks.length > 0 ? (
-        <div className="latest-result-movers-card">
-          <p className="eyebrow">Room score</p>
-          <h3>Leaderboard movement</h3>
-          <ol className="result-movers" aria-label="Latest result score changes">
-            {rankedPicks
-            .slice(0, 3)
-            .map((pick, index) => (
-              <li key={pick.playerId}>
-                <span className="result-rank">{index + 1}</span>
-                <span>{pick.playerName}</span>
-                <small>{hitSummary(pick)}</small>
-                <b>+{pick.points}</b>
-              </li>
-            ))}
-          </ol>
+      <div className="history-card-meta">
+        <div>
+          <span>Your pick</span>
+          <b>{pickText}</b>
         </div>
-      ) : null}
-
-      <Link className="latest-result-action" href={matchHref}>
-        <span>View full breakdown</span>
-        <b>Open</b>
-      </Link>
-    </section>
+        <div>
+          <span>Points</span>
+          <b>{pointsText}</b>
+        </div>
+        <span className="history-open-label">Open</span>
+      </div>
+    </Link>
   );
 }
 
-function resultHeadline(match: AppMatch): string {
-  if (match.homeScore == null || match.awayScore == null) {
-    return `${match.homeTeam.name} vs ${match.awayTeam.name}`;
-  }
-
-  if (match.homeScore > match.awayScore) {
-    return `${match.homeTeam.name} beat ${match.awayTeam.name}`;
-  }
-
-  if (match.awayScore > match.homeScore) {
-    return `${match.awayTeam.name} beat ${match.homeTeam.name}`;
-  }
-
-  return `${match.homeTeam.name} and ${match.awayTeam.name} drew`;
-}
-
-function hitSummary(pick: RoomMatchPick): string {
-  const hits = [
-    pick.scoreFinal > 0 ? "Exact" : null,
-    pick.scoreResult > 0 ? "Result" : null,
-    pick.scoreHalftime > 0 ? "HT" : null,
-    pick.scoreFirstScorer > 0 ? "First scorer" : null,
-    pick.scoreLastScorer > 0 ? "Last scorer" : null
-  ].filter(Boolean);
-
-  return hits.length > 0 ? hits.join(", ") : "No hits";
-}
-
-function hitCount(pick: RoomMatchPick): number {
-  return [
-    pick.scoreFinal,
-    pick.scoreResult,
-    pick.scoreHalftime,
-    pick.scoreFirstScorer,
-    pick.scoreLastScorer
-  ].filter((points) => points > 0).length;
-}
-
-function ordinalRank(rank: number): string {
-  if (rank <= 0) {
-    return "-";
-  }
-
-  const suffix = rank % 10 === 1 && rank % 100 !== 11
-    ? "st"
-    : rank % 10 === 2 && rank % 100 !== 12
-      ? "nd"
-      : rank % 10 === 3 && rank % 100 !== 13
-        ? "rd"
-        : "th";
-
-  return `${rank}${suffix}`;
+function signedPoints(points: number): string {
+  return `${points >= 0 ? "+" : ""}${points}`;
 }
