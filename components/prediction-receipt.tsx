@@ -32,9 +32,12 @@ export function PredictionReceipt({
       <div>
         <p className="eyebrow">Your prediction</p>
         <h2 className="prediction-scoreline" aria-label={`${homeTeam.name} ${finalScore} ${awayTeam.name}`} id="receipt-title">
-          <span>{homeTeam.name}</span>
           <b>{finalScore}</b>
-          <span>{awayTeam.name}</span>
+          <span>
+            {homeTeam.name}
+            <small>vs</small>
+            {awayTeam.name}
+          </span>
         </h2>
         <div className="prediction-receipt-meta">
           {detailParts.map((part) => (

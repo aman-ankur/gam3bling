@@ -5083,10 +5083,8 @@ body {
 
 .prediction-scoreline {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
-  justify-items: center;
+  place-items: center;
+  gap: 8px;
   margin-top: 6px;
   width: 100%;
   font-size: 20px;
@@ -5094,20 +5092,20 @@ body {
 }
 
 .prediction-scoreline span {
-  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
   overflow: hidden;
+  gap: 7px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.prediction-scoreline span:first-child {
-  justify-self: end;
-  text-align: right;
-}
-
-.prediction-scoreline span:last-child {
-  justify-self: start;
-  text-align: left;
+.prediction-scoreline small {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
 }
 
 .prediction-scoreline b {
