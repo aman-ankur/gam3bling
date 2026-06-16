@@ -5083,9 +5083,10 @@ body {
 
 .prediction-scoreline {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(82px, auto) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 10px;
+  justify-items: center;
   margin-top: 6px;
   width: 100%;
   font-size: 20px;
@@ -5100,10 +5101,12 @@ body {
 }
 
 .prediction-scoreline span:first-child {
+  justify-self: end;
   text-align: right;
 }
 
 .prediction-scoreline span:last-child {
+  justify-self: start;
   text-align: left;
 }
 
@@ -5139,6 +5142,23 @@ body {
   background: rgba(230, 193, 92, 0.08);
   font-size: 11px;
   font-weight: 800;
+}
+
+.pick-card.mine {
+  border-color: rgba(230, 193, 92, 0.58);
+  background:
+    linear-gradient(135deg, rgba(230, 193, 92, 0.13), rgba(255, 255, 255, 0.04)),
+    rgba(255, 255, 255, 0.055);
+}
+
+.pick-card.mine .pick-player b,
+.pick-card.mine .pick-score-summary strong {
+  color: var(--text);
+}
+
+.pick-card.mine .pick-player small,
+.pick-card.mine .pick-score-summary small {
+  color: rgba(247, 245, 236, 0.76);
 }
 
 .pick-card {
