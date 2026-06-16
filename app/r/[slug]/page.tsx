@@ -17,7 +17,7 @@ import { getUpcomingMatches } from "@/features/matches/data";
 import type { AppMatch } from "@/features/matches/data";
 import { getActiveMatchIds, getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
 import { getPlayerSessionForRoom } from "@/features/players/session";
-import { getCurrentPlayerPredictedMatchIds, getRoomMatchPicks } from "@/features/predictions/data";
+import { getCurrentPlayerPredictedMatchIds, getRoomHistoryMatches, getRoomMatchPicks } from "@/features/predictions/data";
 import { refreshRoomScores } from "@/features/results/actions";
 import { claimRoomPlayer, deleteRoom, joinRoom, rememberRoomInviteCode, removeRoomMember } from "@/features/rooms/actions";
 import { getRoomSummary, type RoomSummary } from "@/features/rooms/data";
@@ -54,12 +54,12 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
 
   if (shouldShowHub) {
     const matches = await getUpcomingMatches({ includeDemo: isDemoRoomSlug(slug) });
-    const latestCompletedMatches = getLatestCompletedMatches(matches, 5);
-    const [leaderboard, predictedMatchIds] = await Promise.all([
+    const [leaderboard, predictedMatchIds, historyMatches] = await Promise.all([
       getRoomLeaderboard(slug),
-      getCurrentPlayerPredictedMatchIds(slug, matches)
+      getCurrentPlayerPredictedMatchIds(slug, matches),
+      getRoomHistoryMatches(slug, { includeDemo: isDemoRoomSlug(slug), limit: 12 })
     ]);
-    const latestResultPickSets = await Promise.all(latestCompletedMatches.map((match) => getRoomMatchPicks(slug, match)));
+    const latestResultPickSets = await Promise.all(historyMatches.map((match) => getRoomMatchPicks(slug, match)));
     const now = getCurrentDate();
     const initialNow = now.toISOString();
     const activeMatchIds = getActiveMatchIds(matches, now);
@@ -188,9 +188,17 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
         </RoomAccordion>
 
         <RoomAccordion eyebrow="Results ledger" title="History">
-          {latestCompletedMatches.length > 0 ? (
-            <div className="latest-results-list" aria-label="Recent completed predictions">
-              {latestCompletedMatches.map((match, index) => (
+          <div className="history-refresh-row">
+            <span>Past room picks appear here even before the provider has settled them.</span>
+            <form action={refreshScoresAction}>
+              <SubmitButton className="secondary-button compact-link" pendingLabel="Refreshing...">
+                Refresh scores
+              </SubmitButton>
+            </form>
+          </div>
+          {historyMatches.length > 0 ? (
+            <div className="latest-results-list" aria-label="Room prediction history">
+              {historyMatches.map((match, index) => (
                 <LatestResultCard key={match.id} match={match} picks={latestResultPickSets[index] ?? []} slug={slug} />
               ))}
             </div>
@@ -372,13 +380,6 @@ function RoomAccordion({ children, eyebrow, title }: { children: ReactNode; eyeb
       </div>
     </details>
   );
-}
-
-function getLatestCompletedMatches(matches: AppMatch[], limit: number): AppMatch[] {
-  return matches
-    .filter((match) => match.status === "final" && match.homeScore != null && match.awayScore != null)
-    .sort((left, right) => new Date(right.kickoffAt).getTime() - new Date(left.kickoffAt).getTime())
-    .slice(0, limit);
 }
 
 function hasMatchId(matchIds: Set<string>, match: AppMatch): boolean {

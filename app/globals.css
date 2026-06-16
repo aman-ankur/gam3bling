@@ -4886,6 +4886,22 @@ body {
   gap: 12px;
 }
 
+.history-refresh-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.history-refresh-row span {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
 .latest-result-hero-link {
   color: inherit;
   text-decoration: none;

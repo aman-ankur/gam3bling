@@ -10,6 +10,7 @@ type LatestResultCardProps = {
 };
 
 export function LatestResultCard({ match, picks, slug }: LatestResultCardProps) {
+  const isSettled = match.status === "final" && match.homeScore != null && match.awayScore != null;
   const savedPicks = picks.filter((pick) => pick.saved);
   const currentPick = savedPicks.find((pick) => pick.isCurrentPlayer);
   const exactHits = savedPicks.filter((pick) => pick.scoreFinal > 0).length;
@@ -17,40 +18,45 @@ export function LatestResultCard({ match, picks, slug }: LatestResultCardProps) 
     .slice()
     .sort((left, right) => right.points - left.points || left.playerName.localeCompare(right.playerName));
   const matchHref = `/r/${slug}/matches/${match.apiMatchId}`;
+  const scoreText = match.homeScore != null && match.awayScore != null ? `${match.homeScore}-${match.awayScore}` : "vs";
 
   return (
     <section className="latest-result-card" aria-labelledby="latest-result-title">
       <Link className="latest-result-hero latest-result-hero-link" href={matchHref} aria-label={`Open full breakdown for ${match.homeTeam.name} vs ${match.awayTeam.name}`}>
-        <p className="eyebrow">Final just landed</p>
+        <p className="eyebrow">{isSettled ? "Final just landed" : "Result pending"}</p>
         <h2 id="latest-result-title">{resultHeadline(match)}</h2>
-        <p>{currentPick ? `You earned ${currentPick.points} points.` : "Room scores are ready."} First and last scorer may stay pending until official event data is mapped.</p>
-        <div className="latest-scoreline" aria-label={`${match.homeTeam.name} ${match.homeScore} ${match.awayTeam.name} ${match.awayScore}`}>
+        <p>
+          {isSettled
+            ? `${currentPick ? `You earned ${currentPick.points} points.` : "Room scores are ready."} First and last scorer may stay pending until official event data is mapped.`
+            : "Open this match or refresh room scores to fetch the latest provider result and settle saved picks."}
+        </p>
+        <div className="latest-scoreline" aria-label={`${match.homeTeam.name} ${scoreText} ${match.awayTeam.name}`}>
           <strong><TeamName team={match.homeTeam} /></strong>
-          <b>{match.homeScore}-{match.awayScore}</b>
+          <b>{scoreText}</b>
           <strong><TeamName team={match.awayTeam} /></strong>
         </div>
       </Link>
 
       <div className="latest-return-card">
         <p className="eyebrow">Your return</p>
-        <h3>Prediction settled</h3>
+        <h3>{isSettled ? "Prediction settled" : "Awaiting result"}</h3>
         <div className="latest-result-summary">
           <div>
             <span>Your points</span>
-            <b>{currentPick ? `+${currentPick.points}` : "-"}</b>
+            <b>{isSettled && currentPick ? `+${currentPick.points}` : "-"}</b>
           </div>
           <div>
             <span>Room rank</span>
-            <b>{currentPick ? ordinalRank(rankedPicks.findIndex((pick) => pick.playerId === currentPick.playerId) + 1) : "-"}</b>
+            <b>{isSettled && currentPick ? ordinalRank(rankedPicks.findIndex((pick) => pick.playerId === currentPick.playerId) + 1) : "-"}</b>
           </div>
           <div>
             <span>Hits</span>
-            <b>{currentPick ? `${hitCount(currentPick)}/5` : `${exactHits}`}</b>
+            <b>{isSettled ? (currentPick ? `${hitCount(currentPick)}/5` : `${exactHits}`) : "Pending"}</b>
           </div>
         </div>
       </div>
 
-      {savedPicks.length > 0 ? (
+      {isSettled && savedPicks.length > 0 ? (
         <div className="latest-result-movers-card">
           <p className="eyebrow">Room score</p>
           <h3>Leaderboard movement</h3>

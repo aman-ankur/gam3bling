@@ -1,5 +1,6 @@
 import type { AppMatch } from "@/features/matches/data";
 import { getPlayerSessionForRoom } from "@/features/players/session";
+import { getCurrentDate } from "@/features/time/now";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 export type RoomMatchPick = {
@@ -33,6 +34,109 @@ type InternalRoomMatchPick = RoomMatchPick & {
   nameKey: string;
   submittedAt?: string;
 };
+
+type RoomHistoryMatchRow = {
+  id: string;
+  api_provider?: string | null;
+  api_match_id?: string | null;
+  home_team_id: string;
+  away_team_id: string;
+  kickoff_at: string;
+  stage: string;
+  group_name?: string | null;
+  status: string;
+  home_score?: number | null;
+  away_score?: number | null;
+  home_halftime_score?: number | null;
+  away_halftime_score?: number | null;
+  first_scoring_team_id?: string | null;
+  last_scoring_team_id?: string | null;
+  last_synced_at?: string | null;
+};
+
+type RoomHistoryTeamRow = {
+  id: string;
+  name: string;
+  short_code: string;
+  flag_code?: string | null;
+};
+
+type RoomHistoryPredictionRow = {
+  match_id: string;
+};
+
+type GetRoomHistoryMatchesOptions = {
+  includeDemo?: boolean;
+  limit?: number;
+};
+
+export async function getRoomHistoryMatches(
+  roomSlug: string,
+  options: GetRoomHistoryMatchesOptions = {}
+): Promise<AppMatch[]> {
+  if (process.env.E2E_USE_FALLBACK_FIXTURES === "1") {
+    return [];
+  }
+
+  const supabase = getSupabaseAdmin();
+
+  if (!supabase) {
+    return [];
+  }
+
+  try {
+    const { data: room } = await supabase.from("rooms").select("id").eq("slug", roomSlug).single();
+
+    if (!room) {
+      return [];
+    }
+
+    const { data: members } = await supabase
+      .from("room_members")
+      .select("player_id, joined_at, players(display_name, avatar_initials)")
+      .eq("room_id", room.id)
+      .order("joined_at", { ascending: true });
+
+    if (!members?.length) {
+      return [];
+    }
+
+    const playerIds = members.map((member) => member.player_id);
+    const { data: predictions, error: predictionError } = await supabase
+      .from("predictions")
+      .select("match_id")
+      .in("player_id", playerIds);
+
+    if (predictionError || !predictions?.length) {
+      return [];
+    }
+
+    const matchIds = Array.from(new Set((predictions as RoomHistoryPredictionRow[]).map((prediction) => prediction.match_id)));
+
+    if (matchIds.length === 0) {
+      return [];
+    }
+
+    const [{ data: matchRows, error: matchError }, { data: teamRows, error: teamError }] = await Promise.all([
+      supabase.from("matches").select("*").in("id", matchIds),
+      supabase.from("teams").select("*")
+    ]);
+
+    if (matchError || teamError || !matchRows || !teamRows) {
+      return [];
+    }
+
+    const now = getCurrentDate().getTime();
+
+    return mapRoomHistoryMatches(matchRows as RoomHistoryMatchRow[], teamRows as RoomHistoryTeamRow[])
+      .filter((match) => options.includeDemo || match.apiProvider !== "demo")
+      .filter((match) => isRoomHistoryMatch(match, now))
+      .sort((left, right) => new Date(right.kickoffAt).getTime() - new Date(left.kickoffAt).getTime())
+      .slice(0, options.limit ?? 20);
+  } catch {
+    return [];
+  }
+}
 
 export async function getRoomMatchPicks(roomSlug: string, match: AppMatch): Promise<RoomMatchPick[]> {
   if (process.env.E2E_USE_FALLBACK_FIXTURES === "1") {
@@ -110,6 +214,52 @@ export async function getRoomMatchPicks(roomSlug: string, match: AppMatch): Prom
   } catch {
     return [];
   }
+}
+
+function mapRoomHistoryMatches(matchRows: RoomHistoryMatchRow[], teamRows: RoomHistoryTeamRow[]): AppMatch[] {
+  const teamsById = new Map(
+    teamRows.map((team) => [
+      team.id,
+      {
+        id: team.id,
+        name: team.name,
+        shortCode: team.short_code,
+        flagCode: team.flag_code
+      }
+    ])
+  );
+
+  return matchRows.flatMap((match) => {
+    const homeTeam = teamsById.get(match.home_team_id);
+    const awayTeam = teamsById.get(match.away_team_id);
+
+    if (!homeTeam || !awayTeam) {
+      return [];
+    }
+
+    return [{
+      id: match.id,
+      apiProvider: match.api_provider,
+      apiMatchId: match.api_match_id ?? match.id,
+      homeTeam,
+      awayTeam,
+      kickoffAt: match.kickoff_at,
+      stage: match.stage,
+      groupName: match.group_name,
+      status: match.status,
+      homeScore: match.home_score,
+      awayScore: match.away_score,
+      homeHalftimeScore: match.home_halftime_score,
+      awayHalftimeScore: match.away_halftime_score,
+      firstScoringTeamId: match.first_scoring_team_id,
+      lastScoringTeamId: match.last_scoring_team_id,
+      lastSyncedAt: match.last_synced_at
+    }];
+  });
+}
+
+function isRoomHistoryMatch(match: AppMatch, now: number): boolean {
+  return ["live", "halftime", "final"].includes(match.status) || new Date(match.kickoffAt).getTime() <= now;
 }
 
 function dedupePicksByPlayerName(picks: InternalRoomMatchPick[]): RoomMatchPick[] {
