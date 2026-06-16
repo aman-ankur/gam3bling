@@ -1,8 +1,11 @@
 type PredictionLockInput = {
   now: Date;
   kickoffAt: Date;
+  status?: string | null;
 };
 
-export function isPredictionLocked({ now, kickoffAt }: PredictionLockInput): boolean {
-  return now.getTime() >= kickoffAt.getTime();
+const STARTED_STATUSES = new Set(["live", "halftime", "final"]);
+
+export function isPredictionLocked({ now, kickoffAt, status }: PredictionLockInput): boolean {
+  return STARTED_STATUSES.has(status ?? "") || now.getTime() >= kickoffAt.getTime();
 }

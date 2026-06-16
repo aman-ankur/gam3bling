@@ -33,7 +33,7 @@ export async function savePrediction(roomSlug: string, matchRouteId: string, for
   const matches = await getUpcomingMatches();
   const appMatch = matches.find((candidate) => candidate.id === matchRouteId || candidate.apiMatchId === matchRouteId);
 
-  if (isPredictionLocked({ now: new Date(), kickoffAt: new Date(match.kickoff_at) })) {
+  if (isPredictionLocked({ now: new Date(), kickoffAt: new Date(match.kickoff_at), status: match.status })) {
     console.warn("[predictions.save] kickoff_locked", { roomSlug, matchRouteId });
     redirect(`/r/${roomSlug}/matches/${matchRouteId}?error=locked`);
   }

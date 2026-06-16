@@ -75,7 +75,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
 
   const now = getCurrentDate();
   const initialNow = now.toISOString();
-  const kickoffLocked = isPredictionLocked({ now, kickoffAt: new Date(match.kickoffAt) });
+  const kickoffLocked = isPredictionLocked({ now, kickoffAt: new Date(match.kickoffAt), status: match.status });
   const windowLocked = !isMatchInOpenPredictionWindow(match, matches, now);
   const locked = kickoffLocked || windowLocked;
   const predictionAction = savePrediction.bind(null, slug, match.apiMatchId);
