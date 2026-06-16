@@ -1,8 +1,12 @@
 import { expect, test } from "vitest";
-import { formatKickoffInIst, formatTimeToKickoff } from "./match-time";
+import { formatHistoryKickoffInIst, formatKickoffInIst, formatTimeToKickoff } from "./match-time";
 
 test("formats kickoff time in IST", () => {
   expect(formatKickoffInIst("2026-06-14T17:00:00Z")).toBe("14 Jun, 10:30 PM IST");
+});
+
+test("formats history kickoff time with weekday in IST", () => {
+  expect(formatHistoryKickoffInIst("2026-06-16T01:00:00Z")).toBe("Tue, 16 Jun, 6:30 AM IST");
 });
 
 test("formats hours and minutes to kickoff", () => {

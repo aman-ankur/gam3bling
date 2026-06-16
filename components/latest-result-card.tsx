@@ -2,6 +2,7 @@ import Link from "next/link";
 import { TeamName } from "@/components/team-name";
 import type { AppMatch } from "@/features/matches/data";
 import type { RoomMatchPick } from "@/features/predictions/data";
+import { formatHistoryKickoffInIst } from "@/features/time/match-time";
 
 type LatestResultCardProps = {
   match: AppMatch;
@@ -37,6 +38,7 @@ export function LatestResultCard({ match, picks, slug }: LatestResultCardProps) 
             <span className="history-vs">vs</span>
             <TeamName team={match.awayTeam} />
           </strong>
+          <small className="history-kickoff-time">{formatHistoryKickoffInIst(match.kickoffAt)}</small>
         </div>
         <b className="history-card-score">{scoreText}</b>
       </div>

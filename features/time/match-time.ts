@@ -7,6 +7,16 @@ const IST_FORMATTER = new Intl.DateTimeFormat("en-IN", {
   timeZone: "Asia/Kolkata"
 });
 
+const IST_HISTORY_FORMATTER = new Intl.DateTimeFormat("en-IN", {
+  weekday: "short",
+  day: "2-digit",
+  month: "short",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+  timeZone: "Asia/Kolkata"
+});
+
 export function formatKickoffInIst(kickoffAt: string | Date): string {
   const date = typeof kickoffAt === "string" ? new Date(kickoffAt) : kickoffAt;
   const formatted = IST_FORMATTER.format(date).replace(",", "").replace(/\s(am|pm)$/i, (period) =>
@@ -15,6 +25,16 @@ export function formatKickoffInIst(kickoffAt: string | Date): string {
   const [day, month, time, period] = formatted.split(" ");
 
   return `${day} ${month}, ${time} ${period} IST`;
+}
+
+export function formatHistoryKickoffInIst(kickoffAt: string | Date): string {
+  const date = typeof kickoffAt === "string" ? new Date(kickoffAt) : kickoffAt;
+  const formatted = IST_HISTORY_FORMATTER.format(date)
+    .replaceAll(",", "")
+    .replace(/\s(am|pm)$/i, (period) => period.toUpperCase());
+  const [weekday, day, month, time, period] = formatted.split(" ");
+
+  return `${weekday}, ${day} ${month}, ${time} ${period} IST`;
 }
 
 export function formatRefreshTimeInIst(refreshedAt: string | Date): string {
