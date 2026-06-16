@@ -464,6 +464,62 @@ describe("normalizeEpsnScoreboardEvent", () => {
 });
 
 describe("createEpsnProvider", () => {
+  test("finds early UTC World Cup matches from ESPN's previous scoreboard date", async () => {
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ events: [] })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          events: [
+            {
+              id: "760427",
+              date: "2026-06-16T01:00Z",
+              status: { type: { state: "post", completed: true, description: "Full Time" } },
+              competitions: [
+                {
+                  competitors: [
+                    { homeAway: "home", score: "2", team: { id: "469", displayName: "Iran", abbreviation: "IRN" } },
+                    { homeAway: "away", score: "2", team: { id: "2666", displayName: "New Zealand", abbreviation: "NZL" } }
+                  ]
+                }
+              ]
+            }
+          ]
+        })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ keyEvents: [] })
+      });
+    const provider = createEpsnProvider({ baseUrl: "https://espn.test", fetchImpl });
+
+    await expect(provider.fetchUpdates([
+      {
+        localMatchId: "match-irn-nzl",
+        apiProvider: "seed",
+        apiMatchId: "wc2026-irn-nzl",
+        kickoffAt: "2026-06-16T01:00:00.000Z",
+        homeTeam: { id: "team-irn", name: "Iran", shortCode: "IRN" },
+        awayTeam: { id: "team-nzl", name: "New Zealand", shortCode: "NZL" }
+      }
+    ])).resolves.toEqual([
+      expect.objectContaining({
+        localMatchId: "match-irn-nzl",
+        apiMatchId: "760427",
+        status: "final",
+        homeScore: 2,
+        awayScore: 2,
+        winner: "draw"
+      })
+    ]);
+    expect(fetchImpl).toHaveBeenNthCalledWith(1, "https://espn.test/scoreboard?dates=20260616&limit=100");
+    expect(fetchImpl).toHaveBeenNthCalledWith(2, "https://espn.test/scoreboard?dates=20260615&limit=100");
+    expect(fetchImpl).toHaveBeenNthCalledWith(3, "https://espn.test/summary?event=760427");
+  });
+
   test("enriches score updates with halftime and scorer teams from summary events", async () => {
     const fetchImpl = vi.fn()
       .mockResolvedValueOnce({
@@ -485,6 +541,10 @@ describe("createEpsnProvider", () => {
             }
           ]
         })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ events: [] })
       })
       .mockResolvedValueOnce({
         ok: true,
@@ -520,7 +580,8 @@ describe("createEpsnProvider", () => {
       })
     ]);
     expect(fetchImpl).toHaveBeenNthCalledWith(1, "https://espn.test/scoreboard?dates=20260614&limit=100");
-    expect(fetchImpl).toHaveBeenNthCalledWith(2, "https://espn.test/summary?event=760421");
+    expect(fetchImpl).toHaveBeenNthCalledWith(2, "https://espn.test/scoreboard?dates=20260613&limit=100");
+    expect(fetchImpl).toHaveBeenNthCalledWith(3, "https://espn.test/summary?event=760421");
   });
 });
 

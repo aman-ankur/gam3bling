@@ -400,7 +400,7 @@ function normalizeClockLabel(clock: string | null | undefined): string | null {
 }
 
 async function fetchScoreboardEvents(fetchImpl: FetchImpl, baseUrl: string, queries: ProviderMatchQuery[]): Promise<EpsnScoreboardEvent[]> {
-  const dateKeys = [...new Set(queries.map((query) => espnDateKey(query.kickoffAt)).filter(Boolean))];
+  const dateKeys = [...new Set(queries.flatMap((query) => espnDateKeys(query.kickoffAt)))];
   const payloads = await Promise.all(dateKeys.map(async (dateKey) => {
     const response = await fetchImpl(`${baseUrl}/scoreboard?dates=${dateKey}&limit=100`);
 
@@ -475,13 +475,23 @@ function winnerFromScore(homeScore: number | null, awayScore: number | null): Ma
   return "draw";
 }
 
-function espnDateKey(value: string): string | null {
+function espnDateKeys(value: string): string[] {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return null;
+    return [];
   }
 
+  const keys = [espnDateKey(date)];
+
+  if (date.getUTCHours() < 7) {
+    keys.push(espnDateKey(new Date(date.getTime() - 24 * 60 * 60 * 1000)));
+  }
+
+  return keys;
+}
+
+function espnDateKey(date: Date): string {
   return date.toISOString().slice(0, 10).replaceAll("-", "");
 }
 
