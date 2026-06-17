@@ -11,6 +11,7 @@ import type {
   MatchLineupView,
   MatchTeamStatisticView
 } from "./types";
+import { resolveLocalTeamIdFromProviderName } from "./team-mapping";
 
 type MatchDetailRow = {
   status: MatchDetailCacheStatus;
@@ -276,17 +277,17 @@ function mapProviderTeamIds(payload: MatchDetailsSavePayload): Map<string, strin
 }
 
 function localTeamIdFromName(teamName: string, payload: MatchDetailsSavePayload): string | null {
-  const normalized = normalizeName(teamName);
-
-  if (normalized === normalizeName(payload.homeTeamName)) {
-    return payload.homeTeamId;
-  }
-
-  if (normalized === normalizeName(payload.awayTeamName)) {
-    return payload.awayTeamId;
-  }
-
-  return null;
+  return resolveLocalTeamIdFromProviderName({
+    providerTeamName: teamName,
+    homeTeam: {
+      id: payload.homeTeamId,
+      name: payload.homeTeamName
+    },
+    awayTeam: {
+      id: payload.awayTeamId,
+      name: payload.awayTeamName
+    }
+  });
 }
 
 function emptyMatchDetails(): MatchDetailsView {
@@ -384,8 +385,4 @@ function teamNameFromMatch(teamId: string, match: AppMatch): string {
   }
 
   return "Team";
-}
-
-function normalizeName(value: string): string {
-  return value.trim().toLowerCase();
 }
