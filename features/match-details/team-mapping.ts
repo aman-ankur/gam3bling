@@ -20,12 +20,22 @@ const TEAM_NAME_ALIASES: Record<string, string> = {
 export function resolveLocalTeamIdFromProviderName({
   awayTeam,
   homeTeam,
+  providerTeamSide,
   providerTeamName
 }: {
   awayTeam: TeamIdentity;
   homeTeam: TeamIdentity;
+  providerTeamSide?: "home" | "away" | null;
   providerTeamName: string;
 }): string | null {
+  if (providerTeamSide === "home") {
+    return homeTeam.id;
+  }
+
+  if (providerTeamSide === "away") {
+    return awayTeam.id;
+  }
+
   const normalized = canonicalTeamName(providerTeamName);
 
   if (normalized === canonicalTeamName(homeTeam.name)) {

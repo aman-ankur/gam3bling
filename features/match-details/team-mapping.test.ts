@@ -2,6 +2,15 @@ import { describe, expect, test } from "vitest";
 import { resolveLocalTeamIdFromProviderName } from "./team-mapping";
 
 describe("resolveLocalTeamIdFromProviderName", () => {
+  test("uses provider home/away side before matching provider names", () => {
+    expect(resolveLocalTeamIdFromProviderName({
+      providerTeamName: "Any provider label",
+      providerTeamSide: "away",
+      homeTeam: { id: "team-por", name: "Portugal" },
+      awayTeam: { id: "team-cod", name: "DR Congo" }
+    })).toBe("team-cod");
+  });
+
   test("maps ESPN Congo DR naming to the local DR Congo team", () => {
     expect(resolveLocalTeamIdFromProviderName({
       providerTeamName: "Congo DR",

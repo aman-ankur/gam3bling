@@ -258,7 +258,7 @@ function mapProviderTeamIds(payload: MatchDetailsSavePayload): Map<string, strin
   const mapped = new Map<string, string>();
 
   for (const lineup of payload.details.lineups) {
-    const localTeamId = localTeamIdFromName(lineup.teamName, payload);
+    const localTeamId = localTeamIdFromName(lineup.teamName, payload, lineup.providerTeamSide);
 
     if (localTeamId) {
       mapped.set(lineup.providerTeamId, localTeamId);
@@ -266,7 +266,7 @@ function mapProviderTeamIds(payload: MatchDetailsSavePayload): Map<string, strin
   }
 
   for (const stat of payload.details.statistics) {
-    const localTeamId = localTeamIdFromName(stat.teamName, payload);
+    const localTeamId = localTeamIdFromName(stat.teamName, payload, stat.providerTeamSide);
 
     if (localTeamId) {
       mapped.set(stat.providerTeamId, localTeamId);
@@ -276,9 +276,10 @@ function mapProviderTeamIds(payload: MatchDetailsSavePayload): Map<string, strin
   return mapped;
 }
 
-function localTeamIdFromName(teamName: string, payload: MatchDetailsSavePayload): string | null {
+function localTeamIdFromName(teamName: string, payload: MatchDetailsSavePayload, providerTeamSide?: "home" | "away" | null): string | null {
   return resolveLocalTeamIdFromProviderName({
     providerTeamName: teamName,
+    providerTeamSide,
     homeTeam: {
       id: payload.homeTeamId,
       name: payload.homeTeamName

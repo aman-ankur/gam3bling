@@ -65,8 +65,9 @@ test("saved prediction page shows compact receipt before editable details", asyn
   await expect(page.locator("header").getByRole("heading", { name: "FIFA World Cup 2026" })).toBeVisible();
   await expect(page.locator("header").getByText("World Cup Room")).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Back to room" })).toHaveAttribute("href", "/r/world-cup-room?hub=1");
-  await expect(page.getByText("Netherlands 2-1 Japan")).toBeVisible();
-  await expect(page.locator(".prediction-receipt").getByText("HT 1-0")).toBeVisible();
+  const receipt = page.getByRole("region", { name: "Netherlands 2-1 Japan" });
+  await expect(receipt).toBeVisible();
+  await expect(receipt.getByText("HT 1-0")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Friends' predictions" })).toBeVisible();
   await expect(page.locator(".pick-details")).toHaveCount(0);
   await expect(page.locator(".pick-card").first()).toHaveCSS("border-radius", "8px");

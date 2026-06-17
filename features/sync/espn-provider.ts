@@ -83,6 +83,7 @@ type EpsnSummary = {
   }>;
   boxscore?: {
     teams?: Array<{
+      homeAway?: string | null;
       team?: EpsnTeam | null;
       statistics?: Array<{
         label?: string | null;
@@ -308,6 +309,7 @@ function normalizeEpsnLineups(rosters: NonNullable<EpsnSummary["rosters"]>): Pro
     return [{
       providerTeamId,
       teamName,
+      providerTeamSide: normalizeHomeAway(roster.homeAway),
       formation: null,
       coachName: null,
       players: [
@@ -344,6 +346,10 @@ function normalizeEpsnLineupPlayer(player: EpsnRosterPlayer, sortOrder: number):
   };
 }
 
+function normalizeHomeAway(value: string | null | undefined): "home" | "away" | null {
+  return value === "home" || value === "away" ? value : null;
+}
+
 function normalizeEpsnStatistics(teams: NonNullable<NonNullable<EpsnSummary["boxscore"]>["teams"]>): ProviderTeamStatistic[] {
   return teams.flatMap((teamStats) => {
     const providerTeamId = valueToString(teamStats.team?.id);
@@ -363,6 +369,7 @@ function normalizeEpsnStatistics(teams: NonNullable<NonNullable<EpsnSummary["box
       return [{
         providerTeamId,
         teamName,
+        providerTeamSide: normalizeHomeAway(teamStats.homeAway),
         statName,
         statValue: stat.displayValue == null ? null : String(stat.displayValue),
         sortOrder: index

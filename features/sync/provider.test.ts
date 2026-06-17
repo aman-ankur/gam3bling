@@ -659,6 +659,7 @@ describe("normalizeEpsnSummary", () => {
         teams: [
           {
             team: { id: "628", displayName: "Australia" },
+            homeAway: "home",
             statistics: [
               { label: "Possession", displayValue: "28.4" },
               { label: "Shots", displayValue: "9" }
@@ -666,6 +667,7 @@ describe("normalizeEpsnSummary", () => {
           },
           {
             team: { id: "465", displayName: "Turkiye" },
+            homeAway: "away",
             statistics: [
               { label: "Possession", displayValue: "71.6" }
             ]
@@ -686,6 +688,7 @@ describe("normalizeEpsnSummary", () => {
         {
           providerTeamId: "628",
           teamName: "Australia",
+          providerTeamSide: "home",
           formation: null,
           coachName: null,
           players: [
@@ -712,6 +715,7 @@ describe("normalizeEpsnSummary", () => {
         {
           providerTeamId: "465",
           teamName: "Turkiye",
+          providerTeamSide: "away",
           formation: null,
           coachName: null,
           players: [
@@ -728,9 +732,9 @@ describe("normalizeEpsnSummary", () => {
         }
       ],
       statistics: [
-        { providerTeamId: "628", teamName: "Australia", statName: "Possession", statValue: "28.4", sortOrder: 0 },
-        { providerTeamId: "628", teamName: "Australia", statName: "Shots", statValue: "9", sortOrder: 1 },
-        { providerTeamId: "465", teamName: "Turkiye", statName: "Possession", statValue: "71.6", sortOrder: 0 }
+        { providerTeamId: "628", teamName: "Australia", providerTeamSide: "home", statName: "Possession", statValue: "28.4", sortOrder: 0 },
+        { providerTeamId: "628", teamName: "Australia", providerTeamSide: "home", statName: "Shots", statValue: "9", sortOrder: 1 },
+        { providerTeamId: "465", teamName: "Turkiye", providerTeamSide: "away", statName: "Possession", statValue: "71.6", sortOrder: 0 }
       ],
       rawPayload: {
         lineups: expect.any(Array),

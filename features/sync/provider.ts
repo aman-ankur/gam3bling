@@ -49,6 +49,7 @@ export type ProviderLineupPlayer = {
 export type ProviderLineup = {
   providerTeamId: string;
   teamName: string;
+  providerTeamSide?: "home" | "away" | null;
   formation: string | null;
   coachName: string | null;
   players: ProviderLineupPlayer[];
@@ -57,6 +58,7 @@ export type ProviderLineup = {
 export type ProviderTeamStatistic = {
   providerTeamId: string;
   teamName: string;
+  providerTeamSide?: "home" | "away" | null;
   statName: string;
   statValue: string | null;
   sortOrder: number;
