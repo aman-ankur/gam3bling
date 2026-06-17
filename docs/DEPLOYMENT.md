@@ -175,7 +175,15 @@ The route updates prediction score breakdowns and writes a `sync_logs` row.
 
 ## 7. Fixture Source
 
-The bundled seed currently includes the June 14-17, 2026 World Cup fixtures from published schedule listings. Seeded fixtures make prediction entry work before every provider ID is available.
+The bundled seed currently includes the June 14-18, 2026 World Cup fixtures from published schedule listings. Seeded fixtures make prediction entry work before every provider ID is available.
+
+To backfill upcoming production fixtures from ESPN's public World Cup scoreboard, run:
+
+```bash
+node scripts/seed-espn-fixtures.mjs --start=2026-06-17 --days=11
+```
+
+Use the previous UTC date when seeding early-morning IST fixtures, because ESPN buckets matches by UTC schedule date.
 
 ## 8. Current Live Score Limits
 

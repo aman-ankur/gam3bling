@@ -65,6 +65,8 @@ export async function getUpcomingMatches(options: GetUpcomingMatchesOptions = {}
   }
 
   const supabase = getSupabaseAdmin();
+  const recentMatchWindowMs = 12 * 60 * 60 * 1000;
+  const lowerBound = new Date(getCurrentDate().getTime() - recentMatchWindowMs).toISOString();
 
   if (!supabase) {
     return fallbackAppMatches();
@@ -72,7 +74,7 @@ export async function getUpcomingMatches(options: GetUpcomingMatchesOptions = {}
 
   try {
     const [{ data: matchRows, error: matchError }, { data: teamRows, error: teamError }] = await Promise.all([
-      supabase.from("matches").select("*").order("kickoff_at", { ascending: true }).limit(40),
+      supabase.from("matches").select("*").gte("kickoff_at", lowerBound).order("kickoff_at", { ascending: true }).limit(40),
       supabase.from("teams").select("*")
     ]);
 

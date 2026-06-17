@@ -56,7 +56,11 @@ export const teams: FixtureTeam[] = [
   { id: "20000000-0000-4000-8000-000000000029", name: "Haiti", shortCode: "HAI", flagCode: "HT" },
   { id: "20000000-0000-4000-8000-000000000030", name: "Scotland", shortCode: "SCO", flagCode: "GB-SCT" },
   { id: "20000000-0000-4000-8000-000000000031", name: "Australia", shortCode: "AUS", flagCode: "AU" },
-  { id: "20000000-0000-4000-8000-000000000032", name: "Turkiye", shortCode: "TUR", flagCode: "TR" }
+  { id: "20000000-0000-4000-8000-000000000032", name: "Turkiye", shortCode: "TUR", flagCode: "TR" },
+  { id: "20000000-0000-4000-8000-000000000033", name: "Ghana", shortCode: "GHA", flagCode: "GH" },
+  { id: "20000000-0000-4000-8000-000000000034", name: "Panama", shortCode: "PAN", flagCode: "PA" },
+  { id: "20000000-0000-4000-8000-000000000035", name: "Uzbekistan", shortCode: "UZB", flagCode: "UZ" },
+  { id: "20000000-0000-4000-8000-000000000036", name: "Colombia", shortCode: "COL", flagCode: "CO" }
 ];
 
 export const matches: FixtureMatch[] = [
@@ -75,7 +79,9 @@ export const matches: FixtureMatch[] = [
   match("30000000-0000-4000-8000-000000000011", "wc2026-arg-alg", "ARG", "ALG", "2026-06-17T01:00:00Z", "Group J", "J"),
   match("30000000-0000-4000-8000-000000000012", "wc2026-aut-jor", "AUT", "JOR", "2026-06-17T04:00:00Z", "Group J", "J"),
   match("30000000-0000-4000-8000-000000000013", "wc2026-por-cod", "POR", "COD", "2026-06-17T17:00:00Z", "Group K", "K"),
-  match("30000000-0000-4000-8000-000000000014", "wc2026-eng-cro", "ENG", "CRO", "2026-06-17T20:00:00Z", "Group L", "L")
+  match("30000000-0000-4000-8000-000000000014", "wc2026-eng-cro", "ENG", "CRO", "2026-06-17T20:00:00Z", "Group L", "L"),
+  match("30000000-0000-4000-8000-000000000017", "760434", "GHA", "PAN", "2026-06-17T23:00:00Z", "Group L", "L"),
+  match("30000000-0000-4000-8000-000000000018", "760436", "UZB", "COL", "2026-06-18T02:00:00Z", "Group K", "K")
 ];
 
 export const teamById = new Map(teams.map((team) => [team.id, team]));

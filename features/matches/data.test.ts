@@ -121,8 +121,10 @@ function createSupabaseForMatchList() {
       if (table === "matches") {
         return {
           select: vi.fn(() => ({
-            order: vi.fn(() => ({
-              limit: vi.fn(async () => ({ data: matches, error: null }))
+            gte: vi.fn(() => ({
+              order: vi.fn(() => ({
+                limit: vi.fn(async () => ({ data: matches, error: null }))
+              }))
             }))
           }))
         };
@@ -154,8 +156,10 @@ function createSupabaseForSpecificMatch(options: {
       if (table === "matches") {
         return {
           select: vi.fn(() => ({
-            order: vi.fn(() => ({
-              limit: vi.fn(async () => ({ data: [], error: null }))
+            gte: vi.fn(() => ({
+              order: vi.fn(() => ({
+                limit: vi.fn(async () => ({ data: [], error: null }))
+              }))
             })),
             eq: vi.fn((column: string, value: string) => ({
               maybeSingle: vi.fn(async () => {
