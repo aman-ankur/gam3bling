@@ -3,12 +3,8 @@ import { MatchCard } from "@/components/match-card";
 import { RoomMissing } from "@/components/room-missing";
 import { getUpcomingMatches } from "@/features/matches/data";
 import { getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
-import { ensureMatchDetailsForMatches } from "@/features/match-details/cache";
-import { createSupabaseMatchDetailsStore } from "@/features/match-details/data";
 import { getCurrentPlayerPredictedMatchIds } from "@/features/predictions/data";
 import { getRoomSummary } from "@/features/rooms/data";
-import { createDefaultFootballProvider } from "@/features/sync/default-provider";
-import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 type MatchesPageProps = {
   params: Promise<{
@@ -27,16 +23,6 @@ export default async function MatchesPage({ params }: MatchesPageProps) {
   const openMatchIds = getOpenPredictionMatchIds(matches);
   const openMatches = matches.filter((match) => openMatchIds.has(match.id) || openMatchIds.has(match.apiMatchId));
   const savedMatchIds = await getCurrentPlayerPredictedMatchIds(slug, openMatches);
-  const supabase = getSupabaseAdmin();
-
-  if (supabase && !process.env.E2E_USE_FALLBACK_FIXTURES) {
-    await ensureMatchDetailsForMatches({
-      matches: openMatches,
-      provider: createDefaultFootballProvider(),
-      store: createSupabaseMatchDetailsStore(supabase)
-    });
-  }
-
   const lockedMatchCount = Math.max(matches.length - openMatches.length, 0);
 
   console.info("[matches.list] loaded", {

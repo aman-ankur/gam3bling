@@ -8,6 +8,8 @@ test("matches page prioritizes upcoming prediction locks", async ({ page }) => {
   await expect(page.getByText("15 Jun, 1:30 AM IST")).toBeVisible();
   await expect(page.getByRole("link", { name: /View pick Netherlands vs Japan/i })).toBeVisible();
   await expect(page.getByRole("link", { name: /Predict Ivory Coast vs Ecuador/i })).toBeVisible();
+  await expect(page.locator(".match-card").first().locator(".fixture-row")).toHaveCount(0);
+  await expect(page.locator(".match-card").first().getByText("FIFA rank #7 / #18")).toBeVisible();
   await expect(page.getByText("Details cached")).toHaveCount(0);
   await expect(page.getByText("Fetch queued")).toHaveCount(0);
 });
@@ -22,6 +24,15 @@ test("prediction page includes all MVP markets for an open fixture", async ({ pa
   await expect(page.getByLabel("Netherlands flag").first()).toBeVisible();
   await expect(page.getByLabel("Japan flag").first()).toBeVisible();
   await expect(page.locator(".match-hero-score-card .center-lock b")).toHaveText("vs");
+  await expect(page.getByRole("button", { name: /Team comparison/i })).toBeVisible();
+  await expect(page.getByText("Current WC points")).toBeHidden();
+  await page.getByRole("button", { name: /Team comparison/i }).click();
+  await expect(page.getByRole("heading", { name: "Team comparison" })).toBeVisible();
+  await expect(page.getByText("World ranking")).toBeVisible();
+  await expect(page.getByLabel("Netherlands ranking value")).toHaveText("#7");
+  await expect(page.getByLabel("Japan ranking value")).toHaveText("#18");
+  await expect(page.getByText("Current WC points")).toBeVisible();
+  await expect(page.getByText("World Cup record")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Final score" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Match result" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Half-time score" })).toBeVisible();

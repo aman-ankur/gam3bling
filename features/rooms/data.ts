@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { getUpcomingMatches, type AppMatch } from "@/features/matches/data";
 import { getActiveMatchIds, getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
@@ -49,7 +50,7 @@ const fallbackRoom: RoomSummary = {
   ]
 };
 
-export async function getRoomSummary(slug: string): Promise<RoomSummary> {
+export const getRoomSummary = cache(async function getRoomSummary(slug: string): Promise<RoomSummary> {
   if (process.env.E2E_USE_FALLBACK_FIXTURES === "1") {
     return { ...fallbackRoom, slug, name: titleFromSlug(slug) };
   }
@@ -92,7 +93,7 @@ export async function getRoomSummary(slug: string): Promise<RoomSummary> {
   } catch {
     return emptyRoom(slug);
   }
-}
+});
 
 function mapRoomMembers(
   memberships: Array<{

@@ -1,10 +1,13 @@
+import { cache } from "react";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { withSupabaseRetry } from "@/lib/supabase/retry";
 import { matches as fallbackMatches, teamById, teams as fallbackTeams } from "@/features/fixtures/world-cup-2026";
+import { enrichTeamRanking } from "@/features/teams/team-comparison";
 import { getCurrentDate } from "../time/now";
 
 export type AppTeam = {
   id: string;
+  fifaRank?: number;
   name: string;
   shortCode: string;
   flagCode?: string | null;
@@ -60,6 +63,10 @@ type GetUpcomingMatchesOptions = {
 };
 
 export async function getUpcomingMatches(options: GetUpcomingMatchesOptions = {}): Promise<AppMatch[]> {
+  return getUpcomingMatchesByDemoVisibility(Boolean(options.includeDemo));
+}
+
+const getUpcomingMatchesByDemoVisibility = cache(async (includeDemo: boolean): Promise<AppMatch[]> => {
   if (process.env.E2E_USE_FALLBACK_FIXTURES === "1") {
     return fallbackAppMatches();
   }
@@ -82,14 +89,14 @@ export async function getUpcomingMatches(options: GetUpcomingMatchesOptions = {}
       return fallbackAppMatches();
     }
 
-    const visibleRows = (matchRows as MatchRow[]).filter((match) => options.includeDemo || match.api_provider !== "demo");
+    const visibleRows = (matchRows as MatchRow[]).filter((match) => includeDemo || match.api_provider !== "demo");
     const mappedMatches = mapMatchRows(visibleRows, teamRows as TeamRow[]);
 
     return prioritizeUpcoming(mappedMatches);
   } catch {
     return fallbackAppMatches();
   }
-}
+});
 
 export async function getMatchByRouteId(routeId: string): Promise<AppMatch | null> {
   const matches = await getUpcomingMatches();
@@ -167,6 +174,7 @@ function mapMatchRows(matchRows: MatchRow[], teamRows: TeamRow[]): AppMatch[] {
       team.id,
       {
         id: team.id,
+        fifaRank: enrichTeamRanking({ shortCode: team.short_code }).fifaRank,
         name: team.name,
         shortCode: team.short_code,
         flagCode: team.flag_code
@@ -217,12 +225,14 @@ function fallbackAppMatches(): AppMatch[] {
       apiMatchId: match.apiMatchId,
       homeTeam: {
         id: homeTeam.id,
+        fifaRank: enrichTeamRanking({ shortCode: homeTeam.shortCode }).fifaRank,
         name: homeTeam.name,
         shortCode: homeTeam.shortCode,
         flagCode: homeTeam.flagCode
       },
       awayTeam: {
         id: awayTeam.id,
+        fifaRank: enrichTeamRanking({ shortCode: awayTeam.shortCode }).fifaRank,
         name: awayTeam.name,
         shortCode: awayTeam.shortCode,
         flagCode: awayTeam.flagCode
@@ -238,6 +248,7 @@ function fallbackAppMatches(): AppMatch[] {
 export function fallbackTeamOptions(): AppTeam[] {
   return fallbackTeams.map((team) => ({
     id: team.id,
+    fifaRank: enrichTeamRanking({ shortCode: team.shortCode }).fifaRank,
     name: team.name,
     shortCode: team.shortCode,
     flagCode: team.flagCode

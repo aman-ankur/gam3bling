@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { CountdownTimer } from "@/components/countdown-timer";
+import { InlineRefreshButton } from "@/components/inline-refresh-button";
 import { LiveMatchClock } from "@/components/live-match-clock";
 import { LineupPitch } from "@/components/lineup-pitch";
 import { MatchDetailTabs } from "@/components/match-detail-tabs";
@@ -10,22 +11,20 @@ import { PredictionForm } from "@/components/prediction-form";
 import { PredictionReceipt } from "@/components/prediction-receipt";
 import { RoomMissing } from "@/components/room-missing";
 import { RoomPicksBoard } from "@/components/room-picks-board";
-import { SubmitButton } from "@/components/submit-button";
+import { TeamComparisonPanel } from "@/components/team-comparison-panel";
 import { MatchupName, TeamName } from "@/components/team-name";
 import { savePrediction } from "@/features/predictions/actions";
 import { getMatchByRouteId, getUpcomingMatches } from "@/features/matches/data";
 import type { AppMatch } from "@/features/matches/data";
 import { isMatchInOpenPredictionWindow } from "@/features/matches/prediction-window";
-import { refreshMatchDetails } from "@/features/match-details/actions";
-import { ensureMatchDetailsForMatches } from "@/features/match-details/cache";
-import { createSupabaseMatchDetailsStore, getCachedMatchDetails } from "@/features/match-details/data";
+import { refreshMatchDetailsInline } from "@/features/match-details/actions";
+import { getCachedMatchDetails } from "@/features/match-details/data";
 import { getPlayerSessionForRoom } from "@/features/players/session";
 import { isPredictionLocked } from "@/features/predictions/locking";
 import { getRoomMatchPicks } from "@/features/predictions/data";
-import { checkMatchResult, refreshMatchScore } from "@/features/results/actions";
+import { checkMatchResultInline, refreshMatchScoreInline } from "@/features/results/actions";
 import { getResultCheckState } from "@/features/results/check-window";
 import { getRoomSummary } from "@/features/rooms/data";
-import { createDefaultFootballProvider } from "@/features/sync/default-provider";
 import { getCurrentDate } from "@/features/time/now";
 import { formatKickoffInIst, formatRefreshTimeInIst } from "@/features/time/match-time";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
@@ -79,9 +78,9 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
   const windowLocked = !isMatchInOpenPredictionWindow(match, matches, now);
   const locked = kickoffLocked || windowLocked;
   const predictionAction = savePrediction.bind(null, slug, match.apiMatchId);
-  const resultCheckAction = checkMatchResult.bind(null, slug, match.apiMatchId);
-  const refreshScoreAction = refreshMatchScore.bind(null, slug, match.apiMatchId);
-  const refreshDetailsAction = refreshMatchDetails.bind(null, slug, match.apiMatchId);
+  const resultCheckAction = checkMatchResultInline.bind(null, slug, match.apiMatchId);
+  const refreshScoreAction = refreshMatchScoreInline.bind(null, slug, match.apiMatchId);
+  const refreshDetailsAction = refreshMatchDetailsInline.bind(null, slug, match.apiMatchId);
   const resultCheckState = getResultCheckState(
     {
       kickoffAt: match.kickoffAt,
@@ -91,18 +90,11 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
     now
   );
   const supabase = getSupabaseAdmin();
-
-  if (supabase && !windowLocked && !process.env.E2E_USE_FALLBACK_FIXTURES) {
-    await ensureMatchDetailsForMatches({
-      matches: [match],
-      provider: createDefaultFootballProvider(),
-      store: createSupabaseMatchDetailsStore(supabase)
-    });
-  }
-
-  const matchDetails = await getCachedMatchDetails(supabase, match);
-  const roomPicks = await getRoomMatchPicks(slug, match);
-  const session = await getPlayerSessionForRoom(slug);
+  const [matchDetails, roomPicks, session] = await Promise.all([
+    getCachedMatchDetails(supabase, match),
+    getRoomMatchPicks(slug, match),
+    getPlayerSessionForRoom(slug)
+  ]);
   const currentPrediction = roomPicks.find((pick) => pick.isCurrentPlayer && pick.saved);
   const receiptPrediction = currentPrediction ?? (saved ? createFallbackReceipt(match) : undefined);
   const isFinalMatch = match.status === "final" && match.homeScore != null && match.awayScore != null;
@@ -200,17 +192,19 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
               <div>
                 <small>{scoreRefreshLabel}</small>
               </div>
-              <form action={refreshScoreAction} className="match-score-refresh">
-                <SubmitButton className="secondary-button subtle-refresh-button" pendingLabel="Refreshing...">
+              <div className="match-score-refresh">
+                <InlineRefreshButton action={refreshScoreAction} className="secondary-button subtle-refresh-button" pendingLabel="Refreshing...">
                   Refresh
-                </SubmitButton>
-              </form>
+                </InlineRefreshButton>
+              </div>
             </div>
           </section>
 
           <MatchDetailTabs
             predictions={(
               <>
+                <TeamComparisonPanel match={match} matches={matches} />
+
                 {receiptPrediction ? (
                   <PredictionReceipt
                     awayTeam={match.awayTeam}
@@ -266,14 +260,14 @@ function FinalMatchSummary({ match }: { match: AppMatch }) {
   );
 }
 
-function MatchDetailsRefreshPanel({ action, status }: { action: (formData: FormData) => Promise<void>; status?: string }) {
+function MatchDetailsRefreshPanel({ action, status }: { action: () => Promise<{ ok: boolean; message: string; status: string }>; status?: string }) {
   return (
-    <form action={action} className="match-details-refresh">
+    <div className="match-details-refresh">
       <p>{status === "checked" ? "Latest provider check completed." : "Lineups usually arrive 20-40 minutes before kickoff."}</p>
-      <SubmitButton className="secondary-button" pendingLabel="Checking provider...">
+      <InlineRefreshButton action={action} className="secondary-button" pendingLabel="Checking provider...">
         Fetch latest lineups & stats
-      </SubmitButton>
-    </form>
+      </InlineRefreshButton>
+    </div>
   );
 }
 

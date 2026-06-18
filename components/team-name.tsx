@@ -1,6 +1,7 @@
 import type { AppTeam } from "@/features/matches/data";
 
 type TeamDisplay = {
+  fifaRank?: number | null;
   flagCode?: string | null;
   name: string;
   shortCode?: string | null;
@@ -21,7 +22,10 @@ export function TeamName({ className, team }: TeamNameProps) {
   const flag = flagGlyph(team.flagCode, team.shortCode);
 
   return (
-    <span className={["team-name", className].filter(Boolean).join(" ")}>
+    <span
+      className={["team-name", className].filter(Boolean).join(" ")}
+      data-fifa-rank={team.fifaRank ? `#${team.fifaRank}` : undefined}
+    >
       <span aria-label={`${team.name} flag`} className="team-flag" data-flag={flag} role="img" />
       <span>{team.name}</span>
     </span>

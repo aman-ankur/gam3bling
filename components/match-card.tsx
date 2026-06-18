@@ -47,6 +47,8 @@ export function MatchCard({
   const isLive = status === "live";
   const scoreText = homeScore != null && awayScore != null && (isLive || isLocked) ? `${homeScore}-${awayScore}` : null;
   const clockInitialNow = initialNow ?? new Date().toISOString();
+  const kickoffLabel = isLive ? "Live now" : formatKickoffInIst(kickoffAt);
+  const rankingLabel = formatRankingLabel(homeTeam, awayTeam);
   const className = [
     "match-ticket",
     "match-card",
@@ -115,15 +117,10 @@ export function MatchCard({
       <h3 aria-label={matchTitle}>
         <MatchupName awayTeam={awayTeam} homeTeam={homeTeam} />
       </h3>
-      <p className="kickoff-line">{formatKickoffInIst(kickoffAt)}</p>
-      <div className="fixture-row" aria-hidden="true">
-        <strong>
-          <TeamName team={homeTeam} />
-        </strong>
-        <span>{scoreText ?? "vs"}</span>
-        <strong>
-          <TeamName team={awayTeam} />
-        </strong>
+      <div className="match-card-facts" aria-label={`${kickoffLabel}${rankingLabel ? `, ${rankingLabel}` : ""}`}>
+        <span>{kickoffLabel}</span>
+        {rankingLabel ? <span>{rankingLabel}</span> : null}
+        {scoreText ? <strong>{scoreText}</strong> : null}
       </div>
       <div className="match-action-row">
         <div className="match-card-note">
@@ -143,4 +140,15 @@ export function MatchCard({
       </div>
     </article>
   );
+}
+
+function formatRankingLabel(homeTeam: AppTeam, awayTeam: AppTeam): string | null {
+  if (!homeTeam.fifaRank && !awayTeam.fifaRank) {
+    return null;
+  }
+
+  const homeRank = homeTeam.fifaRank ? `#${homeTeam.fifaRank}` : "NR";
+  const awayRank = awayTeam.fifaRank ? `#${awayTeam.fifaRank}` : "NR";
+
+  return `FIFA rank ${homeRank} / ${awayRank}`;
 }

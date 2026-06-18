@@ -2,6 +2,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/app-shell";
+import { InlineRefreshButton } from "@/components/inline-refresh-button";
 import { LatestResultCard } from "@/components/latest-result-card";
 import { LiveMatchClock } from "@/components/live-match-clock";
 import { MatchCard } from "@/components/match-card";
@@ -17,9 +18,9 @@ import { getUpcomingMatches } from "@/features/matches/data";
 import type { AppMatch } from "@/features/matches/data";
 import { getActiveMatchIds, getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
 import { getPlayerSessionForRoom } from "@/features/players/session";
-import { getCurrentPlayerMatchPickSummaries, getCurrentPlayerPredictedMatchIds, getRoomHistoryMatches, getRoomMatchPicks } from "@/features/predictions/data";
+import { getCurrentPlayerMatchPickSummaries, getCurrentPlayerPredictedMatchIds, getRoomHistoryMatches, getRoomMatchPicksForMatches } from "@/features/predictions/data";
 import type { CurrentPlayerMatchPickSummary } from "@/features/predictions/data";
-import { refreshRoomScores } from "@/features/results/actions";
+import { refreshRoomScoresInline } from "@/features/results/actions";
 import { claimRoomPlayer, deleteRoom, joinRoom, rememberRoomInviteCode, removeRoomMember } from "@/features/rooms/actions";
 import { getRoomSummary, type RoomSummary } from "@/features/rooms/data";
 import { formatKickoffInIst, formatRefreshTimeInIst } from "@/features/time/match-time";
@@ -45,8 +46,10 @@ type RoomPageProps = {
 export default async function RoomPage({ params, searchParams }: RoomPageProps) {
   const { slug } = await params;
   const { admin, adminError, claimName, claimPlayerId, error, hub, invite, inviteError, scores } = await searchParams;
-  const room = await getRoomSummary(slug);
-  const session = await getPlayerSessionForRoom(slug);
+  const [room, session] = await Promise.all([
+    getRoomSummary(slug),
+    getPlayerSessionForRoom(slug)
+  ]);
   const shouldShowHub = hub === "1" || Boolean(session);
 
   if (!room.exists) {
@@ -60,7 +63,6 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
       getCurrentPlayerPredictedMatchIds(slug, matches),
       getRoomHistoryMatches(slug, { includeDemo: isDemoRoomSlug(slug), limit: 12 })
     ]);
-    const latestResultPickSets = await Promise.all(historyMatches.map((match) => getRoomMatchPicks(slug, match)));
     const now = getCurrentDate();
     const initialNow = now.toISOString();
     const activeMatchIds = getActiveMatchIds(matches, now);
@@ -68,7 +70,11 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
     const activeMatches = matches.filter((match) => hasMatchId(activeMatchIds, match));
     const openMatches = matches.filter((match) => hasMatchId(openMatchIds, match));
     const currentMatches = [...activeMatches, ...openMatches.filter((match) => !hasMatchId(activeMatchIds, match))].slice(0, 4);
-    const currentPlayerPickSummaries = await getCurrentPlayerMatchPickSummaries(slug, currentMatches);
+    const [currentPlayerPickSummaries, historyPickSetsByMatchId] = await Promise.all([
+      getCurrentPlayerMatchPickSummaries(slug, currentMatches),
+      getRoomMatchPicksForMatches(slug, historyMatches)
+    ]);
+    const latestResultPickSets = historyMatches.map((match) => historyPickSetsByMatchId.get(match.id) ?? []);
     const featuredMatch = currentMatches[0];
     const featuredMatchIsActive = featuredMatch ? hasMatchId(activeMatchIds, featuredMatch) : false;
     const otherCurrentMatches = currentMatches.slice(1);
@@ -79,7 +85,7 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
     const shareLink = await buildShareLink(slug, visibleInvite);
     const recoverInviteAction = rememberRoomInviteCode.bind(null, slug);
     const isRoomCreator = Boolean(session && room.creatorPlayerId && session.playerId === room.creatorPlayerId);
-    const refreshScoresAction = refreshRoomScores.bind(null, slug);
+    const refreshScoresAction = refreshRoomScoresInline.bind(null, slug);
 
     return (
       <AppShell roomName={room.name} roomSlug={slug} subtitle="Room hub">
@@ -111,11 +117,9 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
             </div>
             <div className="section-heading-actions">
               <span className="status-chip">{activeMatches.length > 0 ? `${activeMatches.length} live` : `${openMatches.length} open`}</span>
-              <form action={refreshScoresAction}>
-                <SubmitButton className="secondary-button compact-link" pendingLabel="Refreshing...">
-                  Refresh scores
-                </SubmitButton>
-              </form>
+              <InlineRefreshButton action={refreshScoresAction} className="secondary-button compact-link" pendingLabel="Refreshing...">
+                Refresh scores
+              </InlineRefreshButton>
               {currentMatchesRefreshLabel ? <small className="refresh-timestamp">{currentMatchesRefreshLabel}</small> : null}
             </div>
           </div>
@@ -194,11 +198,9 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
         <RoomAccordion eyebrow="Results ledger" title="History">
           <div className="history-refresh-row">
             <span>Past room picks appear here even before the provider has settled them.</span>
-            <form action={refreshScoresAction}>
-              <SubmitButton className="secondary-button compact-link" pendingLabel="Refreshing...">
-                Refresh scores
-              </SubmitButton>
-            </form>
+            <InlineRefreshButton action={refreshScoresAction} className="secondary-button compact-link" pendingLabel="Refreshing...">
+              Refresh scores
+            </InlineRefreshButton>
           </div>
           {historyMatches.length > 0 ? (
             <div className="latest-results-list" aria-label="Room prediction history">

@@ -108,10 +108,11 @@ test("collapses duplicate display names to the latest saved room prediction", as
       if (table === "predictions") {
         return {
           select: vi.fn(() => ({
-            eq: vi.fn(() => ({
+            in: vi.fn(() => ({
               in: vi.fn(async () => ({
                 data: [
                   {
+                    match_id: "match-1",
                     player_id: "amanwa-old",
                     final_home_score: 4,
                     final_away_score: 1,
@@ -124,6 +125,7 @@ test("collapses duplicate display names to the latest saved room prediction", as
                     submitted_at: "2026-06-14T13:00:00.000Z"
                   },
                   {
+                    match_id: "match-1",
                     player_id: "amanwa-new",
                     final_home_score: 2,
                     final_away_score: 1,

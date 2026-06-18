@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 type BottomNavProps = {
@@ -19,13 +20,13 @@ export function BottomNav({ roomSlug }: BottomNavProps) {
   return (
     <nav className="bottom-nav" aria-label="Primary">
       {navItems.map((item) => (
-        <a
+        <Link
           aria-current={isCurrentNavItem(pathname, item.href) ? "page" : undefined}
           href={item.href}
           key={item.href}
         >
           {item.label}
-        </a>
+        </Link>
       ))}
     </nav>
   );

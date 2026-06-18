@@ -1,6 +1,7 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { cache } from "react";
 
 const COOKIE_NAME = "gb_session";
 const MAX_ROOM_SESSIONS = 12;
@@ -27,7 +28,7 @@ export async function getPlayerSessionForRoom(roomSlug: string): Promise<PlayerS
   return sessions.find((session) => session.roomSlug === roomSlug) ?? null;
 }
 
-export async function getPlayerSessions(): Promise<PlayerSession[]> {
+export const getPlayerSessions = cache(async function getPlayerSessions(): Promise<PlayerSession[]> {
   const cookieStore = await cookies();
   const value = cookieStore.get(COOKIE_NAME)?.value;
 
@@ -46,7 +47,7 @@ export async function getPlayerSessions(): Promise<PlayerSession[]> {
   } catch {
     return [];
   }
-}
+});
 
 export async function setPlayerSession(session: PlayerSession): Promise<void> {
   const sessions = mergeSessions(session, await getPlayerSessions());

@@ -1,4 +1,4 @@
-import { SubmitButton } from "@/components/submit-button";
+import { InlineRefreshButton, type InlineRefreshActionResult } from "@/components/inline-refresh-button";
 import type { AppMatch } from "@/features/matches/data";
 import type { RoomMatchPick } from "@/features/predictions/data";
 import type { ResultCheckState } from "@/features/results/check-window";
@@ -9,7 +9,7 @@ type MatchResultBreakdownProps = {
 };
 
 type ResultCheckPanelProps = {
-  action: () => Promise<void>;
+  action: () => Promise<InlineRefreshActionResult>;
   state: ResultCheckState;
   resultMessage?: string;
 };
@@ -103,9 +103,9 @@ export function ResultCheckPanel({ action, resultMessage, state }: ResultCheckPa
       {resultMessage ? <p className="result-check-message">{resultMessage}</p> : null}
 
       {state.canCheck ? (
-        <form action={action}>
-          <SubmitButton pendingLabel="Checking result...">Check final result</SubmitButton>
-        </form>
+        <InlineRefreshButton action={action} className="primary-button" pendingLabel="Checking result...">
+          Check final result
+        </InlineRefreshButton>
       ) : (
         <button className="primary-button" disabled type="button">
           {state.reason === "cooldown" ? "Try again in 5 minutes" : "Opens after expected full time"}

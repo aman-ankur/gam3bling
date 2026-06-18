@@ -15,12 +15,37 @@ type RoomAdminRow = {
   slug: string;
 };
 
+type MatchDetailsRefreshStatus = "checked" | "permission" | "invalid" | "missing" | "error" | "access";
+
+type InlineActionResult = {
+  ok: boolean;
+  message: string;
+  status: string;
+};
+
 export async function refreshMatchDetails(roomSlug: string, matchRouteId: string): Promise<void> {
+  const targetPath = `/r/${roomSlug}/matches/${matchRouteId}`;
+  const detailStatus = await refreshMatchDetailsStatus(roomSlug, matchRouteId);
+
+  redirect(`${targetPath}?details=${detailStatus}`);
+}
+
+export async function refreshMatchDetailsInline(roomSlug: string, matchRouteId: string): Promise<InlineActionResult> {
+  const detailStatus = await refreshMatchDetailsStatus(roomSlug, matchRouteId);
+
+  return {
+    ok: detailStatus === "checked",
+    status: detailStatus,
+    message: detailsMessage(detailStatus)
+  };
+}
+
+async function refreshMatchDetailsStatus(roomSlug: string, matchRouteId: string): Promise<MatchDetailsRefreshStatus> {
   const targetPath = `/r/${roomSlug}/matches/${matchRouteId}`;
   const supabase = getSupabaseAdmin();
 
   if (!supabase) {
-    redirect(`${targetPath}?details=error`);
+    return "error";
   }
 
   const [match, roomResult, session] = await Promise.all([
@@ -35,11 +60,11 @@ export async function refreshMatchDetails(roomSlug: string, matchRouteId: string
   const room = roomResult.data as RoomAdminRow | null;
 
   if (!match || !room) {
-    redirect(`${targetPath}?details=missing`);
+    return "missing";
   }
 
   if (!session || session.roomId !== room.id || session.playerId !== room.creator_player_id) {
-    redirect(`${targetPath}?details=permission`);
+    return "permission";
   }
 
   const result = await ensureMatchDetailsForMatches({
@@ -55,7 +80,31 @@ export async function refreshMatchDetails(roomSlug: string, matchRouteId: string
         "checked";
 
   revalidatePath(targetPath);
-  redirect(`${targetPath}?details=${detailStatus}`);
+  return detailStatus;
+}
+
+function detailsMessage(details: MatchDetailsRefreshStatus): string {
+  if (details === "checked") {
+    return "Latest lineups and stats checked.";
+  }
+
+  if (details === "permission") {
+    return "Only the room creator can refresh match details.";
+  }
+
+  if (details === "invalid") {
+    return "This fixture cannot fetch provider details yet.";
+  }
+
+  if (details === "missing") {
+    return "This fixture could not be found.";
+  }
+
+  if (details === "access") {
+    return "API-Football account access is blocked. Check the API key/account before fetching lineups or stats.";
+  }
+
+  return "The provider details check failed. Try again in a few minutes.";
 }
 
 function hasProviderAccessFailure(messages: string[]): boolean {

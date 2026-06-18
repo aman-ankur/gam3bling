@@ -7,7 +7,7 @@ type AppShellProps = {
   subtitle?: string;
 };
 
-export async function AppShell({ children, roomName, roomSlug, subtitle = "Friend prediction rooms" }: AppShellProps) {
+export function AppShell({ children, roomName, roomSlug, subtitle = "Friend prediction rooms" }: AppShellProps) {
   const roomShell = Boolean(roomSlug && !isBrandShell(roomName));
   const brandShell = isBrandShell(roomName);
 

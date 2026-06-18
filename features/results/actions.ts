@@ -18,11 +18,76 @@ type ResultMatchRow = {
   status: string;
 };
 
+type InlineActionResult = {
+  ok: boolean;
+  message: string;
+  status: string;
+};
+
+type ResultCheckStatus = "checked" | "pending" | "cooldown" | "early" | "final" | "error" | "match";
+type ScoreRefreshStatus = "refreshed" | "pending" | "error" | "match";
+
 export async function checkMatchResult(roomSlug: string, matchRouteId: string): Promise<void> {
+  const resultStatus = await checkMatchResultStatus(roomSlug, matchRouteId);
+
+  if (resultStatus === "match") {
+    redirect(`/r/${roomSlug}/matches?error=match`);
+  }
+
+  redirect(`/r/${roomSlug}/matches/${matchRouteId}?result=${resultStatus}`);
+}
+
+export async function checkMatchResultInline(roomSlug: string, matchRouteId: string): Promise<InlineActionResult> {
+  const status = await checkMatchResultStatus(roomSlug, matchRouteId);
+
+  return {
+    ok: status === "checked",
+    status,
+    message: resultMessage(status)
+  };
+}
+
+export async function refreshMatchScore(roomSlug: string, matchRouteId: string): Promise<void> {
+  const scoreStatus = await refreshMatchScoreStatus(roomSlug, matchRouteId);
+
+  if (scoreStatus === "match") {
+    redirect(`/r/${roomSlug}/matches?error=match`);
+  }
+
+  redirect(`/r/${roomSlug}/matches/${matchRouteId}?score=${scoreStatus}`);
+}
+
+export async function refreshMatchScoreInline(roomSlug: string, matchRouteId: string): Promise<InlineActionResult> {
+  const status = await refreshMatchScoreStatus(roomSlug, matchRouteId);
+
+  return {
+    ok: status === "refreshed",
+    status,
+    message: matchScoreMessage(status)
+  };
+}
+
+export async function refreshRoomScores(roomSlug: string): Promise<void> {
+  const scoreStatus = await refreshRoomScoresStatus(roomSlug);
+
+  redirect(`/r/${roomSlug}?hub=1&scores=${scoreStatus}`);
+}
+
+export async function refreshRoomScoresInline(roomSlug: string): Promise<InlineActionResult> {
+  const status = await refreshRoomScoresStatus(roomSlug);
+
+  return {
+    ok: status === "refreshed",
+    status,
+    message: roomScoreMessage(status)
+  };
+}
+
+async function checkMatchResultStatus(roomSlug: string, matchRouteId: string): Promise<ResultCheckStatus> {
   const supabase = getSupabaseAdmin();
 
   if (!supabase) {
-    redirect(`/r/${roomSlug}/matches/${matchRouteId}?result=error`);
+    return "error";
   }
 
   let match;
@@ -35,11 +100,11 @@ export async function checkMatchResult(roomSlug: string, matchRouteId: string): 
       roomSlug,
       message: error instanceof Error ? error.message : "Unknown match lookup error"
     });
-    redirect(`/r/${roomSlug}/matches/${matchRouteId}?result=error`);
+    return "error";
   }
 
   if (!match) {
-    redirect(`/r/${roomSlug}/matches?error=match`);
+    return "match";
   }
 
   const checkState = getResultCheckState(
@@ -52,7 +117,7 @@ export async function checkMatchResult(roomSlug: string, matchRouteId: string): 
   );
 
   if (!checkState.canCheck) {
-    redirect(`/r/${roomSlug}/matches/${matchRouteId}?result=${checkState.reason}`);
+    return checkState.reason === "available" ? "pending" : checkState.reason;
   }
 
   let syncResult;
@@ -65,21 +130,21 @@ export async function checkMatchResult(roomSlug: string, matchRouteId: string): 
       roomSlug,
       message: error instanceof Error ? error.message : "Unknown result check error"
     });
-    redirect(`/r/${roomSlug}/matches/${matchRouteId}?result=error`);
+    return "error";
   }
 
   if (syncResult.status === "final") {
-    redirect(`/r/${roomSlug}/matches/${matchRouteId}?result=checked`);
+    return "checked";
   }
 
-  redirect(`/r/${roomSlug}/matches/${matchRouteId}?result=pending`);
+  return "pending";
 }
 
-export async function refreshMatchScore(roomSlug: string, matchRouteId: string): Promise<void> {
+async function refreshMatchScoreStatus(roomSlug: string, matchRouteId: string): Promise<ScoreRefreshStatus> {
   const supabase = getSupabaseAdmin();
 
   if (!supabase) {
-    redirect(`/r/${roomSlug}/matches/${matchRouteId}?score=error`);
+    return "error";
   }
 
   let match;
@@ -92,11 +157,11 @@ export async function refreshMatchScore(roomSlug: string, matchRouteId: string):
       roomSlug,
       message: error instanceof Error ? error.message : "Unknown match lookup error"
     });
-    redirect(`/r/${roomSlug}/matches/${matchRouteId}?score=error`);
+    return "error";
   }
 
   if (!match) {
-    redirect(`/r/${roomSlug}/matches?error=match`);
+    return "match";
   }
 
   let scoreStatus: "refreshed" | "pending";
@@ -111,17 +176,17 @@ export async function refreshMatchScore(roomSlug: string, matchRouteId: string):
       roomSlug,
       message: error instanceof Error ? error.message : "Unknown score refresh error"
     });
-    redirect(`/r/${roomSlug}/matches/${matchRouteId}?score=error`);
+    return "error";
   }
 
-  redirect(`/r/${roomSlug}/matches/${matchRouteId}?score=${scoreStatus}`);
+  return scoreStatus;
 }
 
-export async function refreshRoomScores(roomSlug: string): Promise<void> {
+async function refreshRoomScoresStatus(roomSlug: string): Promise<ScoreRefreshStatus> {
   const supabase = getSupabaseAdmin();
 
   if (!supabase) {
-    redirect(`/r/${roomSlug}?hub=1&scores=error`);
+    return "error";
   }
 
   let scoreStatus: "refreshed" | "pending";
@@ -134,10 +199,62 @@ export async function refreshRoomScores(roomSlug: string): Promise<void> {
       roomSlug,
       message: error instanceof Error ? error.message : "Unknown room score refresh error"
     });
-    redirect(`/r/${roomSlug}?hub=1&scores=error`);
+    return "error";
   }
 
-  redirect(`/r/${roomSlug}?hub=1&scores=${scoreStatus}`);
+  return scoreStatus;
+}
+
+function resultMessage(status: ResultCheckStatus): string {
+  if (status === "checked") {
+    return "Final result checked and room scores refreshed.";
+  }
+
+  if (status === "pending") {
+    return "Official final result is not available yet.";
+  }
+
+  if (status === "cooldown") {
+    return "This match was checked recently. Try again in a few minutes.";
+  }
+
+  if (status === "early") {
+    return "Result checks open around 115 minutes after kickoff.";
+  }
+
+  if (status === "match") {
+    return "This fixture could not be found.";
+  }
+
+  return "The provider check failed. Try again in a few minutes.";
+}
+
+function matchScoreMessage(status: ScoreRefreshStatus): string {
+  if (status === "refreshed") {
+    return "Latest score loaded.";
+  }
+
+  if (status === "pending") {
+    return "Score checked. No provider update yet.";
+  }
+
+  if (status === "match") {
+    return "This fixture could not be found.";
+  }
+
+  return "The score refresh failed. Try again in a few minutes.";
+}
+
+function roomScoreMessage(status: ScoreRefreshStatus): string {
+  if (status === "refreshed") {
+    return "Room scores refreshed.";
+  }
+
+  if (status === "pending") {
+    return "Scores checked. No provider update yet.";
+  }
+
+  return "Could not refresh scores right now.";
 }
 
 async function refreshDetailsForMatchIfAvailable({
