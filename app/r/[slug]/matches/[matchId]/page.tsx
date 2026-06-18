@@ -25,6 +25,7 @@ import { getRoomMatchPicks } from "@/features/predictions/data";
 import { checkMatchResultInline, refreshMatchScoreInline } from "@/features/results/actions";
 import { getResultCheckState } from "@/features/results/check-window";
 import { getRoomSummary } from "@/features/rooms/data";
+import { getEpsnTournamentSummaryForMatch } from "@/features/teams/espn-standings";
 import { getCurrentDate } from "@/features/time/now";
 import { formatKickoffInIst, formatRefreshTimeInIst } from "@/features/time/match-time";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
@@ -99,10 +100,11 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
     now
   );
   const supabase = getSupabaseAdmin();
-  const [matchDetails, roomPicks, session] = await Promise.all([
+  const [matchDetails, roomPicks, session, tournamentSummaryByCode] = await Promise.all([
     getCachedMatchDetails(supabase, match),
     getRoomMatchPicks(slug, match),
-    getPlayerSessionForRoom(slug)
+    getPlayerSessionForRoom(slug),
+    getEpsnTournamentSummaryForMatch(match)
   ]);
   const currentPrediction = roomPicks.find((pick) => pick.isCurrentPlayer && pick.saved);
   const receiptPrediction = currentPrediction ?? (saved ? createFallbackReceipt(match) : undefined);
@@ -145,7 +147,12 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
           ) : (
             <FinalMatchSummary match={match} />
           )}
-          <TeamComparisonPanel match={match} matches={comparisonMatches} mode="static" />
+          <TeamComparisonPanel
+            match={match}
+            matches={comparisonMatches}
+            mode="static"
+            tournamentSummaryByCode={tournamentSummaryByCode}
+          />
           <RoomPicksBoard awayTeam={match.awayTeam} eyebrow="Friends" homeTeam={match.homeTeam} picks={roomPicks} showResults title="Room predictions" />
           <details className="edit-prediction-panel">
             <summary>
@@ -211,7 +218,14 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
           </section>
 
           <MatchDetailTabs
-            compare={<TeamComparisonPanel match={match} matches={comparisonMatches} mode="static" />}
+            compare={(
+              <TeamComparisonPanel
+                match={match}
+                matches={comparisonMatches}
+                mode="static"
+                tournamentSummaryByCode={tournamentSummaryByCode}
+              />
+            )}
             predictions={(
               <>
                 {receiptPrediction ? (

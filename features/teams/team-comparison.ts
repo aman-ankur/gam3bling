@@ -17,6 +17,8 @@ export type TeamTournamentSummary = {
   wins: number;
 };
 
+export type TeamTournamentSummaryByCode = Record<string, TeamTournamentSummary>;
+
 export type TeamComparison = {
   awaySummary: TeamTournamentSummary;
   awayProfile: TeamProfile | null;
@@ -101,7 +103,11 @@ export function formatMatchRankingLabel(homeTeam: Pick<AppTeam, "shortCode">, aw
   return `FIFA rank ${rankLabel(getFifaRank(homeTeam))} / ${rankLabel(getFifaRank(awayTeam))}`;
 }
 
-export function buildTeamComparison(match: AppMatch, matches: AppMatch[]): TeamComparison {
+export function buildTeamComparison(
+  match: AppMatch,
+  matches: AppMatch[],
+  tournamentSummaryByCode: TeamTournamentSummaryByCode = {}
+): TeamComparison {
   const homeProfile = getTeamProfile(match.homeTeam);
   const awayProfile = getTeamProfile(match.awayTeam);
   const homeRank = homeProfile?.fifaRank;
@@ -113,9 +119,15 @@ export function buildTeamComparison(match: AppMatch, matches: AppMatch[]): TeamC
 
   return {
     awayProfile,
-    awaySummary: summarizeTournamentTeam(match.awayTeam, matches),
+    awaySummary: bestAvailableSummary(
+      summarizeTournamentTeam(match.awayTeam, matches),
+      tournamentSummaryByCode[match.awayTeam.shortCode.toUpperCase()]
+    ),
     homeProfile,
-    homeSummary: summarizeTournamentTeam(match.homeTeam, matches),
+    homeSummary: bestAvailableSummary(
+      summarizeTournamentTeam(match.homeTeam, matches),
+      tournamentSummaryByCode[match.homeTeam.shortCode.toUpperCase()]
+    ),
     rankingGap,
     rankingLeader
   };
@@ -133,6 +145,14 @@ function profile(fifaRank: number, confederation: string, worldCupBest: string):
 
 function rankLabel(rank: number | null | undefined): string {
   return rank ? `#${rank}` : "Rank pending";
+}
+
+function bestAvailableSummary(local: TeamTournamentSummary, external?: TeamTournamentSummary): TeamTournamentSummary {
+  if (!external) {
+    return local;
+  }
+
+  return external.played > local.played ? external : local;
 }
 
 function summarizeTournamentTeam(team: AppTeam, matches: AppMatch[]): TeamTournamentSummary {

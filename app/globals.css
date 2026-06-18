@@ -411,6 +411,18 @@ a {
   overflow-wrap: anywhere;
 }
 
+.match-card-note .saved-pick-summary,
+.other-open-match-row em {
+  color: rgba(190, 196, 192, 0.82);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.match-card-note .saved-pick-summary {
+  max-width: 28ch;
+}
+
 .ticket-meta strong {
   padding: 4px 8px;
   border-radius: 999px;
@@ -4277,11 +4289,11 @@ body {
 
 .comparison-row {
   display: grid;
-  grid-template-columns: minmax(54px, 0.7fr) minmax(112px, 1.3fr) minmax(54px, 0.7fr);
+  grid-template-columns: minmax(78px, 0.9fr) minmax(104px, 1.2fr) minmax(78px, 0.9fr);
   gap: 8px;
   align-items: center;
-  min-height: 46px;
-  padding: 0 12px;
+  min-height: 44px;
+  padding: 8px 10px;
   border-top: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.035);
   text-align: center;
@@ -4293,14 +4305,17 @@ body {
 
 .comparison-row b {
   color: var(--text);
-  font-size: 15px;
-  font-weight: 1000;
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
 }
 
 .comparison-row span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
+  line-height: 1.15;
 }
 
 .comparison-nudge {

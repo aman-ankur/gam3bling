@@ -9,7 +9,8 @@ type MatchStatsPanelProps = {
 };
 
 export function MatchStatsPanel({ emptyAction, match, statistics }: MatchStatsPanelProps) {
-  const groupedStats = groupStats(statistics, match);
+  const canShowMatchStats = ["live", "halftime", "final"].includes(match.status);
+  const groupedStats = canShowMatchStats ? groupStats(statistics, match) : [];
 
   return (
     <article className="section-stack match-detail-panel" aria-labelledby="stats-title">
@@ -21,7 +22,9 @@ export function MatchStatsPanel({ emptyAction, match, statistics }: MatchStatsPa
         <span className="status-chip">{match.status}</span>
       </div>
 
-      {groupedStats.length > 0 ? (
+      {!canShowMatchStats ? (
+        <p className="section-note">Match stats appear once the game starts. Use Compare for rankings and tournament form before kickoff.</p>
+      ) : groupedStats.length > 0 ? (
         <div className="stats-list">
           <div className="stats-teams">
             <strong>

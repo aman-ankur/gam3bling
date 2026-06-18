@@ -48,7 +48,7 @@ test("room page can render a room hub for returning players", async ({ page }) =
   await expect(page.locator(".match-card.featured .fixture-row")).toHaveCount(0);
   await expect(page.locator(".match-card.featured").getByText("15 Jun, 1:30 AM IST")).toBeVisible();
   await expect(page.locator(".match-card.featured").getByRole("link", { name: /View pick Netherlands vs Japan/i })).toBeVisible();
-  await expect(page.locator(".match-card.featured").getByText(/Your pick: 2-1 .* HT 1-0 .* Netherlands/)).toBeVisible();
+  await expect(page.locator(".match-card.featured").getByText("Pick: 2-1 · HT 1-0")).toBeVisible();
   await expect(page.getByText("Other open matches")).toBeVisible();
   await expect(page.getByRole("link", { name: /Predict Ivory Coast vs Ecuador/i })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Room score" })).toBeVisible();

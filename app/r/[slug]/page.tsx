@@ -432,7 +432,7 @@ function OtherOpenMatchLink({
             formatKickoffInIst(match.kickoffAt)
           )}
         </small>
-        {pickSummary ? <em>Your pick: {compactPickSummary(pickSummary)}</em> : null}
+        {pickSummary ? <em>Pick: {compactPickSummary(pickSummary)}</em> : null}
       </div>
       <span>{actionLabel}</span>
     </Link>
@@ -444,7 +444,7 @@ function compactPickSummary(summary?: CurrentPlayerMatchPickSummary): string | u
     return undefined;
   }
 
-  return `${summary.finalScore} · HT ${summary.halftimeScore} · ${summary.result} · ${summary.scorers}`;
+  return `${summary.finalScore} · HT ${summary.halftimeScore}`;
 }
 
 function scoreRefreshMessage(scores: string | undefined): string | undefined {

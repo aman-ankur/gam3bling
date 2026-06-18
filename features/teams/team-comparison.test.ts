@@ -29,6 +29,17 @@ describe("team comparison profiles", () => {
     expect(comparison.awayProfile?.confederation).toBe("CONCACAF");
     expect(comparison.rankingGap).toBe(46);
   });
+
+  it("uses external standings when local match rows have not caught up", () => {
+    const match = fixtureMatch("GHA", "PAN");
+    const comparison = buildTeamComparison(match, [match], {
+      GHA: tournamentSummary(),
+      PAN: tournamentSummary()
+    });
+
+    expect(comparison.homeSummary).toMatchObject({ draws: 1, played: 1, points: 1 });
+    expect(comparison.awaySummary).toMatchObject({ draws: 1, played: 1, points: 1 });
+  });
 });
 
 function fixtureMatch(homeCode: string, awayCode: string): AppMatch {
@@ -52,4 +63,15 @@ function fixtureTeam(shortCode: string): AppTeam {
   }
 
   return enrichTeamRanking(team);
+}
+
+function tournamentSummary() {
+  return {
+    draws: 1,
+    goalDifference: 0,
+    losses: 0,
+    played: 1,
+    points: 1,
+    wins: 0
+  };
 }

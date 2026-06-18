@@ -107,10 +107,14 @@ export async function getCachedMatchDetails(supabase: SupabaseClient | null, mat
 
   const { data: detailRow } = await supabase
     .from("match_details")
-    .select("lineups_status, stats_status")
+    .select("lineups_status, stats_status, last_fetched_at")
     .eq("match_id", match.id)
     .maybeSingle();
-  const detail = detailRow as { lineups_status?: MatchDetailCacheStatus; stats_status?: MatchDetailCacheStatus } | null;
+  const detail = detailRow as {
+    last_fetched_at?: string | null;
+    lineups_status?: MatchDetailCacheStatus;
+    stats_status?: MatchDetailCacheStatus;
+  } | null;
 
   if (!detail) {
     return emptyMatchDetails();
@@ -130,11 +134,14 @@ export async function getCachedMatchDetails(supabase: SupabaseClient | null, mat
       .in("match_lineup_id", lineupIds)
       .order("sort_order", { ascending: true })
     : { data: [] };
-  const { data: statRows } = await supabase
-    .from("match_team_statistics")
-    .select("team_id, stat_name, stat_value, sort_order, teams(name)")
-    .eq("match_id", match.id)
-    .order("sort_order", { ascending: true });
+  const canUseStats = canShowMatchStats(match) && wasFetchedAfterKickoff(detail.last_fetched_at, match.kickoffAt);
+  const { data: statRows } = canUseStats
+    ? await supabase
+      .from("match_team_statistics")
+      .select("team_id, stat_name, stat_value, sort_order, teams(name)")
+      .eq("match_id", match.id)
+      .order("sort_order", { ascending: true })
+    : { data: [] };
   const playersByLineup = new Map<string, MatchLineupPlayerView[]>();
 
   for (const row of (playerRows ?? []) as MatchLineupPlayerRow[]) {
@@ -152,7 +159,7 @@ export async function getCachedMatchDetails(supabase: SupabaseClient | null, mat
 
   return {
     lineupsStatus: detail.lineups_status ?? "missing",
-    statsStatus: detail.stats_status ?? "missing",
+    statsStatus: canUseStats ? detail.stats_status ?? "missing" : "unavailable",
     lineups: lineups.map((lineup) => ({
       id: lineup.id,
       teamId: lineup.team_id,
@@ -169,6 +176,21 @@ export async function getCachedMatchDetails(supabase: SupabaseClient | null, mat
       sortOrder: row.sort_order
     }))
   };
+}
+
+function canShowMatchStats(match: AppMatch): boolean {
+  return ["live", "halftime", "final"].includes(match.status);
+}
+
+function wasFetchedAfterKickoff(lastFetchedAt: string | null | undefined, kickoffAt: string): boolean {
+  if (!lastFetchedAt) {
+    return false;
+  }
+
+  const fetchedMs = new Date(lastFetchedAt).getTime();
+  const kickoffMs = new Date(kickoffAt).getTime();
+
+  return !Number.isNaN(fetchedMs) && !Number.isNaN(kickoffMs) && fetchedMs >= kickoffMs;
 }
 
 async function saveMatchDetails(supabase: SupabaseClient, payload: MatchDetailsSavePayload): Promise<void> {

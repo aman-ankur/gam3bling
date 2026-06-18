@@ -89,7 +89,7 @@ export function MatchCard({
         <div className="match-action-row">
           <div className="match-card-note">
             <small>{progress}</small>
-            {pickSummary ? <span>Your pick: {pickSummary}</span> : null}
+            {pickSummary ? <span className="saved-pick-summary">Pick: {pickSummary}</span> : null}
           </div>
           {href && !isLocked ? (
             <Link aria-label={ariaActionLabel ?? `${actionLabel} ${matchTitle}`} className="card-link" href={href}>
@@ -124,7 +124,7 @@ export function MatchCard({
         <div className="match-card-note">
           <span className={`state-dot ${status}`}>{status}</span>
           <small>{progress}</small>
-          {pickSummary ? <span>Your pick: {pickSummary}</span> : null}
+          {pickSummary ? <span className="saved-pick-summary">Pick: {pickSummary}</span> : null}
         </div>
         {href && !isLocked ? (
           <Link aria-label={ariaActionLabel ?? `${actionLabel} ${matchTitle}`} className="card-link" href={href}>

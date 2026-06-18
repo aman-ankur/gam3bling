@@ -68,8 +68,8 @@ test("match page tabs show lineups and stats without exposing cache internals", 
 
   await page.getByRole("button", { name: "Stats" }).click();
   await expect(page.getByRole("heading", { name: "Stats" })).toBeVisible();
-  await expect(page.getByLabel("Japan flag").first()).toBeVisible();
-  await expect(page.getByText("Ball Possession")).toBeVisible();
+  await expect(page.getByText("Match stats appear once the game starts. Use Compare for rankings and tournament form before kickoff.")).toBeVisible();
+  await expect(page.getByText("Ball Possession")).toHaveCount(0);
   await expect(page.getByText("Details cached")).toHaveCount(0);
   await expect(page.getByText("Fetch queued")).toHaveCount(0);
 });

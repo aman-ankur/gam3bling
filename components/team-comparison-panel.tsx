@@ -3,18 +3,25 @@
 import { useState } from "react";
 import { TeamName } from "@/components/team-name";
 import type { AppMatch } from "@/features/matches/data";
-import { buildTeamComparison } from "@/features/teams/team-comparison";
+import { buildTeamComparison, type TeamTournamentSummaryByCode } from "@/features/teams/team-comparison";
 
 type TeamComparisonPanelProps = {
   defaultOpen?: boolean;
   match: AppMatch;
   matches: AppMatch[];
   mode?: "collapsible" | "static";
+  tournamentSummaryByCode?: TeamTournamentSummaryByCode;
 };
 
-export function TeamComparisonPanel({ defaultOpen = false, match, matches, mode = "collapsible" }: TeamComparisonPanelProps) {
+export function TeamComparisonPanel({
+  defaultOpen = false,
+  match,
+  matches,
+  mode = "collapsible",
+  tournamentSummaryByCode = {}
+}: TeamComparisonPanelProps) {
   const [open, setOpen] = useState(defaultOpen);
-  const comparison = buildTeamComparison(match, matches);
+  const comparison = buildTeamComparison(match, matches, tournamentSummaryByCode);
   const isStatic = mode === "static";
   const isOpen = isStatic || open;
 
@@ -67,8 +74,8 @@ export function TeamComparisonPanel({ defaultOpen = false, match, matches, mode 
             label="World ranking"
           />
           <ComparisonRow
-            awayValue={`${comparison.awaySummary.points}`}
-            homeValue={`${comparison.homeSummary.points}`}
+            awayValue={pointsLabel(comparison.awaySummary)}
+            homeValue={pointsLabel(comparison.homeSummary)}
             label="Current WC points"
           />
           <ComparisonRow
@@ -77,13 +84,13 @@ export function TeamComparisonPanel({ defaultOpen = false, match, matches, mode 
             label="World Cup record"
           />
           <ComparisonRow
-            awayValue={goalDifferenceLabel(comparison.awaySummary.goalDifference)}
-            homeValue={goalDifferenceLabel(comparison.homeSummary.goalDifference)}
+            awayValue={goalDifferenceLabel(comparison.awaySummary)}
+            homeValue={goalDifferenceLabel(comparison.homeSummary)}
             label="Goal difference"
           />
           <ComparisonRow
-            awayValue={comparison.awaySummary.played ? `${comparison.awaySummary.played}` : "0"}
-            homeValue={comparison.homeSummary.played ? `${comparison.homeSummary.played}` : "0"}
+            awayValue={playedLabel(comparison.awaySummary)}
+            homeValue={playedLabel(comparison.homeSummary)}
             label="Matches played"
           />
           <ComparisonRow
@@ -104,7 +111,7 @@ export function TeamComparisonPanel({ defaultOpen = false, match, matches, mode 
           <small>
             {comparison.rankingLeader ? `${comparison.rankingLeader.name} have the ranking edge.` : "Ranking edge unavailable."}
             {" "}
-            Profiles refresh with the page; tournament points update when match results sync.
+            Tournament form refreshes from synced results and ESPN standings.
           </small>
         </div>
       </div> : null}
@@ -126,14 +133,32 @@ function rankLabel(rank: number | null | undefined): string {
   return rank ? `#${rank}` : "-";
 }
 
-function recordLabel(summary: { draws: number; losses: number; wins: number }): string {
+function recordLabel(summary: { draws: number; losses: number; played: number; wins: number }): string {
+  if (summary.played === 0) {
+    return "No WC games yet";
+  }
+
   return `${summary.wins}W ${summary.draws}D ${summary.losses}L`;
 }
 
-function goalDifferenceLabel(goalDifference: number): string {
+function goalDifferenceLabel(summary: { goalDifference: number; played: number }): string {
+  if (summary.played === 0) {
+    return "-";
+  }
+
+  const { goalDifference } = summary;
+
   if (goalDifference > 0) {
     return `+${goalDifference}`;
   }
 
   return `${goalDifference}`;
+}
+
+function playedLabel(summary: { played: number }): string {
+  return summary.played ? `${summary.played}` : "None yet";
+}
+
+function pointsLabel(summary: { played: number; points: number }): string {
+  return summary.played ? `${summary.points}` : "First match";
 }
