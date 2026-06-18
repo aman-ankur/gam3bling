@@ -12,6 +12,13 @@ describe("team comparison profiles", () => {
     expect(missingProfiles).toEqual([]);
   });
 
+  it("covers production synced ESPN team codes", () => {
+    const productionCodes = ["BIH", "BRA", "CAN", "CZE", "KOR", "MAR", "MEX", "PAR", "QAT", "RSA", "SUI", "USA"];
+    const missingProfiles = productionCodes.filter((shortCode) => !getTeamProfile({ shortCode }));
+
+    expect(missingProfiles).toEqual([]);
+  });
+
   it("builds comparison details for future fixtures without missing ranks", () => {
     const match = fixtureMatch("GHA", "PAN");
     const comparison = buildTeamComparison(match, [match]);
