@@ -23,6 +23,7 @@ import type { CurrentPlayerMatchPickSummary } from "@/features/predictions/data"
 import { refreshRoomScoresInline } from "@/features/results/actions";
 import { claimRoomPlayer, deleteRoom, joinRoom, rememberRoomInviteCode, removeRoomMember } from "@/features/rooms/actions";
 import { getRoomSummary, type RoomSummary } from "@/features/rooms/data";
+import { formatMatchRankingLabel } from "@/features/teams/team-comparison";
 import { formatKickoffInIst, formatRefreshTimeInIst } from "@/features/time/match-time";
 import { getCurrentDate } from "@/features/time/now";
 
@@ -410,6 +411,7 @@ function OtherOpenMatchLink({
   const matchTitle = `${match.homeTeam.name} vs ${match.awayTeam.name}`;
   const actionLabel = isSaved ? "Show" : isActive ? "View" : "Predict";
   const scoreText = isActive && match.homeScore != null && match.awayScore != null ? `${match.homeScore}-${match.awayScore}` : "vs";
+  const rankLabel = formatMatchRankingLabel(match.homeTeam, match.awayTeam);
 
   return (
     <Link
@@ -432,6 +434,7 @@ function OtherOpenMatchLink({
             formatKickoffInIst(match.kickoffAt)
           )}
         </small>
+        <small>{rankLabel}</small>
         {pickSummary ? <em>Your pick: {compactPickSummary(pickSummary)}</em> : null}
       </div>
       <span>{actionLabel}</span>

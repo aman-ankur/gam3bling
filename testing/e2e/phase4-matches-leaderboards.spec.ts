@@ -24,15 +24,18 @@ test("prediction page includes all MVP markets for an open fixture", async ({ pa
   await expect(page.getByLabel("Netherlands flag").first()).toBeVisible();
   await expect(page.getByLabel("Japan flag").first()).toBeVisible();
   await expect(page.locator(".match-hero-score-card .center-lock b")).toHaveText("vs");
-  await expect(page.getByRole("button", { name: /Team comparison/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Compare" })).toBeVisible();
   await expect(page.getByText("Current WC points")).toBeHidden();
-  await page.getByRole("button", { name: /Team comparison/i }).click();
+  await page.getByRole("button", { name: "Compare" }).click();
   await expect(page.getByRole("heading", { name: "Team comparison" })).toBeVisible();
   await expect(page.getByText("World ranking")).toBeVisible();
   await expect(page.getByLabel("Netherlands ranking value")).toHaveText("#7");
   await expect(page.getByLabel("Japan ranking value")).toHaveText("#18");
   await expect(page.getByText("Current WC points")).toBeVisible();
   await expect(page.getByText("World Cup record")).toBeVisible();
+  await expect(page.getByText("World Cup best")).toBeVisible();
+  await expect(page.getByText("Region")).toBeVisible();
+  await page.getByRole("button", { name: "Predictions", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Final score" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Match result" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Half-time score" })).toBeVisible();
@@ -40,6 +43,7 @@ test("prediction page includes all MVP markets for an open fixture", async ({ pa
   await expect(page.getByRole("heading", { name: "Last team to score" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Save predictions" })).toBeEnabled();
   await expect(page.getByRole("button", { name: "Predictions", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Compare" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Lineups" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Stats" })).toBeVisible();
 });

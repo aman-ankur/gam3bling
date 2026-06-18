@@ -136,6 +136,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
           ) : (
             <FinalMatchSummary match={match} />
           )}
+          <TeamComparisonPanel match={match} matches={matches} mode="static" />
           <RoomPicksBoard awayTeam={match.awayTeam} eyebrow="Friends" homeTeam={match.homeTeam} picks={roomPicks} showResults title="Room predictions" />
           <details className="edit-prediction-panel">
             <summary>
@@ -201,10 +202,9 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
           </section>
 
           <MatchDetailTabs
+            compare={<TeamComparisonPanel match={match} matches={matches} mode="static" />}
             predictions={(
               <>
-                <TeamComparisonPanel match={match} matches={matches} />
-
                 {receiptPrediction ? (
                   <PredictionReceipt
                     awayTeam={match.awayTeam}

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { TeamName } from "@/components/team-name";
 import type { AppMatch } from "@/features/matches/data";
 import type { RoomMatchPick } from "@/features/predictions/data";
+import { formatMatchRankingLabel } from "@/features/teams/team-comparison";
 import { formatHistoryKickoffInIst } from "@/features/time/match-time";
 
 type LatestResultCardProps = {
@@ -17,6 +18,7 @@ export function LatestResultCard({ match, picks, slug }: LatestResultCardProps) 
   const matchHref = `/r/${slug}/matches/${match.apiMatchId}`;
   const hasScore = match.homeScore != null && match.awayScore != null;
   const scoreText = hasScore ? `${match.homeScore}-${match.awayScore}` : "Pending";
+  const rankLabel = formatMatchRankingLabel(match.homeTeam, match.awayTeam);
   const pickText = currentPick?.finalScore ?? (
     currentPick?.finalHomeScore != null && currentPick.finalAwayScore != null
       ? `${currentPick.finalHomeScore}-${currentPick.finalAwayScore}`
@@ -39,6 +41,7 @@ export function LatestResultCard({ match, picks, slug }: LatestResultCardProps) 
             <TeamName team={match.awayTeam} />
           </strong>
           <small className="history-kickoff-time">{formatHistoryKickoffInIst(match.kickoffAt)}</small>
+          <small className="history-kickoff-time">{rankLabel}</small>
         </div>
         <b className="history-card-score">{scoreText}</b>
       </div>
