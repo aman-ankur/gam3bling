@@ -66,6 +66,10 @@ export async function getUpcomingMatches(options: GetUpcomingMatchesOptions = {}
   return getUpcomingMatchesByDemoVisibility(Boolean(options.includeDemo));
 }
 
+export async function getTournamentMatches(options: GetUpcomingMatchesOptions = {}): Promise<AppMatch[]> {
+  return getTournamentMatchesByDemoVisibility(Boolean(options.includeDemo));
+}
+
 const getUpcomingMatchesByDemoVisibility = cache(async (includeDemo: boolean): Promise<AppMatch[]> => {
   if (process.env.E2E_USE_FALLBACK_FIXTURES === "1") {
     return fallbackAppMatches();
@@ -93,6 +97,35 @@ const getUpcomingMatchesByDemoVisibility = cache(async (includeDemo: boolean): P
     const mappedMatches = mapMatchRows(visibleRows, teamRows as TeamRow[]);
 
     return prioritizeUpcoming(mappedMatches);
+  } catch {
+    return fallbackAppMatches();
+  }
+});
+
+const getTournamentMatchesByDemoVisibility = cache(async (includeDemo: boolean): Promise<AppMatch[]> => {
+  if (process.env.E2E_USE_FALLBACK_FIXTURES === "1") {
+    return fallbackAppMatches();
+  }
+
+  const supabase = getSupabaseAdmin();
+
+  if (!supabase) {
+    return fallbackAppMatches();
+  }
+
+  try {
+    const [{ data: matchRows, error: matchError }, { data: teamRows, error: teamError }] = await Promise.all([
+      supabase.from("matches").select("*").order("kickoff_at", { ascending: true }).limit(128),
+      supabase.from("teams").select("*")
+    ]);
+
+    if (matchError || teamError || !matchRows || !teamRows) {
+      return fallbackAppMatches();
+    }
+
+    const visibleRows = (matchRows as MatchRow[]).filter((match) => includeDemo || match.api_provider !== "demo");
+
+    return mapMatchRows(visibleRows, teamRows as TeamRow[]);
   } catch {
     return fallbackAppMatches();
   }

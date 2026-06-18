@@ -9,7 +9,7 @@ test("matches page prioritizes upcoming prediction locks", async ({ page }) => {
   await expect(page.getByRole("link", { name: /View pick Netherlands vs Japan/i })).toBeVisible();
   await expect(page.getByRole("link", { name: /Predict Ivory Coast vs Ecuador/i })).toBeVisible();
   await expect(page.locator(".match-card").first().locator(".fixture-row")).toHaveCount(0);
-  await expect(page.locator(".match-card").first().getByText("FIFA rank #7 / #18")).toBeVisible();
+  await expect(page.locator(".match-card").first().locator(".team-name").first()).toHaveAttribute("data-fifa-rank", "#7");
   await expect(page.getByText("Details cached")).toHaveCount(0);
   await expect(page.getByText("Fetch queued")).toHaveCount(0);
 });

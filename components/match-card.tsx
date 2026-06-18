@@ -4,7 +4,6 @@ import { LiveMatchClock } from "@/components/live-match-clock";
 import { MatchupName, TeamName } from "@/components/team-name";
 import type { AppTeam } from "@/features/matches/data";
 import { formatKickoffInIst } from "@/features/time/match-time";
-import { formatMatchRankingLabel } from "@/features/teams/team-comparison";
 
 type MatchCardProps = {
   actionLabel?: string;
@@ -49,7 +48,6 @@ export function MatchCard({
   const scoreText = homeScore != null && awayScore != null && (isLive || isLocked) ? `${homeScore}-${awayScore}` : null;
   const clockInitialNow = initialNow ?? new Date().toISOString();
   const kickoffLabel = isLive ? "Live now" : formatKickoffInIst(kickoffAt);
-  const rankingLabel = formatMatchRankingLabel(homeTeam, awayTeam);
   const className = [
     "match-ticket",
     "match-card",
@@ -118,9 +116,8 @@ export function MatchCard({
       <h3 aria-label={matchTitle}>
         <MatchupName awayTeam={awayTeam} homeTeam={homeTeam} />
       </h3>
-      <div className="match-card-facts" aria-label={`${kickoffLabel}, ${rankingLabel}`}>
+      <div className="match-card-facts" aria-label={kickoffLabel}>
         <span>{kickoffLabel}</span>
-        <span>{rankingLabel}</span>
         {scoreText ? <strong>{scoreText}</strong> : null}
       </div>
       <div className="match-action-row">

@@ -14,7 +14,7 @@ import { RoomPicksBoard } from "@/components/room-picks-board";
 import { TeamComparisonPanel } from "@/components/team-comparison-panel";
 import { MatchupName, TeamName } from "@/components/team-name";
 import { savePrediction } from "@/features/predictions/actions";
-import { getMatchByRouteId, getUpcomingMatches } from "@/features/matches/data";
+import { getMatchByRouteId, getTournamentMatches, getUpcomingMatches } from "@/features/matches/data";
 import type { AppMatch } from "@/features/matches/data";
 import { isMatchInOpenPredictionWindow } from "@/features/matches/prediction-window";
 import { refreshMatchDetailsInline } from "@/features/match-details/actions";
@@ -46,14 +46,23 @@ type MatchPredictionPageProps = {
 export default async function MatchPredictionPage({ params, searchParams }: MatchPredictionPageProps) {
   const { matchId, slug } = await params;
   const { details, error, result, saved, score } = await searchParams;
-  const matches = await getUpcomingMatches({ includeDemo: isDemoRoomSlug(slug) });
-  const room = await getRoomSummary(slug);
+  const includeDemo = isDemoRoomSlug(slug);
+  const [matches, tournamentMatches, room] = await Promise.all([
+    getUpcomingMatches({ includeDemo }),
+    getTournamentMatches({ includeDemo }),
+    getRoomSummary(slug)
+  ]);
 
   if (!room.exists) {
     return <RoomMissing slug={slug} />;
   }
 
-  const match = matches.find((candidate) => candidate.id === matchId || candidate.apiMatchId === matchId) ?? await getMatchByRouteId(matchId);
+  const match = tournamentMatches.find((candidate) => candidate.id === matchId || candidate.apiMatchId === matchId)
+    ?? matches.find((candidate) => candidate.id === matchId || candidate.apiMatchId === matchId)
+    ?? await getMatchByRouteId(matchId);
+  const comparisonMatches = match && !tournamentMatches.some((candidate) => candidate.id === match.id)
+    ? [...tournamentMatches, match]
+    : tournamentMatches;
 
   if (!match) {
     console.warn("[matches.prediction] missing", { slug, matchId });
@@ -136,7 +145,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
           ) : (
             <FinalMatchSummary match={match} />
           )}
-          <TeamComparisonPanel match={match} matches={matches} mode="static" />
+          <TeamComparisonPanel match={match} matches={comparisonMatches} mode="static" />
           <RoomPicksBoard awayTeam={match.awayTeam} eyebrow="Friends" homeTeam={match.homeTeam} picks={roomPicks} showResults title="Room predictions" />
           <details className="edit-prediction-panel">
             <summary>
@@ -202,7 +211,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
           </section>
 
           <MatchDetailTabs
-            compare={<TeamComparisonPanel match={match} matches={matches} mode="static" />}
+            compare={<TeamComparisonPanel match={match} matches={comparisonMatches} mode="static" />}
             predictions={(
               <>
                 {receiptPrediction ? (

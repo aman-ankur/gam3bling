@@ -455,18 +455,21 @@ a {
 
 .team-name[data-fifa-rank]::after {
   display: inline-flex;
+  align-self: flex-start;
   align-items: center;
   justify-content: center;
-  min-height: 22px;
-  padding: 0 7px;
-  border: 1px solid rgba(216, 185, 93, 0.28);
-  border-radius: 999px;
+  min-height: 1em;
+  margin-left: -2px;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 0;
   color: var(--gold);
-  background: rgba(216, 185, 93, 0.09);
+  background: transparent;
   content: attr(data-fifa-rank);
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 1000;
   line-height: 1;
+  transform: translateY(-0.32em);
 }
 
 .team-flag {
