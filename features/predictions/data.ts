@@ -29,6 +29,13 @@ export type RoomMatchPick = {
   isCurrentPlayer: boolean;
 };
 
+export type CurrentPlayerMatchPickSummary = {
+  finalScore: string;
+  halftimeScore: string;
+  result: string;
+  scorers: string;
+};
+
 type InternalRoomMatchPick = RoomMatchPick & {
   joinedAt: string;
   nameKey: string;
@@ -378,6 +385,88 @@ export async function getCurrentPlayerPredictedMatchIds(roomSlug: string, matche
     }));
   } catch {
     return new Set();
+  }
+}
+
+export async function getCurrentPlayerMatchPickSummaries(
+  roomSlug: string,
+  matches: AppMatch[]
+): Promise<Map<string, CurrentPlayerMatchPickSummary>> {
+  if (process.env.E2E_USE_FALLBACK_FIXTURES === "1") {
+    const fallbackMatch = matches.find((candidate) => candidate.apiMatchId === "1489376");
+
+    return fallbackMatch
+      ? new Map([
+        [fallbackMatch.id, {
+          finalScore: "2-1",
+          halftimeScore: "1-0",
+          result: fallbackMatch.homeTeam.name,
+          scorers: `${fallbackMatch.homeTeam.name} first, ${fallbackMatch.awayTeam.name} last`
+        }],
+        [fallbackMatch.apiMatchId, {
+          finalScore: "2-1",
+          halftimeScore: "1-0",
+          result: fallbackMatch.homeTeam.name,
+          scorers: `${fallbackMatch.homeTeam.name} first, ${fallbackMatch.awayTeam.name} last`
+        }]
+      ])
+      : new Map();
+  }
+
+  const supabase = getSupabaseAdmin();
+  const session = await getPlayerSessionForRoom(roomSlug);
+
+  if (!supabase || !session || matches.length === 0) {
+    return new Map();
+  }
+
+  try {
+    const { data: room } = await supabase.from("rooms").select("id").eq("slug", roomSlug).single();
+
+    if (!room) {
+      return new Map();
+    }
+
+    const { data: membership } = await supabase
+      .from("room_members")
+      .select("player_id")
+      .eq("room_id", room.id)
+      .eq("player_id", session.playerId)
+      .maybeSingle();
+
+    if (!membership) {
+      return new Map();
+    }
+
+    const matchById = new Map(matches.map((candidate) => [candidate.id, candidate]));
+    const { data: predictions } = await supabase
+      .from("predictions")
+      .select("match_id, final_home_score, final_away_score, halftime_home_score, halftime_away_score, match_result, first_scoring_team_id, last_scoring_team_id")
+      .eq("player_id", session.playerId)
+      .in("match_id", [...matchById.keys()]);
+    const summaries = new Map<string, CurrentPlayerMatchPickSummary>();
+
+    for (const prediction of predictions ?? []) {
+      const predictedMatch = matchById.get(prediction.match_id);
+
+      if (!predictedMatch) {
+        continue;
+      }
+
+      const summary = {
+        finalScore: `${prediction.final_home_score}-${prediction.final_away_score}`,
+        halftimeScore: `${prediction.halftime_home_score}-${prediction.halftime_away_score}`,
+        result: resultLabel(prediction.match_result, predictedMatch),
+        scorers: scorersLabel(prediction.first_scoring_team_id, prediction.last_scoring_team_id, predictedMatch)
+      };
+
+      summaries.set(predictedMatch.id, summary);
+      summaries.set(predictedMatch.apiMatchId, summary);
+    }
+
+    return summaries;
+  } catch {
+    return new Map();
   }
 }
 

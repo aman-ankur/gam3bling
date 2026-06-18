@@ -17,7 +17,8 @@ import { getUpcomingMatches } from "@/features/matches/data";
 import type { AppMatch } from "@/features/matches/data";
 import { getActiveMatchIds, getOpenPredictionMatchIds } from "@/features/matches/prediction-window";
 import { getPlayerSessionForRoom } from "@/features/players/session";
-import { getCurrentPlayerPredictedMatchIds, getRoomHistoryMatches, getRoomMatchPicks } from "@/features/predictions/data";
+import { getCurrentPlayerMatchPickSummaries, getCurrentPlayerPredictedMatchIds, getRoomHistoryMatches, getRoomMatchPicks } from "@/features/predictions/data";
+import type { CurrentPlayerMatchPickSummary } from "@/features/predictions/data";
 import { refreshRoomScores } from "@/features/results/actions";
 import { claimRoomPlayer, deleteRoom, joinRoom, rememberRoomInviteCode, removeRoomMember } from "@/features/rooms/actions";
 import { getRoomSummary, type RoomSummary } from "@/features/rooms/data";
@@ -67,6 +68,7 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
     const activeMatches = matches.filter((match) => hasMatchId(activeMatchIds, match));
     const openMatches = matches.filter((match) => hasMatchId(openMatchIds, match));
     const currentMatches = [...activeMatches, ...openMatches.filter((match) => !hasMatchId(activeMatchIds, match))].slice(0, 4);
+    const currentPlayerPickSummaries = await getCurrentPlayerMatchPickSummaries(slug, currentMatches);
     const featuredMatch = currentMatches[0];
     const featuredMatchIsActive = featuredMatch ? hasMatchId(activeMatchIds, featuredMatch) : false;
     const otherCurrentMatches = currentMatches.slice(1);
@@ -136,6 +138,7 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
                 initialNow={initialNow}
                 kickoffAt={featuredMatch.kickoffAt}
                 metaLabel={featuredMatchIsActive ? "Match live" : "Predictions open"}
+                pickSummary={compactPickSummary(currentPlayerPickSummaries.get(featuredMatch.id) ?? currentPlayerPickSummaries.get(featuredMatch.apiMatchId))}
                 progress={
                   predictedMatchIds.has(featuredMatch.id) || predictedMatchIds.has(featuredMatch.apiMatchId)
                     ? "Saved"
@@ -160,6 +163,7 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
                   initialNow={initialNow}
                   key={match.id}
                   match={match}
+                  pickSummary={currentPlayerPickSummaries.get(match.id) ?? currentPlayerPickSummaries.get(match.apiMatchId)}
                   slug={slug}
                 />
               ))}
@@ -391,12 +395,14 @@ function OtherOpenMatchLink({
   isActive,
   isSaved,
   match,
+  pickSummary,
   slug
 }: {
   initialNow: string;
   isActive: boolean;
   isSaved: boolean;
   match: AppMatch;
+  pickSummary?: CurrentPlayerMatchPickSummary;
   slug: string;
 }) {
   const matchTitle = `${match.homeTeam.name} vs ${match.awayTeam.name}`;
@@ -424,10 +430,19 @@ function OtherOpenMatchLink({
             formatKickoffInIst(match.kickoffAt)
           )}
         </small>
+        {pickSummary ? <em>Your pick: {compactPickSummary(pickSummary)}</em> : null}
       </div>
       <span>{actionLabel}</span>
     </Link>
   );
+}
+
+function compactPickSummary(summary?: CurrentPlayerMatchPickSummary): string | undefined {
+  if (!summary) {
+    return undefined;
+  }
+
+  return `${summary.finalScore} · HT ${summary.halftimeScore} · ${summary.result} · ${summary.scorers}`;
 }
 
 function scoreRefreshMessage(scores: string | undefined): string | undefined {

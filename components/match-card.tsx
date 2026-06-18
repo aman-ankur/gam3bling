@@ -18,6 +18,7 @@ type MatchCardProps = {
   initialNow?: string;
   progress: string;
   metaLabel?: string;
+  pickSummary?: string;
   featured?: boolean;
   status?: "open" | "locked" | "live";
   variant?: "standard" | "sport";
@@ -36,6 +37,7 @@ export function MatchCard({
   initialNow,
   progress,
   metaLabel,
+  pickSummary,
   featured = false,
   status = "open",
   variant = "standard"
@@ -84,8 +86,9 @@ export function MatchCard({
           <span />
         </div>
         <div className="match-action-row">
-          <div>
+          <div className="match-card-note">
             <small>{progress}</small>
+            {pickSummary ? <span>Your pick: {pickSummary}</span> : null}
           </div>
           {href && !isLocked ? (
             <Link aria-label={ariaActionLabel ?? `${actionLabel} ${matchTitle}`} className="card-link" href={href}>
@@ -123,9 +126,10 @@ export function MatchCard({
         </strong>
       </div>
       <div className="match-action-row">
-        <div>
+        <div className="match-card-note">
           <span className={`state-dot ${status}`}>{status}</span>
           <small>{progress}</small>
+          {pickSummary ? <span>Your pick: {pickSummary}</span> : null}
         </div>
         {href && !isLocked ? (
           <Link aria-label={ariaActionLabel ?? `${actionLabel} ${matchTitle}`} className="card-link" href={href}>

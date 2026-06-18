@@ -373,6 +373,17 @@ a {
   white-space: normal;
 }
 
+.match-card-note span,
+.other-open-match-row em {
+  display: block;
+  color: rgba(232, 197, 106, 0.9);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 850;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
 .ticket-meta strong {
   padding: 4px 8px;
   border-radius: 999px;
@@ -2510,6 +2521,10 @@ body {
   color: var(--muted);
   font-size: 12px;
   font-weight: 850;
+}
+
+.other-open-match-row em {
+  margin-top: 4px;
 }
 
 .other-open-match-row > span {
