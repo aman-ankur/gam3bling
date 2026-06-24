@@ -69,7 +69,7 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
     const openMatchIds = getOpenPredictionMatchIds(matches, now);
     const activeMatches = matches.filter((match) => hasMatchId(activeMatchIds, match));
     const openMatches = matches.filter((match) => hasMatchId(openMatchIds, match));
-    const currentMatches = [...activeMatches, ...openMatches.filter((match) => !hasMatchId(activeMatchIds, match))].slice(0, 4);
+    const currentMatches = [...activeMatches, ...openMatches.filter((match) => !hasMatchId(activeMatchIds, match))].slice(0, 8);
     const [currentPlayerPickSummaries, historyPickSetsByMatchId] = await Promise.all([
       getCurrentPlayerMatchPickSummaries(slug, currentMatches),
       getRoomMatchPicksForMatches(slug, historyMatches)

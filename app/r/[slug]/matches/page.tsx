@@ -69,7 +69,7 @@ export default async function MatchesPage({ params }: MatchesPageProps) {
         {lockedMatchCount > 0 ? (
           <div className="locked-summary">
             <strong>{lockedMatchCount} later fixtures locked</strong>
-            <span>They unlock automatically as they enter the next 4 match window.</span>
+            <span>They unlock automatically when they enter today or tomorrow&apos;s IST match window.</span>
           </div>
         ) : null}
       </section>

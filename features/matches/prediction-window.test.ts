@@ -2,24 +2,46 @@ import { expect, test } from "vitest";
 import type { AppMatch } from "./data";
 import { getActiveMatchIds, getOpenPredictionMatchIds, isMatchInOpenPredictionWindow } from "./prediction-window";
 
-test("opens only the next four future scheduled matches", () => {
-  const now = new Date("2026-06-14T12:00:00.000Z");
-  const matches = Array.from({ length: 6 }, (_, index) => buildMatch(index + 1));
+test("opens up to eight future scheduled matches from today and tomorrow in IST", () => {
+  const now = new Date("2026-06-14T18:00:00.000Z"); // 14 Jun, 11:30 PM IST
+  const matches = [
+    buildMatch(1, { kickoffAt: "2026-06-14T17:30:00.000Z" }), // already past
+    buildMatch(2, { kickoffAt: "2026-06-14T18:15:00.000Z" }), // today IST
+    buildMatch(3, { kickoffAt: "2026-06-14T19:00:00.000Z" }), // tomorrow IST
+    buildMatch(4, { kickoffAt: "2026-06-15T00:00:00.000Z" }),
+    buildMatch(5, { kickoffAt: "2026-06-15T03:00:00.000Z" }),
+    buildMatch(6, { kickoffAt: "2026-06-15T06:00:00.000Z" }),
+    buildMatch(7, { kickoffAt: "2026-06-15T09:00:00.000Z" }),
+    buildMatch(8, { kickoffAt: "2026-06-15T12:00:00.000Z" }),
+    buildMatch(9, { kickoffAt: "2026-06-15T15:00:00.000Z" }),
+    buildMatch(10, { kickoffAt: "2026-06-15T18:00:00.000Z" }),
+    buildMatch(11, { kickoffAt: "2026-06-15T18:29:00.000Z" }), // still tomorrow IST, but over the 8-match cap
+    buildMatch(12, { kickoffAt: "2026-06-15T18:30:00.000Z" }) // day after tomorrow IST
+  ];
 
   const openMatchIds = getOpenPredictionMatchIds(matches, now);
 
   expect([...openMatchIds]).toEqual([
-    "match-1",
-    "api-1",
     "match-2",
     "api-2",
     "match-3",
     "api-3",
     "match-4",
-    "api-4"
+    "api-4",
+    "match-5",
+    "api-5",
+    "match-6",
+    "api-6",
+    "match-7",
+    "api-7",
+    "match-8",
+    "api-8",
+    "match-9",
+    "api-9"
   ]);
-  expect(isMatchInOpenPredictionWindow(matches[3], matches, now)).toBe(true);
-  expect(isMatchInOpenPredictionWindow(matches[4], matches, now)).toBe(false);
+  expect(isMatchInOpenPredictionWindow(matches[8], matches, now)).toBe(true);
+  expect(isMatchInOpenPredictionWindow(matches[10], matches, now)).toBe(false);
+  expect(isMatchInOpenPredictionWindow(matches[11], matches, now)).toBe(false);
 });
 
 test("does not open past or non-scheduled matches", () => {
@@ -27,10 +49,21 @@ test("does not open past or non-scheduled matches", () => {
   const matches = [
     buildMatch(1, { kickoffAt: "2026-06-14T11:00:00.000Z" }),
     buildMatch(2, { status: "final" }),
-    buildMatch(3)
+    buildMatch(3, { kickoffAt: "2026-06-14T15:00:00.000Z" })
   ];
 
   expect([...getOpenPredictionMatchIds(matches, now)]).toEqual(["match-3", "api-3"]);
+});
+
+test("does not fill the open window with matches after tomorrow in IST", () => {
+  const now = new Date("2026-06-14T04:00:00.000Z"); // 14 Jun, 9:30 AM IST
+  const matches = [
+    buildMatch(1, { kickoffAt: "2026-06-14T08:00:00.000Z" }),
+    buildMatch(2, { kickoffAt: "2026-06-15T18:29:00.000Z" }),
+    buildMatch(3, { kickoffAt: "2026-06-15T18:30:00.000Z" })
+  ];
+
+  expect([...getOpenPredictionMatchIds(matches, now)]).toEqual(["match-1", "api-1", "match-2", "api-2"]);
 });
 
 test("keeps a just-started match active after predictions lock", () => {
