@@ -1,7 +1,7 @@
 import type { AppMatch } from "@/features/matches/data";
 import { getCurrentDate } from "../time/now";
 
-const OPEN_PREDICTION_MATCH_COUNT = 8;
+const OPEN_PREDICTION_MATCH_COUNT = 10;
 const ACTIVE_MATCH_WINDOW_MS = 150 * 60 * 1_000;
 const RECENT_LIVE_SYNC_MS = 30 * 60 * 1_000;
 const IST_DAY_MS = 24 * 60 * 60 * 1_000;
@@ -14,7 +14,11 @@ const IST_DATE_FORMATTER = new Intl.DateTimeFormat("en-IN", {
 
 export function getOpenPredictionMatchIds(matches: AppMatch[], now = getCurrentDate()): Set<string> {
   const nowMs = now.getTime();
-  const openDateKeys = new Set([istDateKey(now), istDateKey(new Date(nowMs + IST_DAY_MS))]);
+  const openDateKeys = new Set([
+    istDateKey(now),
+    istDateKey(new Date(nowMs + IST_DAY_MS)),
+    istDateKey(new Date(nowMs + IST_DAY_MS * 2))
+  ]);
   const openMatches = matches
     .filter((match) => {
       const kickoff = new Date(match.kickoffAt);
