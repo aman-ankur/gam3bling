@@ -165,6 +165,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
               homeTeam={match.homeTeam}
               initialPrediction={receiptPrediction}
               locked={locked}
+              stage={match.stage}
             />
           </details>
         </div>
@@ -236,6 +237,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
                     halftimeScore={receiptPrediction.halftimeScore}
                     homeTeam={match.homeTeam}
                     lastScoringTeamId={receiptPrediction.lastScoringTeamId}
+                    penaltyScore={receiptPrediction.penaltyScore}
                     result={receiptPrediction.matchResult}
                   />
                 ) : null}
@@ -257,6 +259,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
                     homeTeam={match.homeTeam}
                     initialPrediction={receiptPrediction}
                     locked={locked}
+                    stage={match.stage}
                   />
                 </details>
               </>
@@ -369,6 +372,9 @@ function createFallbackReceipt(match: AppMatch) {
     halftimeHomeScore: 1,
     halftimeAwayScore: 0,
     halftimeScore: "1-0",
+    penaltyHomeScore: undefined,
+    penaltyAwayScore: undefined,
+    penaltyScore: undefined,
     matchResult: "home" as const,
     firstScoringTeamId: match.homeTeam.id,
     lastScoringTeamId: match.awayTeam.id,
@@ -379,6 +385,7 @@ function createFallbackReceipt(match: AppMatch) {
     scoreHalftime: 0,
     scoreFirstScorer: 0,
     scoreLastScorer: 0,
+    scorePenalty: 0,
     points: 0,
     saved: true,
     isCurrentPlayer: true

@@ -2,6 +2,7 @@ import { InlineRefreshButton, type InlineRefreshActionResult } from "@/component
 import type { AppMatch } from "@/features/matches/data";
 import type { RoomMatchPick } from "@/features/predictions/data";
 import type { ResultCheckState } from "@/features/results/check-window";
+import { MAX_PREDICTION_POINTS } from "@/features/scoring/rules";
 
 type MatchResultBreakdownProps = {
   match: AppMatch;
@@ -19,17 +20,18 @@ export function MatchResultBreakdown({ match, pick }: MatchResultBreakdownProps)
     return null;
   }
 
-  const maxPoints = 29;
   const hitCount = [
     pick.scoreFinal,
     pick.scoreResult,
     pick.scoreHalftime,
     pick.scoreFirstScorer,
-    pick.scoreLastScorer
+    pick.scoreLastScorer,
+    pick.scorePenalty
   ].filter((points) => points > 0).length;
   const pendingCount = [
     !match.firstScoringTeamId,
-    !match.lastScoringTeamId
+    !match.lastScoringTeamId,
+    pick.penaltyScore && (match.homePenaltyScore == null || match.awayPenaltyScore == null)
   ].filter(Boolean).length;
   const halftimeDetail = match.homeHalftimeScore != null && match.awayHalftimeScore != null
     ? `Predicted ${pick.halftimeScore}, official ${match.homeHalftimeScore}-${match.awayHalftimeScore}`
@@ -43,7 +45,7 @@ export function MatchResultBreakdown({ match, pick }: MatchResultBreakdownProps)
           <span>{match.homeTeam.name} {match.homeScore}-{match.awayScore}</span>
           <span>{match.awayTeam.name}</span>
         </h2>
-        <p>Your pick: {match.homeTeam.name} {pick.finalScore} {match.awayTeam.name} · HT {pick.halftimeScore}</p>
+        <p>Your pick: {match.homeTeam.name} {pick.finalScore} {match.awayTeam.name}{pick.penaltyScore ? ` · Pens ${pick.penaltyScore}` : ""} · HT {pick.halftimeScore}</p>
         <div className="result-chip-row" aria-label="Prediction result summary">
           <span className="result-pill good">+{pick.points} pts</span>
           <span className="result-pill">{hitCount} hits</span>
@@ -58,12 +60,21 @@ export function MatchResultBreakdown({ match, pick }: MatchResultBreakdownProps)
             <h2 id="result-breakdown-title">What you got right</h2>
             <p>Scored from official final score and half-time score.</p>
           </div>
-          <strong>{pick.points}/{maxPoints}</strong>
+          <strong>{pick.points}/{MAX_PREDICTION_POINTS}</strong>
         </div>
 
         <div className="breakdown-list">
           <BreakdownRow detail={`Predicted ${pick.finalScore}, final ${match.homeScore}-${match.awayScore}`} hit={pick.scoreFinal > 0} label="Exact score" points={pick.scoreFinal} />
           <BreakdownRow detail={pick.result ?? "Result prediction"} hit={pick.scoreResult > 0} label="Result" points={pick.scoreResult} />
+          {pick.penaltyScore ? (
+            <BreakdownRow
+              detail={penaltyDetail(match, pick)}
+              hit={pick.scorePenalty > 0}
+              label="Penalty score"
+              pending={match.homePenaltyScore == null || match.awayPenaltyScore == null}
+              points={pick.scorePenalty}
+            />
+          ) : null}
           <BreakdownRow detail={halftimeDetail} hit={pick.scoreHalftime > 0} label="Half-time" points={pick.scoreHalftime} />
           <BreakdownRow
             detail={teamMarketDetail(match.firstScoringTeamId, pick.scoreFirstScorer, "first")}
@@ -129,6 +140,14 @@ function teamMarketDetail(officialTeamId: string | null | undefined, points: num
   }
 
   return points > 0 ? `Team matched official ${market} scorer` : `Missed official ${market} scorer`;
+}
+
+function penaltyDetail(match: AppMatch, pick: RoomMatchPick): string {
+  if (match.homePenaltyScore == null || match.awayPenaltyScore == null) {
+    return `Predicted pens ${pick.penaltyScore}`;
+  }
+
+  return `Predicted pens ${pick.penaltyScore}, official ${match.homePenaltyScore}-${match.awayPenaltyScore}`;
 }
 
 function BreakdownRow({

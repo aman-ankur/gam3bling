@@ -13,6 +13,8 @@ type LocalMatchRow = {
   status: MatchStatus;
   home_score: number | null;
   away_score: number | null;
+  home_penalty_score?: number | null;
+  away_penalty_score?: number | null;
 };
 
 type LocalTeamRow = {
@@ -28,6 +30,8 @@ type PredictionRow = {
   match_result: MatchResult;
   halftime_home_score: number;
   halftime_away_score: number;
+  penalty_home_score?: number | null;
+  penalty_away_score?: number | null;
   first_scoring_team_id: string | null;
   last_scoring_team_id: string | null;
 };
@@ -303,6 +307,8 @@ async function updateMatch(
     away_score: update.awayScore ?? null,
     home_halftime_score: update.homeHalftimeScore ?? null,
     away_halftime_score: update.awayHalftimeScore ?? null,
+    home_penalty_score: update.penaltyHomeScore ?? null,
+    away_penalty_score: update.penaltyAwayScore ?? null,
     winner: update.winner ?? null,
     first_scoring_team_id: update.firstScoringTeamId ?? null,
     last_scoring_team_id: update.lastScoringTeamId ?? null,
@@ -351,6 +357,8 @@ async function scoreFinalMatchPredictions(
         matchResult: prediction.match_result,
         halftimeHomeScore: prediction.halftime_home_score,
         halftimeAwayScore: prediction.halftime_away_score,
+        penaltyHomeScore: prediction.penalty_home_score,
+        penaltyAwayScore: prediction.penalty_away_score,
         firstScoringTeamId: prediction.first_scoring_team_id,
         lastScoringTeamId: prediction.last_scoring_team_id
       },
@@ -359,6 +367,8 @@ async function scoreFinalMatchPredictions(
         awayScore: update.awayScore,
         halftimeHomeScore: update.homeHalftimeScore,
         halftimeAwayScore: update.awayHalftimeScore,
+        penaltyHomeScore: update.penaltyHomeScore,
+        penaltyAwayScore: update.penaltyAwayScore,
         winner: update.winner,
         firstScoringTeamId: update.firstScoringTeamId ?? null,
         lastScoringTeamId: update.lastScoringTeamId ?? null
@@ -372,6 +382,7 @@ async function scoreFinalMatchPredictions(
         score_halftime: score.scoreHalftime,
         score_first_scorer: score.scoreFirstScorer,
         score_last_scorer: score.scoreLastScorer,
+        score_penalty: score.scorePenalty,
         score_total: score.scoreTotal,
         scored_at: scoredAt
       })

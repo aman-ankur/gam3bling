@@ -69,6 +69,8 @@ describe("syncMatches", () => {
           away_score: 1,
           home_halftime_score: 1,
           away_halftime_score: 0,
+          home_penalty_score: null,
+          away_penalty_score: null,
           winner: "home",
           first_scoring_team_id: null,
           last_scoring_team_id: null,
@@ -87,6 +89,7 @@ describe("syncMatches", () => {
           score_halftime: 6,
           score_first_scorer: 0,
           score_last_scorer: 0,
+          score_penalty: 0,
           score_total: 21,
           scored_at: "2026-06-14T12:00:00.000Z"
         }
@@ -507,6 +510,7 @@ describe("syncMatchResult", () => {
         score_halftime: 6,
         score_first_scorer: 4,
         score_last_scorer: 4,
+        score_penalty: 0,
         score_total: 29,
         scored_at: "2026-06-14T12:00:00.000Z"
       }

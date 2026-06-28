@@ -7,6 +7,7 @@ type PredictionReceiptProps = {
   halftimeScore?: string;
   homeTeam: AppTeam;
   lastScoringTeamId?: string;
+  penaltyScore?: string;
   result?: "home" | "away" | "draw";
 };
 
@@ -17,9 +18,11 @@ export function PredictionReceipt({
   halftimeScore,
   homeTeam,
   lastScoringTeamId,
+  penaltyScore,
   result
 }: PredictionReceiptProps) {
   const detailParts = [
+    penaltyScore ? `Pens ${penaltyScore}` : null,
     halftimeScore ? `HT ${halftimeScore}` : "Half-time pending",
     result ? resultText(awayTeam, homeTeam, result) : null,
     firstScoringTeamId || lastScoringTeamId

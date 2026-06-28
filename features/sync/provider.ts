@@ -10,6 +10,8 @@ export type ProviderMatchUpdate = {
   awayTeamExternalId?: string | null;
   homeHalftimeScore?: number | null;
   awayHalftimeScore?: number | null;
+  penaltyHomeScore?: number | null;
+  penaltyAwayScore?: number | null;
   winner?: MatchResult | null;
   firstScoringTeamId?: string | null;
   lastScoringTeamId?: string | null;

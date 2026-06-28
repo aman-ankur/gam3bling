@@ -24,17 +24,22 @@ type PredictionFormProps = {
     finalAwayScore?: number;
     halftimeHomeScore?: number;
     halftimeAwayScore?: number;
+    penaltyHomeScore?: number | null;
+    penaltyAwayScore?: number | null;
     firstScoringTeamId?: string;
     lastScoringTeamId?: string;
   };
   locked?: boolean;
+  stage?: string;
 };
 
-export function PredictionForm({ action, awayTeam, homeTeam, initialPrediction, locked = false }: PredictionFormProps) {
+export function PredictionForm({ action, awayTeam, homeTeam, initialPrediction, locked = false, stage }: PredictionFormProps) {
   const [finalHomeScore, setFinalHomeScore] = useState(String(initialPrediction?.finalHomeScore ?? 2));
   const [finalAwayScore, setFinalAwayScore] = useState(String(initialPrediction?.finalAwayScore ?? 1));
   const [halftimeHomeScore, setHalftimeHomeScore] = useState(String(initialPrediction?.halftimeHomeScore ?? 1));
   const [halftimeAwayScore, setHalftimeAwayScore] = useState(String(initialPrediction?.halftimeAwayScore ?? 0));
+  const [penaltyHomeScore, setPenaltyHomeScore] = useState(String(initialPrediction?.penaltyHomeScore ?? 5));
+  const [penaltyAwayScore, setPenaltyAwayScore] = useState(String(initialPrediction?.penaltyAwayScore ?? 4));
   const [firstScoringTeamId, setFirstScoringTeamId] = useState(initialPrediction?.firstScoringTeamId ?? homeTeam.id);
   const [lastScoringTeamId, setLastScoringTeamId] = useState(initialPrediction?.lastScoringTeamId ?? awayTeam.id);
   const finalHome = parseScore(finalHomeScore);
@@ -50,6 +55,7 @@ export function PredictionForm({ action, awayTeam, homeTeam, initialPrediction, 
     }),
     [awayTeam.id, finalAway, finalHome, firstScoringTeamId, homeTeam.id, lastScoringTeamId]
   );
+  const showPenaltyScore = isKnockoutStage(stage) && derived.matchResult === "draw";
   const updateFinalHomeScore = (value: string) => {
     const nextFinalHome = parseScore(value);
 
@@ -116,6 +122,40 @@ export function PredictionForm({ action, awayTeam, homeTeam, initialPrediction, 
         </div>
         <p className="helper-line">Auto-selected from final score</p>
       </section>
+
+      {showPenaltyScore ? (
+        <section className="market-card" aria-labelledby="penalty-score-title">
+          <h2 id="penalty-score-title">Penalty score</h2>
+          <div className="score-grid">
+            <label>
+              <TeamName team={homeTeam} />
+              <input
+                aria-label={`${homeTeam.name} penalty score`}
+                disabled={locked}
+                inputMode="numeric"
+                min={0}
+                name="penaltyHomeScore"
+                onChange={(event) => setPenaltyHomeScore(event.target.value)}
+                type="number"
+                value={penaltyHomeScore}
+              />
+            </label>
+            <label>
+              <TeamName team={awayTeam} />
+              <input
+                aria-label={`${awayTeam.name} penalty score`}
+                disabled={locked}
+                inputMode="numeric"
+                min={0}
+                name="penaltyAwayScore"
+                onChange={(event) => setPenaltyAwayScore(event.target.value)}
+                type="number"
+                value={penaltyAwayScore}
+              />
+            </label>
+          </div>
+        </section>
+      ) : null}
 
       <section className="market-card" aria-labelledby="halftime-title">
         <h2 id="halftime-title">Half-time score</h2>
@@ -238,6 +278,10 @@ function parseScore(value: string): number {
   const parsed = Number(value);
 
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : 0;
+}
+
+function isKnockoutStage(stage: string | undefined): boolean {
+  return Boolean(stage && !stage.toLocaleLowerCase().startsWith("group"));
 }
 
 function derivePredictionState({

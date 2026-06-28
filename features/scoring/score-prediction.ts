@@ -6,7 +6,7 @@ import type {
 } from "./types";
 import { SCORING_RULES } from "./rules";
 
-const [FINAL_SCORE_RULE, RESULT_RULE, HALFTIME_RULE, FIRST_SCORER_RULE, LAST_SCORER_RULE] = SCORING_RULES;
+const [FINAL_SCORE_RULE, RESULT_RULE, HALFTIME_RULE, FIRST_SCORER_RULE, LAST_SCORER_RULE, PENALTY_RULE] = SCORING_RULES;
 
 const ZERO_SCORE: ScoreBreakdown = {
   scoreFinal: 0,
@@ -14,6 +14,7 @@ const ZERO_SCORE: ScoreBreakdown = {
   scoreHalftime: 0,
   scoreFirstScorer: 0,
   scoreLastScorer: 0,
+  scorePenalty: 0,
   scoreTotal: 0,
   pendingMarkets: []
 };
@@ -51,6 +52,7 @@ export function scorePrediction(
     pendingMarkets,
     LAST_SCORER_RULE.points
   );
+  const scorePenalty = scorePenaltyMarket(prediction, matchResult, pendingMarkets);
 
   return {
     scoreFinal,
@@ -58,9 +60,45 @@ export function scorePrediction(
     scoreHalftime,
     scoreFirstScorer,
     scoreLastScorer,
-    scoreTotal: scoreFinal + scoreResult + scoreHalftime + scoreFirstScorer + scoreLastScorer,
+    scorePenalty,
+    scoreTotal: scoreFinal + scoreResult + scoreHalftime + scoreFirstScorer + scoreLastScorer + scorePenalty,
     pendingMarkets
   };
+}
+
+function scorePenaltyMarket(
+  prediction: PredictionForScoring,
+  matchResult: MatchResultForScoring,
+  pendingMarkets: PendingMarket[]
+): number {
+  const predictedPenaltyHome = prediction.penaltyHomeScore;
+  const predictedPenaltyAway = prediction.penaltyAwayScore;
+  const officialPenaltyHome = matchResult.penaltyHomeScore;
+  const officialPenaltyAway = matchResult.penaltyAwayScore;
+  const hasPrediction = predictedPenaltyHome != null && predictedPenaltyAway != null;
+  const needsPenaltyScore = matchResult.homeScore === matchResult.awayScore && matchResult.winner === "draw";
+
+  if (!hasPrediction && !needsPenaltyScore) {
+    return 0;
+  }
+
+  if (officialPenaltyHome == null || officialPenaltyAway == null) {
+    pendingMarkets.push("penaltyScore");
+    return 0;
+  }
+
+  if (!hasPrediction) {
+    return 0;
+  }
+
+  const homeExact = predictedPenaltyHome === officialPenaltyHome;
+  const awayExact = predictedPenaltyAway === officialPenaltyAway;
+
+  if (homeExact && awayExact) {
+    return PENALTY_RULE.points;
+  }
+
+  return homeExact || awayExact ? 4 : 0;
 }
 
 function scoreHalftimeMarket(

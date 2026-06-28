@@ -27,6 +27,8 @@ export type AppMatch = {
   awayScore?: number | null;
   homeHalftimeScore?: number | null;
   awayHalftimeScore?: number | null;
+  homePenaltyScore?: number | null;
+  awayPenaltyScore?: number | null;
   firstScoringTeamId?: string | null;
   lastScoringTeamId?: string | null;
   lastSyncedAt?: string | null;
@@ -53,6 +55,8 @@ type MatchRow = {
   away_score?: number | null;
   home_halftime_score?: number | null;
   away_halftime_score?: number | null;
+  home_penalty_score?: number | null;
+  away_penalty_score?: number | null;
   first_scoring_team_id?: string | null;
   last_scoring_team_id?: string | null;
   last_synced_at?: string | null;
@@ -237,6 +241,8 @@ function mapMatchRows(matchRows: MatchRow[], teamRows: TeamRow[]): AppMatch[] {
       awayScore: match.away_score,
       homeHalftimeScore: match.home_halftime_score,
       awayHalftimeScore: match.away_halftime_score,
+      homePenaltyScore: match.home_penalty_score,
+      awayPenaltyScore: match.away_penalty_score,
       firstScoringTeamId: match.first_scoring_team_id,
       lastScoringTeamId: match.last_scoring_team_id,
       lastSyncedAt: match.last_synced_at

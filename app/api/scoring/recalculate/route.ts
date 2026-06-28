@@ -45,6 +45,8 @@ export async function POST(request: NextRequest) {
           matchResult: prediction.match_result,
           halftimeHomeScore: prediction.halftime_home_score,
           halftimeAwayScore: prediction.halftime_away_score,
+          penaltyHomeScore: prediction.penalty_home_score,
+          penaltyAwayScore: prediction.penalty_away_score,
           firstScoringTeamId: prediction.first_scoring_team_id,
           lastScoringTeamId: prediction.last_scoring_team_id
         },
@@ -53,6 +55,8 @@ export async function POST(request: NextRequest) {
           awayScore: match.away_score,
           halftimeHomeScore: match.home_halftime_score,
           halftimeAwayScore: match.away_halftime_score,
+          penaltyHomeScore: match.home_penalty_score,
+          penaltyAwayScore: match.away_penalty_score,
           winner: match.winner,
           firstScoringTeamId: match.first_scoring_team_id,
           lastScoringTeamId: match.last_scoring_team_id
@@ -67,6 +71,7 @@ export async function POST(request: NextRequest) {
           score_halftime: score.scoreHalftime,
           score_first_scorer: score.scoreFirstScorer,
           score_last_scorer: score.scoreLastScorer,
+          score_penalty: score.scorePenalty,
           score_total: score.scoreTotal,
           scored_at: new Date().toISOString()
         })

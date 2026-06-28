@@ -33,6 +33,7 @@ test("awards all points for an exact prediction", () => {
     scoreHalftime: 6,
     scoreFirstScorer: 4,
     scoreLastScorer: 4,
+    scorePenalty: 0,
     scoreTotal: 29,
     pendingMarkets: []
   });
@@ -110,6 +111,83 @@ test("awards first and last scorer points independently", () => {
   expect(score.scoreTotal).toBe(8);
 });
 
+test("awards seven penalty points for an exact shootout prediction", () => {
+  const score = scorePrediction(
+    {
+      finalHomeScore: 1,
+      finalAwayScore: 1,
+      matchResult: "draw",
+      halftimeHomeScore: 0,
+      halftimeAwayScore: 0,
+      penaltyHomeScore: 5,
+      penaltyAwayScore: 4
+    },
+    {
+      homeScore: 1,
+      awayScore: 1,
+      winner: "draw",
+      halftimeHomeScore: 0,
+      halftimeAwayScore: 0,
+      penaltyHomeScore: 5,
+      penaltyAwayScore: 4
+    }
+  );
+
+  expect(score.scorePenalty).toBe(7);
+  expect(score.scoreTotal).toBe(28);
+});
+
+test("awards four penalty points when only one shootout side is correct", () => {
+  const score = scorePrediction(
+    {
+      finalHomeScore: 1,
+      finalAwayScore: 1,
+      matchResult: "draw",
+      halftimeHomeScore: 0,
+      halftimeAwayScore: 0,
+      penaltyHomeScore: 5,
+      penaltyAwayScore: 3
+    },
+    {
+      homeScore: 1,
+      awayScore: 1,
+      winner: "draw",
+      halftimeHomeScore: 0,
+      halftimeAwayScore: 0,
+      penaltyHomeScore: 5,
+      penaltyAwayScore: 4
+    }
+  );
+
+  expect(score.scorePenalty).toBe(4);
+  expect(score.scoreTotal).toBe(25);
+});
+
+test("does not stack partial penalty points on exact shootout predictions", () => {
+  const score = scorePrediction(
+    {
+      finalHomeScore: 2,
+      finalAwayScore: 2,
+      matchResult: "draw",
+      halftimeHomeScore: 1,
+      halftimeAwayScore: 1,
+      penaltyHomeScore: 4,
+      penaltyAwayScore: 2
+    },
+    {
+      homeScore: 2,
+      awayScore: 2,
+      winner: "draw",
+      halftimeHomeScore: 1,
+      halftimeAwayScore: 1,
+      penaltyHomeScore: 4,
+      penaltyAwayScore: 2
+    }
+  );
+
+  expect(score.scorePenalty).toBe(7);
+});
+
 test("marks optional markets pending when official data is unavailable", () => {
   const score = scorePrediction(
     {
@@ -160,6 +238,7 @@ test("does not score a match while final score is unavailable", () => {
     scoreHalftime: 0,
     scoreFirstScorer: 0,
     scoreLastScorer: 0,
+    scorePenalty: 0,
     scoreTotal: 0,
     pendingMarkets: ["finalScore"]
   });
@@ -193,6 +272,7 @@ test("returns zero points for a fully incorrect prediction", () => {
     scoreHalftime: 0,
     scoreFirstScorer: 0,
     scoreLastScorer: 0,
+    scorePenalty: 0,
     scoreTotal: 0,
     pendingMarkets: []
   });

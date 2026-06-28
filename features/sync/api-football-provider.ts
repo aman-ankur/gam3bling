@@ -35,6 +35,10 @@ type ApiFootballFixture = {
       home?: number | null;
       away?: number | null;
     };
+    penalty?: {
+      home?: number | null;
+      away?: number | null;
+    };
   };
   teams?: {
     home?: {
@@ -246,6 +250,8 @@ export function normalizeApiFootballFixture(fixture: ApiFootballFixture): Provid
     winner: winnerFromScore(homeScore, awayScore),
     homeHalftimeScore: numberOrNull(fixture.score?.halftime?.home),
     awayHalftimeScore: numberOrNull(fixture.score?.halftime?.away),
+    penaltyHomeScore: numberOrNull(fixture.score?.penalty?.home),
+    penaltyAwayScore: numberOrNull(fixture.score?.penalty?.away),
     firstScoringTeamExternalId: goalTeamIds[0] ?? null,
     lastScoringTeamExternalId: goalTeamIds.at(-1) ?? null,
     ...(elapsed == null ? {} : { matchClock: `${elapsed}:00` }),

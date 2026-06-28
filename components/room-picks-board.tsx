@@ -70,6 +70,7 @@ function PickResultMarkers({ pick }: { pick: RoomMatchPick }) {
       <ResultMarker label="HT" points={pick.scoreHalftime} />
       <ResultMarker label="First" points={pick.scoreFirstScorer} />
       <ResultMarker label="Last" points={pick.scoreLastScorer} />
+      <ResultMarker label="Pens" points={pick.scorePenalty} />
     </div>
   );
 }
@@ -85,6 +86,7 @@ function ResultMarker({ label, points }: { label: string; points: number }) {
 function pickSummaryText(awayTeam: AppTeam, homeTeam: AppTeam, pick: RoomMatchPick) {
   return [
     pickResultText(awayTeam, homeTeam, pick),
+    pick.penaltyScore ? `Pens ${pick.penaltyScore}` : null,
     pick.halftimeScore ? `HT ${pick.halftimeScore}` : null,
     pick.firstScoringTeamId ? `First ${teamNameFromId(pick.firstScoringTeamId, homeTeam, awayTeam)}` : null,
     pick.lastScoringTeamId ? `Last ${teamNameFromId(pick.lastScoringTeamId, homeTeam, awayTeam)}` : null

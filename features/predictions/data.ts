@@ -13,6 +13,9 @@ export type RoomMatchPick = {
   halftimeHomeScore?: number;
   halftimeAwayScore?: number;
   halftimeScore?: string;
+  penaltyHomeScore?: number;
+  penaltyAwayScore?: number;
+  penaltyScore?: string;
   matchResult?: "home" | "away" | "draw";
   firstScoringTeamId?: string;
   lastScoringTeamId?: string;
@@ -23,6 +26,7 @@ export type RoomMatchPick = {
   scoreHalftime: number;
   scoreFirstScorer: number;
   scoreLastScorer: number;
+  scorePenalty: number;
   points: number;
   scoredAt?: string;
   saved: boolean;
@@ -32,6 +36,7 @@ export type RoomMatchPick = {
 export type CurrentPlayerMatchPickSummary = {
   finalScore: string;
   halftimeScore: string;
+  penaltyScore?: string;
   result: string;
   scorers: string;
 };
@@ -97,11 +102,14 @@ type RoomPickPredictionRow = {
   match_result: "home" | "away" | "draw";
   first_scoring_team_id?: string | null;
   last_scoring_team_id?: string | null;
+  penalty_home_score?: number | null;
+  penalty_away_score?: number | null;
   score_final?: number | null;
   score_result?: number | null;
   score_halftime?: number | null;
   score_first_scorer?: number | null;
   score_last_scorer?: number | null;
+  score_penalty?: number | null;
   score_total?: number | null;
   scored_at?: string | null;
   submitted_at?: string | null;
@@ -284,6 +292,11 @@ function buildRoomMatchPicks({
       halftimeHomeScore: prediction?.halftime_home_score ?? undefined,
       halftimeAwayScore: prediction?.halftime_away_score ?? undefined,
       halftimeScore: prediction ? `${prediction.halftime_home_score}-${prediction.halftime_away_score}` : undefined,
+      penaltyHomeScore: prediction?.penalty_home_score ?? undefined,
+      penaltyAwayScore: prediction?.penalty_away_score ?? undefined,
+      penaltyScore: prediction?.penalty_home_score != null && prediction?.penalty_away_score != null
+        ? `${prediction.penalty_home_score}-${prediction.penalty_away_score}`
+        : undefined,
       matchResult: prediction?.match_result,
       firstScoringTeamId: prediction?.first_scoring_team_id ?? undefined,
       lastScoringTeamId: prediction?.last_scoring_team_id ?? undefined,
@@ -294,6 +307,7 @@ function buildRoomMatchPicks({
       scoreHalftime: prediction?.score_halftime ?? 0,
       scoreFirstScorer: prediction?.score_first_scorer ?? 0,
       scoreLastScorer: prediction?.score_last_scorer ?? 0,
+      scorePenalty: prediction?.score_penalty ?? 0,
       points: prediction?.score_total ?? 0,
       scoredAt: prediction?.scored_at ?? undefined,
       saved: Boolean(prediction),
@@ -400,6 +414,9 @@ function toPublicPick(pick: InternalRoomMatchPick, isCurrentPlayer: boolean): Ro
     halftimeHomeScore: pick.halftimeHomeScore,
     halftimeAwayScore: pick.halftimeAwayScore,
     halftimeScore: pick.halftimeScore,
+    penaltyHomeScore: pick.penaltyHomeScore,
+    penaltyAwayScore: pick.penaltyAwayScore,
+    penaltyScore: pick.penaltyScore,
     matchResult: pick.matchResult,
     firstScoringTeamId: pick.firstScoringTeamId,
     lastScoringTeamId: pick.lastScoringTeamId,
@@ -410,6 +427,7 @@ function toPublicPick(pick: InternalRoomMatchPick, isCurrentPlayer: boolean): Ro
     scoreHalftime: pick.scoreHalftime,
     scoreFirstScorer: pick.scoreFirstScorer,
     scoreLastScorer: pick.scoreLastScorer,
+    scorePenalty: pick.scorePenalty,
     points: pick.points,
     scoredAt: pick.scoredAt,
     saved: pick.saved,
@@ -513,7 +531,7 @@ export async function getCurrentPlayerMatchPickSummaries(
     const matchById = new Map(matches.map((candidate) => [candidate.id, candidate]));
     const { data: predictions } = await supabase
       .from("predictions")
-      .select("match_id, final_home_score, final_away_score, halftime_home_score, halftime_away_score, match_result, first_scoring_team_id, last_scoring_team_id")
+      .select("match_id, final_home_score, final_away_score, halftime_home_score, halftime_away_score, penalty_home_score, penalty_away_score, match_result, first_scoring_team_id, last_scoring_team_id")
       .eq("player_id", session.playerId)
       .in("match_id", [...matchById.keys()]);
     const summaries = new Map<string, CurrentPlayerMatchPickSummary>();
@@ -528,6 +546,9 @@ export async function getCurrentPlayerMatchPickSummaries(
       const summary = {
         finalScore: `${prediction.final_home_score}-${prediction.final_away_score}`,
         halftimeScore: `${prediction.halftime_home_score}-${prediction.halftime_away_score}`,
+        penaltyScore: prediction.penalty_home_score != null && prediction.penalty_away_score != null
+          ? `${prediction.penalty_home_score}-${prediction.penalty_away_score}`
+          : undefined,
         result: resultLabel(prediction.match_result, predictedMatch),
         scorers: scorersLabel(prediction.first_scoring_team_id, prediction.last_scoring_team_id, predictedMatch)
       };
@@ -564,6 +585,7 @@ function fallbackPicks(match: AppMatch): RoomMatchPick[] {
       scoreHalftime: 0,
       scoreFirstScorer: 0,
       scoreLastScorer: 0,
+      scorePenalty: 0,
       points: 0,
       saved: true,
       isCurrentPlayer: false
@@ -577,6 +599,7 @@ function fallbackPicks(match: AppMatch): RoomMatchPick[] {
       scoreHalftime: 0,
       scoreFirstScorer: 0,
       scoreLastScorer: 0,
+      scorePenalty: 0,
       points: 0,
       saved: false,
       isCurrentPlayer: true

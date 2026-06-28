@@ -61,6 +61,7 @@ function buildPick(): RoomMatchPick {
     scoreHalftime: 0,
     scoreFirstScorer: 2,
     scoreLastScorer: 0,
+    scorePenalty: 0,
     points: 17,
     saved: true,
     isCurrentPlayer: true

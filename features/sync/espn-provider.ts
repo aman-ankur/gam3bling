@@ -26,6 +26,8 @@ type EpsnTeam = {
 type EpsnCompetitor = {
   homeAway?: string | null;
   score?: string | number | null;
+  shootoutScore?: string | number | null;
+  shootout_score?: string | number | null;
   team?: EpsnTeam | null;
 };
 
@@ -252,6 +254,8 @@ export function normalizeEpsnScoreboardEvent(
     winner: winnerFromScore(homeScore, awayScore),
     homeHalftimeScore: null,
     awayHalftimeScore: null,
+    penaltyHomeScore: numberOrNull(home?.shootoutScore ?? home?.shootout_score),
+    penaltyAwayScore: numberOrNull(away?.shootoutScore ?? away?.shootout_score),
     firstScoringTeamExternalId: null,
     lastScoringTeamExternalId: null,
     ...(matchClock ? { matchClock } : {}),

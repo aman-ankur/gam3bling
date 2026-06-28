@@ -48,6 +48,8 @@ export async function savePrediction(roomSlug: string, matchRouteId: string, for
   const halftimeHomeScore = numberField(formData, "halftimeHomeScore");
   const halftimeAwayScore = numberField(formData, "halftimeAwayScore");
   const matchResult = stringField(formData, "matchResult", "draw");
+  const penaltyHomeScore = optionalNumberField(formData, "penaltyHomeScore");
+  const penaltyAwayScore = optionalNumberField(formData, "penaltyAwayScore");
   const firstScoringTeamId = stringField(formData, "firstScoringTeamId", "");
   const lastScoringTeamId = stringField(formData, "lastScoringTeamId", "");
   const validationError = validatePredictionFields({
@@ -59,7 +61,10 @@ export async function savePrediction(roomSlug: string, matchRouteId: string, for
     lastScoringTeamId,
     matchResult,
     matchAwayTeamId: match.away_team_id,
-    matchHomeTeamId: match.home_team_id
+    matchHomeTeamId: match.home_team_id,
+    matchStage: match.stage,
+    penaltyAwayScore,
+    penaltyHomeScore
   });
 
   if (validationError) {
@@ -75,6 +80,8 @@ export async function savePrediction(roomSlug: string, matchRouteId: string, for
       final_away_score: finalAwayScore,
       halftime_home_score: halftimeHomeScore,
       halftime_away_score: halftimeAwayScore,
+      penalty_home_score: matchResult === "draw" && isKnockoutStage(match.stage) ? penaltyHomeScore : null,
+      penalty_away_score: matchResult === "draw" && isKnockoutStage(match.stage) ? penaltyAwayScore : null,
       match_result: matchResult,
       first_scoring_team_id: firstScoringTeamId || null,
       last_scoring_team_id: lastScoringTeamId || null,
@@ -117,6 +124,22 @@ function numberField(formData: FormData, key: string): number {
   return value;
 }
 
+function optionalNumberField(formData: FormData, key: string): number | null {
+  const rawValue = formData.get(key);
+
+  if (rawValue == null || rawValue === "") {
+    return null;
+  }
+
+  const value = Number(rawValue);
+
+  if (!Number.isInteger(value) || value < 0 || value > 99) {
+    throw new Error(`Invalid ${key}`);
+  }
+
+  return value;
+}
+
 function stringField(formData: FormData, key: string, fallback: string): string {
   const value = formData.get(key);
 
@@ -132,7 +155,10 @@ function validatePredictionFields({
   lastScoringTeamId,
   matchAwayTeamId,
   matchHomeTeamId,
-  matchResult
+  matchResult,
+  matchStage,
+  penaltyAwayScore,
+  penaltyHomeScore
 }: {
   finalAwayScore: number;
   finalHomeScore: number;
@@ -143,6 +169,9 @@ function validatePredictionFields({
   matchAwayTeamId: string;
   matchHomeTeamId: string;
   matchResult: string;
+  matchStage: string;
+  penaltyAwayScore: number | null;
+  penaltyHomeScore: number | null;
 }): string | null {
   const derivedResult = finalHomeScore > finalAwayScore ? "home" : finalAwayScore > finalHomeScore ? "away" : "draw";
 
@@ -152,6 +181,10 @@ function validatePredictionFields({
 
   if (halftimeHomeScore > finalHomeScore || halftimeAwayScore > finalAwayScore) {
     return "halftime_exceeds_final";
+  }
+
+  if (isKnockoutStage(matchStage) && derivedResult === "draw" && (penaltyHomeScore == null || penaltyAwayScore == null)) {
+    return "missing_penalty_score";
   }
 
   const scoringTeamIds = new Set<string>();
@@ -177,4 +210,8 @@ function validatePredictionFields({
   }
 
   return null;
+}
+
+function isKnockoutStage(stage: string): boolean {
+  return !stage.toLocaleLowerCase().startsWith("group");
 }

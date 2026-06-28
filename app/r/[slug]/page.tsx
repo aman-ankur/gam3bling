@@ -91,7 +91,7 @@ export default async function RoomPage({ params, searchParams }: RoomPageProps) 
       <AppShell roomName={room.name} roomSlug={slug} subtitle="Room hub">
         <section className="hero-card room-hub-hero" aria-labelledby="room-hub-title">
           <p className="eyebrow">Room command center</p>
-          <h1 id="room-hub-title">{room.name}</h1>
+          <h1 id="room-hub-title"><RoomTitleWithRound roomName={room.name} /></h1>
           <div className="hub-stats">
             <div>
               <span>Members</span>
@@ -444,7 +444,22 @@ function compactPickSummary(summary?: CurrentPlayerMatchPickSummary): string | u
     return undefined;
   }
 
-  return `${summary.finalScore} · HT ${summary.halftimeScore}`;
+  return [summary.finalScore, summary.penaltyScore ? `Pens ${summary.penaltyScore}` : null, `HT ${summary.halftimeScore}`]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function RoomTitleWithRound({ roomName }: { roomName: string }) {
+  if (roomName.trim().toLocaleLowerCase() !== "bon jor wc26") {
+    return roomName;
+  }
+
+  return (
+    <>
+      {roomName}
+      <sup className="round-superscript">R32</sup>
+    </>
+  );
 }
 
 function scoreRefreshMessage(scores: string | undefined): string | undefined {

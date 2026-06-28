@@ -71,6 +71,8 @@ describe("normalizeApiFootballFixture", () => {
       winner: "home",
       homeHalftimeScore: null,
       awayHalftimeScore: null,
+      penaltyHomeScore: null,
+      penaltyAwayScore: null,
       firstScoringTeamExternalId: null,
       lastScoringTeamExternalId: null,
       kickoffAt: "2026-06-14T17:00:00.000Z"
@@ -455,6 +457,8 @@ describe("normalizeEpsnScoreboardEvent", () => {
       winner: "home",
       homeHalftimeScore: null,
       awayHalftimeScore: null,
+      penaltyHomeScore: null,
+      penaltyAwayScore: null,
       firstScoringTeamExternalId: null,
       lastScoringTeamExternalId: null,
       matchClock: "36:29",
