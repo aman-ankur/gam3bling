@@ -20,7 +20,7 @@ const awayTeam = {
 };
 
 describe("PredictionForm", () => {
-  test("shows penalty score inputs for knockout draws", () => {
+  test("shows penalty score inputs for any draw prediction", () => {
     const markup = renderToStaticMarkup(
       <PredictionForm
         awayTeam={awayTeam}
@@ -31,7 +31,7 @@ describe("PredictionForm", () => {
           penaltyHomeScore: 5,
           penaltyAwayScore: 4
         }}
-        stage="Round of 32"
+        stage="Group A"
       />
     );
 

@@ -6,6 +6,7 @@ import { getUpcomingMatches } from "@/features/matches/data";
 import { isMatchInOpenPredictionWindow } from "@/features/matches/prediction-window";
 import { getPlayerSessionForRoom } from "@/features/players/session";
 import { isPredictionLocked } from "@/features/predictions/locking";
+import { validatePredictionFields } from "@/features/predictions/validation";
 
 export async function savePrediction(roomSlug: string, matchRouteId: string, formData: FormData): Promise<void> {
   const supabase = getSupabaseAdmin();
@@ -80,8 +81,8 @@ export async function savePrediction(roomSlug: string, matchRouteId: string, for
       final_away_score: finalAwayScore,
       halftime_home_score: halftimeHomeScore,
       halftime_away_score: halftimeAwayScore,
-      penalty_home_score: matchResult === "draw" && isKnockoutStage(match.stage) ? penaltyHomeScore : null,
-      penalty_away_score: matchResult === "draw" && isKnockoutStage(match.stage) ? penaltyAwayScore : null,
+      penalty_home_score: matchResult === "draw" ? penaltyHomeScore : null,
+      penalty_away_score: matchResult === "draw" ? penaltyAwayScore : null,
       match_result: matchResult,
       first_scoring_team_id: firstScoringTeamId || null,
       last_scoring_team_id: lastScoringTeamId || null,
@@ -144,74 +145,4 @@ function stringField(formData: FormData, key: string, fallback: string): string 
   const value = formData.get(key);
 
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
-}
-
-function validatePredictionFields({
-  finalAwayScore,
-  finalHomeScore,
-  firstScoringTeamId,
-  halftimeAwayScore,
-  halftimeHomeScore,
-  lastScoringTeamId,
-  matchAwayTeamId,
-  matchHomeTeamId,
-  matchResult,
-  matchStage,
-  penaltyAwayScore,
-  penaltyHomeScore
-}: {
-  finalAwayScore: number;
-  finalHomeScore: number;
-  firstScoringTeamId: string;
-  halftimeAwayScore: number;
-  halftimeHomeScore: number;
-  lastScoringTeamId: string;
-  matchAwayTeamId: string;
-  matchHomeTeamId: string;
-  matchResult: string;
-  matchStage: string;
-  penaltyAwayScore: number | null;
-  penaltyHomeScore: number | null;
-}): string | null {
-  const derivedResult = finalHomeScore > finalAwayScore ? "home" : finalAwayScore > finalHomeScore ? "away" : "draw";
-
-  if (matchResult !== derivedResult) {
-    return "result_mismatch";
-  }
-
-  if (halftimeHomeScore > finalHomeScore || halftimeAwayScore > finalAwayScore) {
-    return "halftime_exceeds_final";
-  }
-
-  if (isKnockoutStage(matchStage) && derivedResult === "draw" && (penaltyHomeScore == null || penaltyAwayScore == null)) {
-    return "missing_penalty_score";
-  }
-
-  const scoringTeamIds = new Set<string>();
-
-  if (finalHomeScore > 0) {
-    scoringTeamIds.add(matchHomeTeamId);
-  }
-
-  if (finalAwayScore > 0) {
-    scoringTeamIds.add(matchAwayTeamId);
-  }
-
-  if (scoringTeamIds.size === 0) {
-    return firstScoringTeamId || lastScoringTeamId ? "scorer_without_goals" : null;
-  }
-
-  if (!firstScoringTeamId || !lastScoringTeamId) {
-    return "missing_scorer";
-  }
-
-  if (!scoringTeamIds.has(firstScoringTeamId) || !scoringTeamIds.has(lastScoringTeamId)) {
-    return "scorer_team_did_not_score";
-  }
-
-  return null;
-}
-
-function isKnockoutStage(stage: string): boolean {
-  return !stage.toLocaleLowerCase().startsWith("group");
 }

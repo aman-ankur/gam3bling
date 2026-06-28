@@ -33,7 +33,7 @@ type PredictionFormProps = {
   stage?: string;
 };
 
-export function PredictionForm({ action, awayTeam, homeTeam, initialPrediction, locked = false, stage }: PredictionFormProps) {
+export function PredictionForm({ action, awayTeam, homeTeam, initialPrediction, locked = false }: PredictionFormProps) {
   const [finalHomeScore, setFinalHomeScore] = useState(String(initialPrediction?.finalHomeScore ?? 2));
   const [finalAwayScore, setFinalAwayScore] = useState(String(initialPrediction?.finalAwayScore ?? 1));
   const [halftimeHomeScore, setHalftimeHomeScore] = useState(String(initialPrediction?.halftimeHomeScore ?? 1));
@@ -55,7 +55,7 @@ export function PredictionForm({ action, awayTeam, homeTeam, initialPrediction, 
     }),
     [awayTeam.id, finalAway, finalHome, firstScoringTeamId, homeTeam.id, lastScoringTeamId]
   );
-  const showPenaltyScore = isKnockoutStage(stage) && derived.matchResult === "draw";
+  const showPenaltyScore = derived.matchResult === "draw";
   const updateFinalHomeScore = (value: string) => {
     const nextFinalHome = parseScore(value);
 
@@ -278,10 +278,6 @@ function parseScore(value: string): number {
   const parsed = Number(value);
 
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : 0;
-}
-
-function isKnockoutStage(stage: string | undefined): boolean {
-  return Boolean(stage && !stage.toLocaleLowerCase().startsWith("group"));
 }
 
 function derivePredictionState({
