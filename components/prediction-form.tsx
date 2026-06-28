@@ -123,40 +123,6 @@ export function PredictionForm({ action, awayTeam, homeTeam, initialPrediction, 
         <p className="helper-line">Auto-selected from final score</p>
       </section>
 
-      {showPenaltyScore ? (
-        <section className="market-card" aria-labelledby="penalty-score-title">
-          <h2 id="penalty-score-title">Penalty score</h2>
-          <div className="score-grid">
-            <label>
-              <TeamName team={homeTeam} />
-              <input
-                aria-label={`${homeTeam.name} penalty score`}
-                disabled={locked}
-                inputMode="numeric"
-                min={0}
-                name="penaltyHomeScore"
-                onChange={(event) => setPenaltyHomeScore(event.target.value)}
-                type="number"
-                value={penaltyHomeScore}
-              />
-            </label>
-            <label>
-              <TeamName team={awayTeam} />
-              <input
-                aria-label={`${awayTeam.name} penalty score`}
-                disabled={locked}
-                inputMode="numeric"
-                min={0}
-                name="penaltyAwayScore"
-                onChange={(event) => setPenaltyAwayScore(event.target.value)}
-                type="number"
-                value={penaltyAwayScore}
-              />
-            </label>
-          </div>
-        </section>
-      ) : null}
-
       <section className="market-card" aria-labelledby="halftime-title">
         <h2 id="halftime-title">Half-time score</h2>
         <div className="score-grid">
@@ -213,6 +179,41 @@ export function PredictionForm({ action, awayTeam, homeTeam, initialPrediction, 
         selected={derived.lastScoringTeamId}
         title="Last team to score"
       />
+
+      {showPenaltyScore ? (
+        <section className="market-card" aria-labelledby="penalty-score-title">
+          <h2 id="penalty-score-title">Penalty score</h2>
+          <div className="score-grid">
+            <label>
+              <TeamName team={homeTeam} />
+              <input
+                aria-label={`${homeTeam.name} penalty score`}
+                disabled={locked}
+                inputMode="numeric"
+                min={0}
+                name="penaltyHomeScore"
+                onChange={(event) => setPenaltyHomeScore(event.target.value)}
+                type="number"
+                value={penaltyHomeScore}
+              />
+            </label>
+            <label>
+              <TeamName team={awayTeam} />
+              <input
+                aria-label={`${awayTeam.name} penalty score`}
+                disabled={locked}
+                inputMode="numeric"
+                min={0}
+                name="penaltyAwayScore"
+                onChange={(event) => setPenaltyAwayScore(event.target.value)}
+                type="number"
+                value={penaltyAwayScore}
+              />
+            </label>
+          </div>
+          <p className="helper-line">Since you selected draw</p>
+        </section>
+      ) : null}
 
       <SubmitButton disabled={locked} pendingLabel="Saving predictions...">Save predictions</SubmitButton>
     </form>

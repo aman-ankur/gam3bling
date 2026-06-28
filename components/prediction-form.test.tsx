@@ -38,6 +38,8 @@ describe("PredictionForm", () => {
     expect(markup).toContain("Penalty score");
     expect(markup).toContain("name=\"penaltyHomeScore\"");
     expect(markup).toContain("name=\"penaltyAwayScore\"");
+    expect(markup).toContain("Since you selected draw");
+    expect(markup.indexOf("Last team to score")).toBeLessThan(markup.indexOf("Penalty score"));
   });
 
   test("hides penalty score inputs for knockout non-draw predictions", () => {
