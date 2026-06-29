@@ -15,6 +15,7 @@ type ResultMatchRow = {
   api_match_id: string | null;
   kickoff_at: string;
   last_synced_at: string | null;
+  stage: string | null;
   status: string;
 };
 
@@ -111,6 +112,7 @@ async function checkMatchResultStatus(roomSlug: string, matchRouteId: string): P
     {
       kickoffAt: match.kickoff_at,
       lastSyncedAt: match.last_synced_at,
+      stage: match.stage,
       status: match.status
     },
     new Date()
@@ -296,7 +298,7 @@ async function findMatch(supabase: NonNullable<ReturnType<typeof getSupabaseAdmi
   const byApiMatch = await withSupabaseRetry<ResultMatchRow>(() =>
     supabase
       .from("matches")
-      .select("id, api_match_id, kickoff_at, last_synced_at, status")
+      .select("id, api_match_id, kickoff_at, last_synced_at, stage, status")
       .eq("api_match_id", routeId)
       .maybeSingle()
   , { label: "results.check.matches.select_by_api_match_id" });
@@ -313,7 +315,7 @@ async function findMatch(supabase: NonNullable<ReturnType<typeof getSupabaseAdmi
     const byId = await withSupabaseRetry<ResultMatchRow>(() =>
       supabase
         .from("matches")
-        .select("id, api_match_id, kickoff_at, last_synced_at, status")
+        .select("id, api_match_id, kickoff_at, last_synced_at, stage, status")
         .eq("id", routeId)
         .maybeSingle()
     , { label: "results.check.matches.select_by_id" });

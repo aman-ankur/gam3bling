@@ -7,18 +7,30 @@ const match = {
   status: "scheduled"
 };
 
-test("keeps result checking closed before the expected full-time window", () => {
-  const state = getResultCheckState(match, new Date("2026-06-15T17:45:00.000Z"));
+test("keeps result checking closed before kickoff", () => {
+  const state = getResultCheckState(match, new Date("2026-06-15T15:59:00.000Z"));
 
   expect(state).toEqual({
     canCheck: false,
     reason: "early",
-    availableAt: "2026-06-15T17:55:00.000Z"
+    availableAt: "2026-06-15T16:00:00.000Z"
   });
 });
 
-test("opens result checking after expected full time", () => {
-  const state = getResultCheckState(match, new Date("2026-06-15T17:56:00.000Z"));
+test("opens result checking after kickoff", () => {
+  const state = getResultCheckState(match, new Date("2026-06-15T16:01:00.000Z"));
+
+  expect(state).toEqual({
+    canCheck: true,
+    reason: "available"
+  });
+});
+
+test("opens knockout result checking after kickoff instead of waiting for extra time", () => {
+  const state = getResultCheckState(
+    { ...match, stage: "Round of 32" },
+    new Date("2026-06-15T16:01:00.000Z")
+  );
 
   expect(state).toEqual({
     canCheck: true,

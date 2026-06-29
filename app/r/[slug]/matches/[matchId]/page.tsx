@@ -95,6 +95,7 @@ export default async function MatchPredictionPage({ params, searchParams }: Matc
     {
       kickoffAt: match.kickoffAt,
       lastSyncedAt: match.lastSyncedAt,
+      stage: match.stage,
       status: match.status
     },
     now
@@ -335,7 +336,7 @@ function resultMessage(result: string | undefined): string | undefined {
   }
 
   if (result === "early") {
-    return "Result checks open around 115 minutes after kickoff.";
+    return "Result checks open after kickoff.";
   }
 
   if (result === "error") {

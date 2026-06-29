@@ -405,6 +405,71 @@ describe("syncMatchResult", () => {
     expect(db.predictionUpdates).toEqual([]);
   });
 
+  test("does not score an unresolved knockout draw without penalty scores", async () => {
+    const db = createFakeSyncDb({
+      matches: [
+        {
+          id: "match-1",
+          api_match_id: "123",
+          stage: "Round of 32",
+          status: "live",
+          home_score: 1,
+          away_score: 1
+        }
+      ],
+      predictions: [
+        {
+          id: "prediction-1",
+          match_id: "match-1",
+          final_home_score: 1,
+          final_away_score: 1,
+          match_result: "draw",
+          halftime_home_score: 0,
+          halftime_away_score: 0,
+          penalty_home_score: 5,
+          penalty_away_score: 4,
+          first_scoring_team_id: null,
+          last_scoring_team_id: null
+        }
+      ]
+    });
+    const provider: FootballProvider = {
+      name: "espn",
+      fetchUpdates: vi.fn().mockResolvedValue([
+        {
+          apiMatchId: "123",
+          status: "final",
+          homeScore: 1,
+          awayScore: 1,
+          winner: "draw",
+          homeHalftimeScore: 0,
+          awayHalftimeScore: 0
+        }
+      ])
+    };
+
+    await expect(syncMatchResult({ supabase: db.client, matchId: "match-1", provider, now: fixedNow })).resolves.toEqual({
+      found: true,
+      fetchedMatches: 1,
+      updatedMatch: true,
+      scoredPredictions: 0,
+      status: "live"
+    });
+
+    expect(db.matchUpdates[0]).toEqual({
+      id: "match-1",
+      payload: expect.objectContaining({
+        status: "live",
+        home_score: 1,
+        away_score: 1,
+        home_penalty_score: null,
+        away_penalty_score: null,
+        winner: "draw"
+      })
+    });
+    expect(db.predictionUpdates).toEqual([]);
+  });
+
   test("anchors live match kickoff from provider clock when available", async () => {
     const db = createFakeSyncDb({
       matches: [

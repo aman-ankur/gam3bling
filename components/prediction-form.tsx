@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ScoringGuide } from "@/components/scoring-guide";
 import { SubmitButton } from "@/components/submit-button";
 import { TeamName } from "@/components/team-name";
+import { isKnockoutStage } from "@/features/matches/stage";
 
 type PredictionFormProps = {
   action?: (formData: FormData) => void | Promise<void>;
@@ -33,7 +34,7 @@ type PredictionFormProps = {
   stage?: string;
 };
 
-export function PredictionForm({ action, awayTeam, homeTeam, initialPrediction, locked = false }: PredictionFormProps) {
+export function PredictionForm({ action, awayTeam, homeTeam, initialPrediction, locked = false, stage }: PredictionFormProps) {
   const [finalHomeScore, setFinalHomeScore] = useState(String(initialPrediction?.finalHomeScore ?? 2));
   const [finalAwayScore, setFinalAwayScore] = useState(String(initialPrediction?.finalAwayScore ?? 1));
   const [halftimeHomeScore, setHalftimeHomeScore] = useState(String(initialPrediction?.halftimeHomeScore ?? 1));
@@ -56,6 +57,7 @@ export function PredictionForm({ action, awayTeam, homeTeam, initialPrediction, 
     [awayTeam.id, finalAway, finalHome, firstScoringTeamId, homeTeam.id, lastScoringTeamId]
   );
   const showPenaltyScore = derived.matchResult === "draw";
+  const isKnockout = isKnockoutStage(stage);
   const updateFinalHomeScore = (value: string) => {
     const nextFinalHome = parseScore(value);
 
@@ -104,6 +106,7 @@ export function PredictionForm({ action, awayTeam, homeTeam, initialPrediction, 
             />
           </label>
         </div>
+        {isKnockout ? <p className="helper-line">After extra time if played</p> : null}
       </section>
 
       <section className="market-card" aria-labelledby="match-result-title">

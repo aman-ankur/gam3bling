@@ -127,7 +127,7 @@ export function ResultCheckPanel({ action, resultMessage, state }: ResultCheckPa
         {state.reason === "cooldown"
           ? "The provider was checked recently. This protects the free-plan API budget."
           : state.reason === "early"
-            ? "Result checks open around 115 minutes after kickoff."
+            ? "Result checks open after kickoff. Scoring waits until the provider confirms final."
             : "If the match is final, scores and leaderboards update immediately."}
       </p>
     </section>

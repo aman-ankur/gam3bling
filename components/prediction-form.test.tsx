@@ -56,5 +56,6 @@ describe("PredictionForm", () => {
     );
 
     expect(markup).not.toContain("Penalty score");
+    expect(markup).toContain("After extra time if played");
   });
 });

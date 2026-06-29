@@ -1,5 +1,6 @@
 import { scorePrediction } from "../scoring/score-prediction";
 import type { MatchResult, MatchStatus } from "../matches/types";
+import { isKnockoutStage } from "../matches/stage";
 import { createDefaultFootballProvider } from "./default-provider";
 import type { FootballProvider, ProviderMatchQuery, ProviderMatchUpdate } from "./provider";
 
@@ -10,6 +11,7 @@ type LocalMatchRow = {
   kickoff_at: string;
   home_team_id: string;
   away_team_id: string;
+  stage: string | null;
   status: MatchStatus;
   home_score: number | null;
   away_score: number | null;
@@ -113,7 +115,7 @@ export async function syncMatches({
   try {
     const [{ data: matches, error: matchError }, { data: teams, error: teamError }] = await Promise.all([
       matchTable(supabase)
-        .select("id, api_provider, api_match_id, kickoff_at, home_team_id, away_team_id, status, home_score, away_score")
+        .select("id, api_provider, api_match_id, kickoff_at, home_team_id, away_team_id, stage, status, home_score, away_score")
         .not("api_match_id", "is", null),
       teamTable(supabase).select("id, name, short_code")
     ]);
@@ -145,11 +147,12 @@ export async function syncMatches({
       }
 
       const resolvedUpdate = resolveMatchUpdateTeams(localMatch, update);
-      await updateMatch(supabase, localMatch.id, resolvedUpdate, syncedAt);
+      const safeUpdate = protectUnresolvedKnockoutDraw(localMatch, resolvedUpdate);
+      await updateMatch(supabase, localMatch.id, safeUpdate, syncedAt);
       updatedMatches += 1;
 
-      if (resolvedUpdate.status === "final" && resolvedUpdate.homeScore != null && resolvedUpdate.awayScore != null) {
-        scoredPredictions += await scoreFinalMatchPredictions(supabase, localMatch.id, resolvedUpdate, syncedAt);
+      if (canScoreFinalMatch(safeUpdate)) {
+        scoredPredictions += await scoreFinalMatchPredictions(supabase, localMatch.id, safeUpdate, syncedAt);
       }
     }
 
@@ -181,7 +184,7 @@ export async function syncMatchResult({
   now = () => new Date()
 }: SyncMatchesOptions & { matchId: string }): Promise<SyncMatchResultResult> {
   const { data: localMatch, error: matchError } = await matchTable(supabase)
-    .select("id, api_provider, api_match_id, kickoff_at, home_team_id, away_team_id, status, home_score, away_score")
+    .select("id, api_provider, api_match_id, kickoff_at, home_team_id, away_team_id, stage, status, home_score, away_score")
     .eq("id", matchId)
     .single();
 
@@ -225,20 +228,49 @@ export async function syncMatchResult({
   }
 
   const resolvedUpdate = resolveMatchUpdateTeams(localMatch, update);
-  await updateMatch(supabase, localMatch.id, resolvedUpdate, syncedAt);
+  const safeUpdate = protectUnresolvedKnockoutDraw(localMatch, resolvedUpdate);
+  await updateMatch(supabase, localMatch.id, safeUpdate, syncedAt);
 
-  const scoredPredictions =
-    resolvedUpdate.status === "final" && resolvedUpdate.homeScore != null && resolvedUpdate.awayScore != null
-      ? await scoreFinalMatchPredictions(supabase, localMatch.id, resolvedUpdate, syncedAt)
-      : 0;
+  const scoredPredictions = canScoreFinalMatch(safeUpdate)
+    ? await scoreFinalMatchPredictions(supabase, localMatch.id, safeUpdate, syncedAt)
+    : 0;
 
   return {
     found: true,
     fetchedMatches: updates.length,
     updatedMatch: true,
     scoredPredictions,
-    status: resolvedUpdate.status
+    status: safeUpdate.status
   };
+}
+
+function canScoreFinalMatch(update: ProviderMatchUpdate): boolean {
+  return update.status === "final" && update.homeScore != null && update.awayScore != null;
+}
+
+function protectUnresolvedKnockoutDraw(
+  localMatch: LocalMatchRow,
+  update: ProviderMatchUpdate
+): ProviderMatchUpdate {
+  if (!isUnresolvedKnockoutDraw(localMatch, update)) {
+    return update;
+  }
+
+  return {
+    ...update,
+    status: localMatch.status === "scheduled" ? "live" : localMatch.status
+  };
+}
+
+function isUnresolvedKnockoutDraw(localMatch: LocalMatchRow, update: ProviderMatchUpdate): boolean {
+  return Boolean(
+    isKnockoutStage(localMatch.stage) &&
+    update.status === "final" &&
+    update.homeScore != null &&
+    update.awayScore != null &&
+    update.homeScore === update.awayScore &&
+    (update.penaltyHomeScore == null || update.penaltyAwayScore == null)
+  );
 }
 
 function resolveMatchUpdateTeams(localMatch: LocalMatchRow, update: ProviderMatchUpdate): ProviderMatchUpdate {

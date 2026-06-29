@@ -53,11 +53,11 @@ describe("checkMatchResult", () => {
     });
   });
 
-  test("redirects early without syncing before the result window opens", async () => {
+  test("redirects early without syncing before kickoff", async () => {
     vi.mocked(getSupabaseAdmin).mockReturnValue(createSupabaseWithMatch({
       id: "match-1",
       api_match_id: "123",
-      kickoff_at: "2026-06-15T16:10:00.000Z",
+      kickoff_at: "2026-06-15T18:10:00.000Z",
       last_synced_at: null,
       status: "scheduled"
     }) as never);
@@ -105,6 +105,31 @@ describe("checkMatchResult", () => {
 
     await expect(checkMatchResult("world-cup-room", "123")).rejects.toThrow(
       "NEXT_REDIRECT:/r/world-cup-room/matches/123?result=checked"
+    );
+
+    expect(syncMatchResult).toHaveBeenCalledWith({ supabase, matchId: "match-1" });
+  });
+
+  test("lets knockout result checks sync during possible extra time", async () => {
+    const supabase = createSupabaseWithMatch({
+      id: "match-1",
+      api_match_id: "123",
+      kickoff_at: "2026-06-15T16:00:00.000Z",
+      last_synced_at: null,
+      stage: "Round of 32",
+      status: "live"
+    });
+    vi.mocked(getSupabaseAdmin).mockReturnValue(supabase as never);
+    vi.mocked(syncMatchResult).mockResolvedValue({
+      found: true,
+      fetchedMatches: 1,
+      updatedMatch: true,
+      scoredPredictions: 0,
+      status: "live"
+    });
+
+    await expect(checkMatchResult("world-cup-room", "123")).rejects.toThrow(
+      "NEXT_REDIRECT:/r/world-cup-room/matches/123?result=pending"
     );
 
     expect(syncMatchResult).toHaveBeenCalledWith({ supabase, matchId: "match-1" });
