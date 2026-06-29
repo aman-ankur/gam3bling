@@ -78,7 +78,7 @@ function scorePenaltyMarket(
   const hasPrediction = predictedPenaltyHome != null && predictedPenaltyAway != null;
   const needsPenaltyScore = matchResult.homeScore === matchResult.awayScore && matchResult.winner === "draw";
 
-  if (!hasPrediction && !needsPenaltyScore) {
+  if (!needsPenaltyScore) {
     return 0;
   }
 
@@ -98,7 +98,38 @@ function scorePenaltyMarket(
     return PENALTY_RULE.points;
   }
 
-  return homeExact || awayExact ? 4 : 0;
+  if (homeExact || awayExact) {
+    return 4;
+  }
+
+  return samePenaltyWinner(
+    predictedPenaltyHome,
+    predictedPenaltyAway,
+    officialPenaltyHome,
+    officialPenaltyAway
+  ) ? 3 : 0;
+}
+
+function samePenaltyWinner(
+  predictedHome: number,
+  predictedAway: number,
+  officialHome: number,
+  officialAway: number
+): boolean {
+  const predictedWinner = penaltyWinner(predictedHome, predictedAway);
+  return predictedWinner != null && predictedWinner === penaltyWinner(officialHome, officialAway);
+}
+
+function penaltyWinner(homeScore: number, awayScore: number): "home" | "away" | null {
+  if (homeScore > awayScore) {
+    return "home";
+  }
+
+  if (awayScore > homeScore) {
+    return "away";
+  }
+
+  return null;
 }
 
 function scoreHalftimeMarket(

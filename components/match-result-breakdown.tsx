@@ -70,7 +70,7 @@ export function MatchResultBreakdown({ match, pick }: MatchResultBreakdownProps)
             <BreakdownRow
               detail={penaltyDetail(match, pick)}
               hit={pick.scorePenalty > 0}
-              label="Penalty score"
+              label="Penalty score/winner"
               pending={match.homePenaltyScore == null || match.awayPenaltyScore == null}
               points={pick.scorePenalty}
             />

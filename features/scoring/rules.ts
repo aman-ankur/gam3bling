@@ -4,9 +4,9 @@ export const SCORING_RULES = [
   { label: "Half-time", points: 6 },
   { label: "First team to score", points: 4 },
   { label: "Last team to score", points: 4 },
-  { label: "Penalty score", points: 7 }
+  { label: "Penalty score", points: 7, detail: "Exact 7, one side 4, winner 3" }
 ] as const;
 
 export const MAX_PREDICTION_POINTS = SCORING_RULES.reduce((total, rule) => total + rule.points, 0);
 
-export const SCORING_SUMMARY = "Exact 10 · Result 5 · HT 6 · First/last 4 each · Pens 7";
+export const SCORING_SUMMARY = "Exact 10 · Result 5 · HT 6 · First/last 4 each · Pens exact 7, side 4, winner 3";

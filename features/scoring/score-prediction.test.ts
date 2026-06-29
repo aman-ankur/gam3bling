@@ -163,6 +163,32 @@ test("awards four penalty points when only one shootout side is correct", () => 
   expect(score.scoreTotal).toBe(25);
 });
 
+test("awards three penalty points when only the shootout winner is correct", () => {
+  const score = scorePrediction(
+    {
+      finalHomeScore: 2,
+      finalAwayScore: 2,
+      matchResult: "draw",
+      halftimeHomeScore: 0,
+      halftimeAwayScore: 0,
+      penaltyHomeScore: 5,
+      penaltyAwayScore: 4
+    },
+    {
+      homeScore: 1,
+      awayScore: 1,
+      winner: "draw",
+      halftimeHomeScore: 1,
+      halftimeAwayScore: 0,
+      penaltyHomeScore: 4,
+      penaltyAwayScore: 3
+    }
+  );
+
+  expect(score.scorePenalty).toBe(3);
+  expect(score.scoreTotal).toBe(8);
+});
+
 test("does not stack partial penalty points on exact shootout predictions", () => {
   const score = scorePrediction(
     {
@@ -186,6 +212,30 @@ test("does not stack partial penalty points on exact shootout predictions", () =
   );
 
   expect(score.scorePenalty).toBe(7);
+});
+
+test("does not leave penalty score pending when the official match is not a draw", () => {
+  const score = scorePrediction(
+    {
+      finalHomeScore: 2,
+      finalAwayScore: 2,
+      matchResult: "draw",
+      halftimeHomeScore: 1,
+      halftimeAwayScore: 0,
+      penaltyHomeScore: 5,
+      penaltyAwayScore: 4
+    },
+    {
+      homeScore: 2,
+      awayScore: 1,
+      winner: "home",
+      halftimeHomeScore: 1,
+      halftimeAwayScore: 0
+    }
+  );
+
+  expect(score.scorePenalty).toBe(0);
+  expect(score.pendingMarkets).not.toContain("penaltyScore");
 });
 
 test("marks optional markets pending when official data is unavailable", () => {

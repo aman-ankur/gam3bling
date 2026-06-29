@@ -16,7 +16,9 @@ export function ScoringGuide({ variant = "compact" }: ScoringGuideProps) {
           {SCORING_RULES.map((rule) => (
             <div key={rule.label}>
               <dt>{rule.label}</dt>
-              <dd>{rule.points} pts</dd>
+              <dd>
+                {rule.points} pts{"detail" in rule ? ` · ${rule.detail}` : ""}
+              </dd>
             </div>
           ))}
         </dl>
